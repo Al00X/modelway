@@ -2,6 +2,8 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import * as buffer from 'node:buffer';
+import { StorageGetModels, StorageSetModels } from '@/services/storage';
+import {ModelType} from "@/interfaces/models.interface";
 
 const AUTOMATIC1111_PATH = path.join('E:', 'sources', 'automatic1111-sd-webui');
 const SD_MODELS_PATH = path.join(AUTOMATIC1111_PATH, 'models', 'Stable-diffusion');
@@ -10,21 +12,55 @@ const HYPERNETWORKS_PATH = path.join(AUTOMATIC1111_PATH, 'models', 'hypernetwork
 const EMBEDDINGS_PATH = path.join(AUTOMATIC1111_PATH, 'embeddings');
 const MODEL_EXTENSIONS = ['.safetensors', '.ckpt', '.pt', '.base'];
 
-export async function ScanModels(type: 'lora' | 'sd' | 'hypernetwork' | 'embedding') {
+const DirectoryTypes: ModelType[] = ['Checkpoint', 'LORA', 'TextualInversion', 'Hypernetwork'];
+
+export async function SyncAllModels() {
+  console.log('SYNCING...');
+  const allModels = (await StorageGetModels()).models;
+  for (let type of ['Checkpoint']) {
+    const scanned = await ScanModelDirectory(type as any);
+    for (let localModel of scanned) {
+      const matchedIndex = allModels.findIndex((x) => x.file === localModel.name);
+      if (matchedIndex !== -1 && allModels[matchedIndex].hash !== localModel.hash) {
+        allModels[matchedIndex] = {
+          ...allModels[matchedIndex],
+          hash: localModel.hash,
+        };
+        console.warn(`Hash of model ${localModel.name} updated, what should we do with it?`);
+      } else if (matchedIndex === -1) {
+        allModels.push({
+          file: localModel.name,
+          hash: localModel.hash,
+          metadata: { type: type as any }
+        });
+      }
+    }
+  }
+  await StorageSetModels(allModels);
+}
+
+export async function ScanModelDirectory(type: ModelType) {
   const dir =
-    type === 'lora'
+    type === 'LORA'
       ? LORA_MODELS_PATH
-      : type === 'hypernetwork'
+      : type === 'Hypernetwork'
       ? HYPERNETWORKS_PATH
-      : type === 'sd'
+      : type === 'Checkpoint'
       ? SD_MODELS_PATH
-      : type === 'embedding'
+      : type === 'TextualInversion'
       ? EMBEDDINGS_PATH
       : '';
   if (!dir) {
-    throw new Error('Dude this is what Typescript is for... what have u done?');
+    throw new Error(`We do no yet a ${type}`);
   }
-  const files = await getFiles(dir);
+  let files: string[];
+  try {
+    files = await getFiles(dir);
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+
   let models: { path: string; name: string; hash: string }[] = [];
   for (let filePath of files) {
     if (
@@ -33,15 +69,18 @@ export async function ScanModels(type: 'lora' | 'sd' | 'hypernetwork' | 'embeddi
       filePath.includes('inpainting')
     )
       continue;
-
-    const file = await fs.open(filePath, 'r+');
-    const hash = await getModelHash(file, 'autoV1');
-    models.push({
-      path: filePath,
-      name: path.basename(filePath),
-      hash: hash,
-    });
-    await file.close();
+    try {
+      const file = await fs.open(filePath, 'r+');
+      const hash = await getModelHash(file, 'autoV1');
+      models.push({
+        path: filePath,
+        name: path.basename(filePath),
+        hash: hash,
+      });
+      await file.close();
+    } catch (e) {
+      console.error(e);
+    }
   }
   return models;
 }

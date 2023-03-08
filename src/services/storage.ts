@@ -2,17 +2,14 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { Model } from '@/interfaces/models.interface';
 import { API } from '@/samples/node-api';
+import {until} from "@/helpers/promise.helper";
 
-const STORAGE_PATH = path.join(API().UserDataPath, 'Data');
-const STORAGE_MODELS_PATH = path.join(STORAGE_PATH, 'models.json');
-const STORAGE_ASSETS_PATH = path.join(STORAGE_PATH, 'assets');
+let STORAGE_PATH: string, STORAGE_MODELS_PATH: string, STORAGE_ASSETS_PATH: string;
 
 interface StorageModels {
   lastUpdate: string;
   models: Model[];
 }
-
-checkStorage();
 
 export async function StorageGetModels() {
   await checkStorage();
@@ -26,6 +23,12 @@ export async function StorageSetModels(models: Model[]) {
 }
 
 async function checkStorage() {
+  await until(() => API().UserDataPath !== null);
+
+  STORAGE_PATH = path.join(API().UserDataPath!, 'Data');
+  STORAGE_MODELS_PATH = path.join(STORAGE_PATH, 'models.json');
+  STORAGE_ASSETS_PATH = path.join(STORAGE_PATH, 'assets');
+
   if (!(await fileExists(STORAGE_PATH))) {
     await fs.mkdir(STORAGE_PATH);
   }

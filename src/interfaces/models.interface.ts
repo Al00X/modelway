@@ -11,6 +11,7 @@ export type ModelType =
 export interface Model {
   file: string;
   hash: string;
+  hide?: boolean;
   metadata: {
     id?: number;
     name?: string;
@@ -23,11 +24,12 @@ export interface Model {
     tags?: string[];
     createdAt?: string;
     updatedAt?: string;
-    triggers: string[];
-    baseModel: string;
-    merges: (string | false)[] | false;
-    hashes: { [p: string]: string };
-    images: ModelImage[];
+    triggers?: string[];
+    baseModel?: string;
+    merges?: (string | false)[] | false;
+    hashes?: { [p: string]: string };
+    coverImage?: ModelImage;
+    images?: ModelImage[];
     notes?: string;
   };
 }

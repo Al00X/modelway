@@ -1,6 +1,6 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, ipcMain, protocol } from 'electron'
 import { release } from 'node:os'
-import { join } from 'node:path'
+import { join } from 'node:path';
 
 // The built directory structure
 //
@@ -73,6 +73,11 @@ async function createWindow() {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
   })
+
+  protocol.registerFileProtocol('assets', (request, callback) => {
+    const file = request.url.substring(9,request.url.length);
+    callback({path: join(app.getPath('userData'), 'Data', 'assets', file)})
+  });
 }
 
 app.whenReady().then(createWindow)

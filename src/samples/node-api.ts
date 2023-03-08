@@ -1,6 +1,6 @@
 import { ipcRenderer } from 'electron'
 
-let UserDataPath = '';
+let UserDataPath: string | null = null;
 
 ipcRenderer.send('app', 'getUserDataPath');
 
