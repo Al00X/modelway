@@ -50,7 +50,7 @@ export default function ModelDetailsDialog(props: {
           leaveTo="opacity-0"
         >
           <div
-            className="fixed inset-0 bg-black bg-opacity-25 pointer-events-none"
+            className="fixed inset-0 bg-black bg-opacity-70 pointer-events-none backdrop-filter backdrop-blur-xs"
             onClick={(e) => {
               e.stopPropagation();
             }}
@@ -69,9 +69,10 @@ export default function ModelDetailsDialog(props: {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-[90%] h-[90%] flex flex-col transform overflow-hidden rounded-2xl bg-gray-700 text-white p-6 text-left align-middle shadow-xl transition-all">
-                <div className={`flex h-full max-h-[19rem] gap-4`}>
-                  <div className={`flex flex-col`} style={{ minWidth: '20rem' }}>
-                    <h3 className="text-3xl font-medium leading-10" style={{ wordBreak: 'break-word' }}>
+                <div className={`flex h-full max-h-[19rem] gap-5`}>
+                  <div className={`flex flex-col`} style={{ minWidth: '25rem' }}>
+                    <p className={`-mt-3 text-sm opacity-50`}>{props.item.metadata.type}</p>
+                    <h3 className="text-3xl mt-0 font-medium leading-10" style={{ wordBreak: 'break-word' }}>
                       {props.computed.name}
                     </h3>
                     <p className={`text-lg opacity-70 mt-2`}>Base: {props.item.metadata.baseModel}</p>
@@ -85,8 +86,11 @@ export default function ModelDetailsDialog(props: {
                       ></textarea>
                     </div>
                   </div>
-                  <TagList tags={props.item.metadata.triggers} label={`Triggers`} />
-                  <TagList tags={props.item.metadata.merges} label={`Merges`} />
+                  <div className={`flex gap-2 w-full`}>
+                    <TagList tags={props.item.metadata.triggers} label={`Triggers`} />
+                    <TagList tags={props.item.metadata.merges} label={`Merges`} />
+                    <TagList tags={props.item.metadata.tags} label={`Tags`} />
+                  </div>
                 </div>
                 <div>
                   <Swiper
@@ -108,6 +112,8 @@ export default function ModelDetailsDialog(props: {
                   </Swiper>
                 </div>
                 <div className="mt-auto flex items-center justify-end gap-2 pt-5">
+                  <p className={`absolute bottom-4 left-4 text-sm opacity-70`}>{props.item.file ? `${props.item.file} - (${props.item.hash})` : 'File not available'}</p>
+
                   <Button onClick={() => props.onClose()}>CLOSE</Button>
                   <Button onClick={() => props.onClose()}>SAVE</Button>
                 </div>

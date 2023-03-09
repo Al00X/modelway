@@ -45,3 +45,23 @@ body {
     transition-duration: 300ms !important;
   }
 }
+
+/* width */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: rgba(28, 28, 28, 0.58);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: rgba(94, 94, 94, 0.68);
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #706f6f;
+}
