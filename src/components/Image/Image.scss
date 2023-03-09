@@ -15,4 +15,17 @@
     min-width: 100%;
     min-height: 100%
   }
+
+  &.fit-width {
+    height: auto !important;
+    img {
+      width: 100% !important;
+    }
+  }
+  &.fit-height {
+    width: auto !important;
+    img {
+      height: 100% !important;
+    }
+  }
 }

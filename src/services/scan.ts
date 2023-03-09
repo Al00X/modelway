@@ -13,30 +13,39 @@ const EMBEDDINGS_PATH = path.join(AUTOMATIC1111_PATH, 'embeddings');
 const MODEL_EXTENSIONS = ['.safetensors', '.ckpt', '.pt', '.base'];
 
 const DirectoryTypes: ModelType[] = ['Checkpoint', 'LORA', 'TextualInversion', 'Hypernetwork'];
-
+let isSyncing = false;
 export async function SyncAllModels() {
+  if (isSyncing) return;
+  isSyncing = true;
   console.log('SYNCING...');
   const allModels = (await StorageGetModels()).models;
   for (let type of ['Checkpoint']) {
     const scanned = await ScanModelDirectory(type as any);
     for (let localModel of scanned) {
       const matchedIndex = allModels.findIndex((x) => x.file === localModel.name);
-      if (matchedIndex !== -1 && allModels[matchedIndex].hash !== localModel.hash) {
+      const file = await fs.open(localModel.path, 'r+');
+      console.log(`Hashing: ${localModel.name}`);
+      // Get the short hash instead,
+      // when searching, search with the shortHash > shortHash Results Regex name > name then shortHash > fullHash
+      const hash = await getModelHash(file, 'autoV1');
+      await file.close()
+      if (matchedIndex !== -1 && allModels[matchedIndex].hash !== hash) {
         allModels[matchedIndex] = {
           ...allModels[matchedIndex],
-          hash: localModel.hash,
+          hash: hash,
         };
-        console.warn(`Hash of model ${localModel.name} updated, what should we do with it?`);
+        // console.warn(`Hash of model ${localModel.name} updated, what should we do with it?`);
       } else if (matchedIndex === -1) {
         allModels.push({
           file: localModel.name,
-          hash: localModel.hash,
+          hash: hash,
           metadata: { type: type as any }
         });
       }
     }
   }
   await StorageSetModels(allModels);
+  isSyncing = false;
 }
 
 export async function ScanModelDirectory(type: ModelType) {
@@ -61,7 +70,7 @@ export async function ScanModelDirectory(type: ModelType) {
     return [];
   }
 
-  let models: { path: string; name: string; hash: string }[] = [];
+  let models: { path: string; name: string; }[] = [];
   for (let filePath of files) {
     if (
       !MODEL_EXTENSIONS.includes(path.extname(filePath)) ||
@@ -70,14 +79,18 @@ export async function ScanModelDirectory(type: ModelType) {
     )
       continue;
     try {
-      const file = await fs.open(filePath, 'r+');
-      const hash = await getModelHash(file, 'autoV1');
+      // const file = await fs.open(filePath, 'r+');
+      // const hash = await getModelHash(file, 'autoV1');
+      // models.push({
+      //   path: filePath,
+      //   name: path.basename(filePath),
+      //   hash: hash,
+      // });
+      // await file.close();
       models.push({
         path: filePath,
         name: path.basename(filePath),
-        hash: hash,
       });
-      await file.close();
     } catch (e) {
       console.error(e);
     }
@@ -96,11 +109,30 @@ async function getFiles(dir: string): Promise<string[]> {
   return Array.prototype.concat(...files);
 }
 
-async function getModelHash(file: fs.FileHandle, algorithm: 'autoV1') {
-  const pos = 0x100000;
-  const length = 0x10000;
-  const result = await file.read(buffer.Buffer.alloc(length), 0, length, pos);
-  return crypto.createHash('sha256').update(result.buffer).digest('hex').substring(0, 8);
+async function getModelHash(file: fs.FileHandle, algorithm: 'autoV1' | 'sha256'): Promise<string> {
+  if (algorithm === 'autoV1') {
+    const pos = 0x100000;
+    const length = 0x10000;
+    const result = await file.read(buffer.Buffer.alloc(length), 0, length, pos);
+    return crypto.createHash('sha256').update(result.buffer).digest('hex').substring(0, 8);
+  } else {
+    return new Promise((resolve, reject) => {
+      const stream = file.createReadStream({
+        highWaterMark: 1024 * 1024 * 256
+      });
+      const hasher = crypto.createHash('sha256');
+      let chunk = 0;
+      stream.on('error', (err) => reject(err));
+      stream.on('data', (d) => {
+        hasher.update(d);
+        chunk++;
+      });
+      stream.on('end', () => {
+        console.log(chunk);
+        resolve(hasher.digest('hex').substring(0, 15));
+      });
+    })
+  }
 }
 
 /**
