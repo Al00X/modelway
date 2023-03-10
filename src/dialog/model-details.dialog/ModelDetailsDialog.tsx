@@ -28,7 +28,6 @@ export default function ModelDetailsDialog(props: {
       }, 100);
     };
     if (props.open) {
-      console.log(swiperRef);
       window.addEventListener('mousewheel', onMouseWheel);
       // window.addEventListener( 'DOMMouseScroll', onMouseWheel );
     }

@@ -2,7 +2,7 @@ import Section from '@/components/Section/Section';
 import Tag from '@/components/Tag/Tag';
 import { clipboard } from 'electron';
 import { openToast } from '@/services/toast';
-import {useEffect, useRef, useState} from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function TagList(props: { label?: string; tags?: string[]; className?: string }) {
   const [list, setList] = useState<string[]>(props.tags ?? []);
@@ -15,7 +15,7 @@ export default function TagList(props: { label?: string; tags?: string[]; classN
     openToast('Copied!');
   }
   function onTagRightClick(tag: string) {
-      removeTag(tag);
+    removeTag(tag);
   }
   function onTagDoubleClick(tag: string) {
     setToEdit(tag);
@@ -23,16 +23,16 @@ export default function TagList(props: { label?: string; tags?: string[]; classN
     inputRef.current?.focus();
   }
   function onTagAdd() {
-      if (list.find(x => x === input)) {
-          return;
-      }
+    if (list.find((x) => x === input)) {
+      return;
+    }
     if (toEdit) {
       editTag(toEdit, input);
       setToEdit('');
       setInput('');
     } else {
-        addTag(input);
-        setInput('');
+      addTag(input);
+      setInput('');
     }
   }
   function onCopyAll() {
@@ -40,18 +40,18 @@ export default function TagList(props: { label?: string; tags?: string[]; classN
     openToast('Copied!');
   }
   function onClearInput() {
-      setInput('');
+    setInput('');
   }
 
   function addTag(tag: string) {
-      setList([...list, tag])
+    setList([...list, tag]);
   }
   function editTag(tag: string, newValue: string) {
-      const index = list.findIndex((x) => x === tag);
-      list[index] = newValue;
+    const index = list.findIndex((x) => x === tag);
+    list[index] = newValue;
   }
   function removeTag(tag: string) {
-      setList(list.filter(x => x !== tag));
+    setList(list.filter((x) => x !== tag));
   }
 
   // useEffect(() => {
@@ -59,18 +59,23 @@ export default function TagList(props: { label?: string; tags?: string[]; classN
   // }, [props.tags, removed, added]);
 
   useEffect(() => {
-      if (input === '') {
-          setToEdit('');
-      }
-  }, [input])
+    if (input === '') {
+      setToEdit('');
+    }
+  }, [input]);
 
   return (
     <>
-      <Section label={props.label} className={`w-full ${props.className ?? ''} pb-12`} wrapperClass={`max-h-[14rem] gap-1 gap-y-2`}>
+      <Section
+        label={props.label}
+        className={`w-full ${props.className ?? ''} pb-12`}
+        wrapperClass={`max-h-[14rem] gap-1 gap-y-2`}
+      >
         {list.map(
           (x, index) =>
             x && (
               <Tag
+                key={x}
                 tag={x}
                 onClick={() => onTagClick(x)}
                 onRightClick={() => onTagRightClick(x)}
@@ -85,9 +90,14 @@ export default function TagList(props: { label?: string; tags?: string[]; classN
           COPY ALL
         </div>
         <div className={`absolute bottom-2 left-1 right-1 flex items-center`}>
-            <button onClick={() => onClearInput()} className={`transition-all outline-0 ml-1 mr-2 overflow-hidden ${input ? 'w-6' : 'w-0'}`}>X</button>
+          <button
+            onClick={() => onClearInput()}
+            className={`transition-all outline-0 ml-1 mr-2 overflow-hidden ${input ? 'w-6' : 'w-0'}`}
+          >
+            X
+          </button>
           <input
-              ref={inputRef}
+            ref={inputRef}
             value={input}
             onInput={(e) => setInput(e.currentTarget.value)}
             onKeyDown={(e) => (e.key === 'Enter' ? onTagAdd() : null)}

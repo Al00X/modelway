@@ -26,7 +26,7 @@ export interface Model {
     updatedAt?: string;
     triggers?: string[];
     baseModel?: string;
-    merges?: (string | false)[] | false;
+    merges?: (string | false)[];
     hashes?: { [p: string]: string };
     coverImage?: ModelImage;
     images?: ModelImage[];
