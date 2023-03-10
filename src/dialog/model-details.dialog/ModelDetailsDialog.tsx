@@ -114,7 +114,7 @@ export default function ModelDetailsDialog(props: {
                     </Swiper>
                   </div>
                   <div className="mt-auto flex items-center justify-end gap-2 pt-5">
-                    <p className={`absolute bottom-4 left-4 text-sm opacity-70`}>{props.item.file ? `${props.item.file} - (${props.item.hash})` : 'File not available'}</p>
+                    <p className={`absolute bottom-4 left-4 text-sm opacity-70 select-text`}>{props.item.file ? `${props.item.file} - (${props.item.hash})` : 'File not available'}</p>
 
                     <Button onClick={() => props.onClose()}>CLOSE</Button>
                     <Button onClick={() => props.onClose()}>SAVE</Button>

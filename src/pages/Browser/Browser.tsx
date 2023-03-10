@@ -7,6 +7,8 @@ import ButtonGroup from '@/components/ButtonGroup/ButtonGroup';
 import Input from '@/components/Input/Input';
 import Select from '@/components/Select/Select';
 import { KeyValue } from '@/interfaces/utils.interface';
+import Button from "@/components/Button/Button";
+import CivitGetModel from "@/services/api";
 
 type SortType = 'alphabet' | 'merges';
 type ViewType = 'grid' | 'list';
@@ -69,6 +71,12 @@ export default function Browser() {
     setList(listToSet);
   }
 
+  async function runServerSync() {
+    for(let i of (list ?? []).slice(35, 36)) {
+      await CivitGetModel(i);
+    }
+  }
+
   useEffect(() => {
     updateList(appContext.list[category] ?? []);
   }, [category, appContext.list]);
@@ -109,6 +117,7 @@ export default function Browser() {
           </Select>
           <ButtonGroup items={SortDirectionList} value={sortDirection} onValue={(e) => setSortDirection(e as any)} />
         </div>
+        <Button onClick={runServerSync}>SYNC</Button>
       </div>
       <div className={`w-full h-full gap-1 ${view === 'grid' ? 'flex flex-wrap' : 'flex flex-col'}`}>
         {!list ? (

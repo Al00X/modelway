@@ -9,15 +9,18 @@ export type ModelType =
   | 'Misc';
 
 export interface Model {
+  fullPath: string;
   file: string;
   hash: string;
   hide?: boolean;
   metadata: {
     id?: number;
     name?: string;
-    modelId?: number;
-    modelName?: string;
+    fileName?: string;
     description?: string;
+    versionName?: string;
+    versionDescription?: string;
+    version?: string;
     type: ModelType;
     nsfw?: boolean;
     creator?: string;

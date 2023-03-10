@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import * as buffer from 'node:buffer';
 import { StorageGetModels, StorageSetModels } from '@/services/storage';
-import {ModelType} from "@/interfaces/models.interface";
+import {Model, ModelType} from "@/interfaces/models.interface";
 
 const AUTOMATIC1111_PATH = path.join('E:', 'sources', 'automatic1111-sd-webui');
 const SD_MODELS_PATH = path.join(AUTOMATIC1111_PATH, 'models', 'Stable-diffusion');
@@ -11,6 +11,8 @@ const LORA_MODELS_PATH = path.join(AUTOMATIC1111_PATH, 'models', 'Lora');
 const HYPERNETWORKS_PATH = path.join(AUTOMATIC1111_PATH, 'models', 'hypernetworks');
 const EMBEDDINGS_PATH = path.join(AUTOMATIC1111_PATH, 'embeddings');
 const MODEL_EXTENSIONS = ['.safetensors', '.ckpt', '.pt', '.base'];
+
+type HashAlgorithms = 'autoV1' | 'sha256';
 
 const DirectoryTypes: ModelType[] = ['Checkpoint', 'LORA', 'TextualInversion', 'Hypernetwork'];
 let isSyncing = false;
@@ -27,16 +29,19 @@ export async function SyncAllModels() {
       console.log(`Hashing: ${localModel.name}`);
       // Get the short hash instead,
       // when searching, search with the shortHash > shortHash Results Regex name > name then shortHash > fullHash
-      const hash = await getModelHash(file, 'autoV1');
+      const hash = await getModelHashByFile(file, 'autoV1');
       await file.close()
       if (matchedIndex !== -1 && allModels[matchedIndex].hash !== hash) {
+        console.log('?');
         allModels[matchedIndex] = {
           ...allModels[matchedIndex],
           hash: hash,
+          fullPath: localModel.path
         };
         // console.warn(`Hash of model ${localModel.name} updated, what should we do with it?`);
       } else if (matchedIndex === -1) {
         allModels.push({
+          fullPath: localModel.path,
           file: localModel.name,
           hash: hash,
           metadata: { type: type as any }
@@ -109,7 +114,16 @@ async function getFiles(dir: string): Promise<string[]> {
   return Array.prototype.concat(...files);
 }
 
-async function getModelHash(file: fs.FileHandle, algorithm: 'autoV1' | 'sha256'): Promise<string> {
+export async function GetModelHash(model: Model, algorithm: HashAlgorithms) {
+  const file = await fs.open(model.fullPath, 'r+');
+  console.log(`Hashing: ${model.file}`);
+  const hash = await getModelHashByFile(file, algorithm);
+  console.log(`${hash}`);
+  await file.close()
+  return hash;
+}
+
+async function getModelHashByFile(file: fs.FileHandle, algorithm: HashAlgorithms): Promise<string> {
   if (algorithm === 'autoV1') {
     const pos = 0x100000;
     const length = 0x10000;
@@ -121,15 +135,12 @@ async function getModelHash(file: fs.FileHandle, algorithm: 'autoV1' | 'sha256')
         highWaterMark: 1024 * 1024 * 256
       });
       const hasher = crypto.createHash('sha256');
-      let chunk = 0;
       stream.on('error', (err) => reject(err));
       stream.on('data', (d) => {
         hasher.update(d);
-        chunk++;
       });
       stream.on('end', () => {
-        console.log(chunk);
-        resolve(hasher.digest('hex').substring(0, 15));
+        resolve(hasher.digest('hex'));
       });
     })
   }
