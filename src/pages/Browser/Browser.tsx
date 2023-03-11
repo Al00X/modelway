@@ -7,8 +7,7 @@ import ButtonGroup from '@/components/ButtonGroup/ButtonGroup';
 import Input from '@/components/Input/Input';
 import Select from '@/components/Select/Select';
 import { KeyValue } from '@/interfaces/utils.interface';
-import Button from "@/components/Button/Button";
-import CivitGetModel from "@/services/api";
+import Button from '@/components/Button/Button';
 
 type SortType = 'alphabet' | 'merges';
 type ViewType = 'grid' | 'list';
@@ -37,10 +36,6 @@ export default function Browser() {
   const [search, setSearch] = useState('');
   const appContext = useAppContext();
 
-  function updateList(newList: Model[]) {
-    setRawList(newList);
-    prepareList();
-  }
   function prepareList() {
     let listToSet = [...(rawList ?? [])];
     if (!listToSet) {
@@ -61,8 +56,8 @@ export default function Browser() {
       if (sortType === 'alphabet')
         return (first.metadata.name ?? first.file).localeCompare(last.metadata.name ?? last.file);
       else if (sortType === 'merges')
-        return (first.metadata.merges?.filter((x) => x)?.length ?? 0) >
-          (last.metadata.merges?.filter((x) => x)?.length ?? 0)
+        return (first.metadata.currentVersion.merges?.filter((x) => x)?.length ?? 0) >
+          (last.metadata.currentVersion.merges?.filter((x) => x)?.length ?? 0)
           ? 1
           : -1;
       return 1;
@@ -72,18 +67,16 @@ export default function Browser() {
   }
 
   async function runServerSync() {
-    for(let i of (list ?? []).slice(35, 36)) {
-      await CivitGetModel(i);
-    }
+
   }
 
   useEffect(() => {
-    updateList(appContext.list[category] ?? []);
+    setRawList(appContext.list[category] ?? []);
   }, [category, appContext.list]);
 
   useEffect(() => {
     prepareList();
-  }, [search, sortType, sortDirection]);
+  }, [search, sortType, sortDirection, rawList]);
 
   return (
     <>
@@ -117,7 +110,7 @@ export default function Browser() {
           </Select>
           <ButtonGroup items={SortDirectionList} value={sortDirection} onValue={(e) => setSortDirection(e as any)} />
         </div>
-        <Button onClick={runServerSync}>SYNC</Button>
+        <Button className={`ml-auto`} onClick={runServerSync}>SYNC</Button>
       </div>
       <div className={`w-full h-full gap-1 ${view === 'grid' ? 'flex flex-wrap' : 'flex flex-col'}`}>
         {!list ? (
@@ -127,6 +120,9 @@ export default function Browser() {
             <ModelCard key={item.metadata.name + item.hash + item.file} item={item} wide={view === 'list'} />
           ))
         )}
+      </div>
+      <div className={`sticky bottom-0 flex items-center pt-0.5 pb-1.5 px-3 text-xs bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg text-white`}>
+        <span className={`ml-auto`}>Total: {rawList?.length ?? 0}</span>
       </div>
     </>
   );

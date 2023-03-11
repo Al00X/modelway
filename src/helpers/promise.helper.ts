@@ -6,3 +6,11 @@ export function until(conditionFunction: () => boolean) {
 
     return new Promise(poll);
 }
+
+export function wait(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(null);
+    }, ms)
+  })
+}

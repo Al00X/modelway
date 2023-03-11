@@ -19,7 +19,7 @@ export default function ModelCard(props: { item: Model; wide?: boolean }) {
 
   useEffect(() => {
     const imagesArray: ModelImage[] = [];
-    for (let i of [props.item.metadata.coverImage, ...(props.item.metadata.images?.slice(0, 3) ?? [])]) {
+    for (let i of [props.item.metadata.coverImage, ...(props.item.metadata.currentVersion.images?.slice(0, 3) ?? [])]) {
       if (!i) continue;
       imagesArray.push(i);
     }
@@ -43,15 +43,15 @@ export default function ModelCard(props: { item: Model; wide?: boolean }) {
             <>
               {info.img.single && <Image item={info.img.single} />}
               <div className={`text-overlay`}>{info.name}</div>
-              {props.item.metadata.baseModel && <div
-                  className={`absolute left-0 top-0 py-1 px-2 bg-gray-900 text-white text-sm shadow-sm font-medium rounded-br-xl`}>{props.item.metadata.baseModel}</div>}
+              {props.item.metadata.currentVersion.baseModel && <div
+                  className={`absolute left-0 top-0 py-1 px-2 bg-gray-900 text-white text-sm shadow-sm font-medium rounded-br-xl`}>{props.item.metadata.currentVersion.baseModel}</div>}
             </>
         ) : (
             <>
               <div className={`flex w-full h-full`}>
                 <div className={`flex flex-col`}>
                   <p className={`text-2xl`}>{info.name}</p>
-                  <p className={`opacity-60 mt-2`}>Base: {props.item.metadata.baseModel}</p>
+                  { props.item.metadata.currentVersion.baseModel && <p className={`opacity-60 mt-2`}>Base: {props.item.metadata.currentVersion.baseModel}</p>}
                 </div>
                 <div className={`flex gap-1 ml-auto max-w-[65%]`}>
                   {info.img.triple?.map(i => <Image key={i.url} item={i} fit={`height`} />)}

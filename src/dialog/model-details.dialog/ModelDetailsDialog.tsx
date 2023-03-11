@@ -77,7 +77,7 @@ export default function ModelDetailsDialog(props: {
                       <h3 className="text-3xl mt-0 font-medium leading-10" style={{ wordBreak: 'break-word' }}>
                         {props.computed.name}
                       </h3>
-                      <p className={`text-lg opacity-70 mt-2`}>Base: {props.item.metadata.baseModel}</p>
+                      <p className={`text-lg opacity-70 mt-2`}>Base: {props.item.metadata.currentVersion.baseModel}</p>
                       <div className={`relative mt-auto w-full p-4 bg-gray-800`}>
                         <p style={{zIndex: -1}} className={`absolute left-0 -top-5 rounded-lg px-4 py-1 pb-4 text-sm bg-gray-800`}>Notes</p>
                         <textarea
@@ -89,8 +89,8 @@ export default function ModelDetailsDialog(props: {
                       </div>
                     </div>
                     <div className={`flex gap-2 w-full`}>
-                      <TagList tags={props.item.metadata.triggers} label={`Triggers`} />
-                      <TagList tags={props.item.metadata.merges} label={`Merges`} />
+                      <TagList tags={props.item.metadata.currentVersion.triggers} label={`Triggers`} />
+                      <TagList tags={props.item.metadata.currentVersion.merges} label={`Merges`} />
                       <TagList tags={props.item.metadata.tags} label={`Tags`} />
                     </div>
                   </div>
@@ -106,7 +106,7 @@ export default function ModelDetailsDialog(props: {
                         scrollbar={true}
                         mousewheel={{ releaseOnEdges: true, sensitivity: 3 }}
                     >
-                      {props.item.metadata.images?.map((x, index) => (
+                      {props.item.metadata.currentVersion.images?.map((x, index) => (
                           <SwiperSlide className={`w-auto`} key={x.url}>
                             <Image item={x} fit={`height`} onClick={() => setLightbox(index)} />
                           </SwiperSlide>
@@ -125,7 +125,7 @@ export default function ModelDetailsDialog(props: {
           </div>
         </Dialog>
       </Transition>
-      <Lightbox index={lightbox} onChange={setLightbox} images={props.item.metadata.images ?? []} />
+      <Lightbox index={lightbox} onChange={setLightbox} images={props.item.metadata.currentVersion.images ?? []} />
     </>
   );
 }

@@ -1,3 +1,5 @@
+import {CivitFileHashes, CivitModelFile} from "@/interfaces/api.interface";
+
 export type ModelType =
   | 'Checkpoint'
   | 'TextualInversion'
@@ -8,6 +10,22 @@ export type ModelType =
   | 'Poses'
   | 'Misc';
 
+export interface ModelVersion {
+  id?: number;
+  modelId?: number;
+  fileName?: string;
+  triggers?: string[];
+  baseModel?: string;
+  name?: string;
+  description?: string | null;
+  merges?: (string | false)[];
+  images?: ModelImage[];
+  createdAt?: string;
+  updatedAt?: string;
+  files?: CivitModelFile[],
+  hashes?: CivitFileHashes
+}
+
 export interface Model {
   fullPath: string;
   file: string;
@@ -16,24 +34,16 @@ export interface Model {
   metadata: {
     id?: number;
     name?: string;
-    fileName?: string;
     description?: string;
-    versionName?: string;
-    versionDescription?: string;
-    version?: string;
     type: ModelType;
     nsfw?: boolean;
     creator?: string;
     tags?: string[];
-    createdAt?: string;
-    updatedAt?: string;
-    triggers?: string[];
-    baseModel?: string;
-    merges?: (string | false)[];
-    hashes?: { [p: string]: string };
     coverImage?: ModelImage;
-    images?: ModelImage[];
     notes?: string;
+    currentVersion: ModelVersion,
+    versions?: ModelVersion[],
+    originalValues?: Model['metadata'],
   };
 }
 
@@ -44,7 +54,6 @@ export interface ModelImage {
   height?: number;
   hash?: string;
   meta?: {
-    Size?: string;
     seed?: number;
     steps?: number;
     prompt?: string;

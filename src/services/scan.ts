@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import * as buffer from 'node:buffer';
 import { StorageGetModels, StorageSetModels } from '@/services/storage';
-import {Model, ModelType} from "@/interfaces/models.interface";
+import { Model, ModelType } from '@/interfaces/models.interface';
 
 const AUTOMATIC1111_PATH = path.join('E:', 'sources', 'automatic1111-sd-webui');
 const SD_MODELS_PATH = path.join(AUTOMATIC1111_PATH, 'models', 'Stable-diffusion');
@@ -13,45 +13,6 @@ const EMBEDDINGS_PATH = path.join(AUTOMATIC1111_PATH, 'embeddings');
 const MODEL_EXTENSIONS = ['.safetensors', '.ckpt', '.pt', '.base'];
 
 type HashAlgorithms = 'autoV1' | 'sha256';
-
-const DirectoryTypes: ModelType[] = ['Checkpoint', 'LORA', 'TextualInversion', 'Hypernetwork'];
-let isSyncing = false;
-export async function SyncAllModels() {
-  if (isSyncing) return;
-  isSyncing = true;
-  console.log('SYNCING...');
-  const allModels = (await StorageGetModels()).models;
-  for (let type of ['Checkpoint']) {
-    const scanned = await ScanModelDirectory(type as any);
-    for (let localModel of scanned) {
-      const matchedIndex = allModels.findIndex((x) => x.file === localModel.name);
-      const file = await fs.open(localModel.path, 'r+');
-      console.log(`Hashing: ${localModel.name}`);
-      // Get the short hash instead,
-      // when searching, search with the shortHash > shortHash Results Regex name > name then shortHash > fullHash
-      const hash = await getModelHashByFile(file, 'autoV1');
-      await file.close()
-      if (matchedIndex !== -1 && allModels[matchedIndex].hash !== hash) {
-        console.log('?');
-        allModels[matchedIndex] = {
-          ...allModels[matchedIndex],
-          hash: hash,
-          fullPath: localModel.path
-        };
-        // console.warn(`Hash of model ${localModel.name} updated, what should we do with it?`);
-      } else if (matchedIndex === -1) {
-        allModels.push({
-          fullPath: localModel.path,
-          file: localModel.name,
-          hash: hash,
-          metadata: { type: type as any }
-        });
-      }
-    }
-  }
-  await StorageSetModels(allModels);
-  isSyncing = false;
-}
 
 export async function ScanModelDirectory(type: ModelType) {
   const dir =
@@ -75,7 +36,7 @@ export async function ScanModelDirectory(type: ModelType) {
     return [];
   }
 
-  let models: { path: string; name: string; }[] = [];
+  let models: { path: string; name: string }[] = [];
   for (let filePath of files) {
     if (
       !MODEL_EXTENSIONS.includes(path.extname(filePath)) ||
@@ -114,16 +75,16 @@ async function getFiles(dir: string): Promise<string[]> {
   return Array.prototype.concat(...files);
 }
 
-export async function GetModelHash(model: Model, algorithm: HashAlgorithms) {
+export async function GetModelHash(model: {fullPath: string, file: string}, algorithm: HashAlgorithms) {
   const file = await fs.open(model.fullPath, 'r+');
   console.log(`Hashing: ${model.file}`);
-  const hash = await getModelHashByFile(file, algorithm);
+  const hash = await GetModelHashByFile(file, algorithm);
   console.log(`${hash}`);
-  await file.close()
+  await file.close();
   return hash;
 }
 
-async function getModelHashByFile(file: fs.FileHandle, algorithm: HashAlgorithms): Promise<string> {
+export async function GetModelHashByFile(file: fs.FileHandle, algorithm: HashAlgorithms): Promise<string> {
   if (algorithm === 'autoV1') {
     const pos = 0x100000;
     const length = 0x10000;
@@ -132,7 +93,7 @@ async function getModelHashByFile(file: fs.FileHandle, algorithm: HashAlgorithms
   } else {
     return new Promise((resolve, reject) => {
       const stream = file.createReadStream({
-        highWaterMark: 1024 * 1024 * 256
+        highWaterMark: 1024 * 1024 * 256,
       });
       const hasher = crypto.createHash('sha256');
       stream.on('error', (err) => reject(err));
@@ -142,7 +103,7 @@ async function getModelHashByFile(file: fs.FileHandle, algorithm: HashAlgorithms
       stream.on('end', () => {
         resolve(hasher.digest('hex'));
       });
-    })
+    });
   }
 }
 

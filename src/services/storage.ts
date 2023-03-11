@@ -14,11 +14,13 @@ interface StorageModels {
 export async function StorageGetModels() {
   await checkStorage();
   const file = await fs.readFile(STORAGE_MODELS_PATH);
+  console.log('Reading models from disk...');
   return JSON.parse(file.toString()) as StorageModels;
 }
 
 export async function StorageSetModels(models: Model[]) {
   await checkStorage();
+  console.log('Writing models to disk...');
   await fs.writeFile(STORAGE_MODELS_PATH, generateModelsJson({ models: models }));
 }
 
@@ -38,7 +40,6 @@ async function checkStorage() {
   if (!(await fileExists(STORAGE_MODELS_PATH))) {
     await fs.writeFile(STORAGE_MODELS_PATH, generateModelsJson({ models: [] }));
   }
-  console.log(`storage ready: `, STORAGE_MODELS_PATH);
 }
 
 async function fileExists(path: string) {
