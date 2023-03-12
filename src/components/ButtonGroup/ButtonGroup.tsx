@@ -13,7 +13,7 @@ export default function ButtonGroup(props: {
         <div
           key={x.value}
           className={`transition-all filter hover:brightness-110 cursor-pointer flex items-center justify-center px-2 py-1 text-white gap-1 w-full border border-gray-400 ${
-            props.value === x.value ? 'pointer-events-none bg-gray-550 opacity-40' : 'bg-gray-300'
+            props.value === x.value ? 'pointer-events-none bg-gray-550 opacity-60' : 'bg-gray-300'
           }`}
           onClick={() => (props.onValue ? props.onValue(x.value) : null)}
         >

@@ -1,7 +1,7 @@
 import Icon from '@/components/Icon/Icon';
-import {useEffect, useRef, useState} from 'react';
+import {forwardRef, useEffect, useRef, useState} from 'react';
 
-export default function Input(props: {
+const Input = forwardRef<HTMLInputElement, {
   placeholder?: string;
   icon?: string;
   value?: string;
@@ -10,13 +10,13 @@ export default function Input(props: {
   debounce?: number;
   className?: string;
   readonly?: boolean;
-}) {
+}>((props, ref) => {
   const [input, setInput] = useState(props.value);
   const timeoutRef = useRef<any>(null);
 
-  useEffect(() => {
-    setInput(props.value);
-  }, [props.value])
+  // useEffect(() => {
+  //   setInput(props.value);
+  // }, [props.value])
 
   function onInputChange(e: string) {
     setInput(e);
@@ -42,8 +42,9 @@ export default function Input(props: {
         style={{cursor: "text"}}
       className={`w-full h-full flex items-center bg-gray-600 border border-gray-400 text-white rounded-lg gap-4 p-2 ${props.className ?? ''}`}
     >
-      {props.icon && <Icon className={`flex-none ml-2`} icon={props.icon} size={`1rem`} />}
+      {props.icon && <Icon className={`flex-none ml-2 opacity-60`} icon={props.icon} size={`1rem`} />}
       <input
+        ref={ref}
         className={`bg-transparent w-full outline-0`}
         style={{cursor: "inherit"}}
         value={input}
@@ -62,4 +63,6 @@ export default function Input(props: {
       )}
     </div>
   );
-}
+})
+
+export default Input;

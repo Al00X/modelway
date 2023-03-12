@@ -1,5 +1,5 @@
 import { useAppContext } from '@/context/app.context';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Model, ModelType } from '@/interfaces/models.interface';
 import Loader from '@/components/Loader/Loader';
 import ModelCard from '@/components/ModelCard/ModelCard';
@@ -8,6 +8,7 @@ import Input from '@/components/Input/Input';
 import Select from '@/components/Select/Select';
 import { KeyValue } from '@/interfaces/utils.interface';
 import Button from '@/components/Button/Button';
+import { GlobalHotKeys } from 'react-hotkeys';
 
 type SortType = 'alphabet' | 'merges';
 type ViewType = 'grid' | 'list';
@@ -34,6 +35,9 @@ export default function Browser() {
   const [list, setList] = useState<Model[] | undefined>(undefined);
   const [rawList, setRawList] = useState<Model[] | undefined>(undefined);
   const [search, setSearch] = useState('');
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   const appContext = useAppContext();
 
   function prepareList() {
@@ -45,7 +49,7 @@ export default function Browser() {
     if (search) {
       listToSet = listToSet.filter((x) => {
         for (let i of [x.file, x.hash, x.metadata.name]) {
-          if (i?.includes(search)) return true;
+          if (i?.toLowerCase()?.includes(search)) return true;
         }
       });
     }
@@ -66,8 +70,12 @@ export default function Browser() {
     setList(listToSet);
   }
 
-  async function runServerSync() {
+  async function runServerSync() {}
 
+  function handleKeyBinds(e: KeyboardEvent) {
+    if (e.ctrlKey && e.key === 'F') {
+      searchInputRef.current?.focus();
+    }
   }
 
   useEffect(() => {
@@ -79,11 +87,13 @@ export default function Browser() {
   }, [search, sortType, sortDirection, rawList]);
 
   return (
-    <>
+    <div className={`flex flex-col h-full`}>
+      <GlobalHotKeys keyMap={{ SEARCH: 'ctrl+f' }} handlers={{ SEARCH: () => searchInputRef.current?.focus() }} />
       <div
         className={`flex flex-wrap p-4 items-center bg-gray-800 bg-opacity-90 backdrop-filter backdrop-blur-sm z-10 sticky top-0 shadow-lg gap-x-12 gap-y-3 `}
       >
         <Input
+          ref={searchInputRef}
           className={`w-full max-w-[20rem]`}
           placeholder={`Search...`}
           icon={`search`}
@@ -110,9 +120,11 @@ export default function Browser() {
           </Select>
           <ButtonGroup items={SortDirectionList} value={sortDirection} onValue={(e) => setSortDirection(e as any)} />
         </div>
-        <Button className={`ml-auto`} onClick={runServerSync}>SYNC</Button>
+        <Button className={`ml-auto`} onClick={runServerSync}>
+          SYNC
+        </Button>
       </div>
-      <div className={`w-full h-full gap-1 ${view === 'grid' ? 'flex flex-wrap' : 'flex flex-col'}`}>
+      <div className={`w-full h-full gap-1 overflow-auto ${view === 'grid' ? 'flex flex-wrap' : 'flex flex-col'}`}>
         {!list ? (
           <Loader />
         ) : (
@@ -121,9 +133,11 @@ export default function Browser() {
           ))
         )}
       </div>
-      <div className={`sticky bottom-0 flex items-center pt-0.5 pb-1.5 px-3 text-xs bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg text-white`}>
+      <div
+        className={`sticky bottom-0 flex items-center pt-0.5 pb-1.5 px-3 text-xs bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg text-white`}
+      >
         <span className={`ml-auto`}>Total: {rawList?.length ?? 0}</span>
       </div>
-    </>
+    </div>
   );
 }
