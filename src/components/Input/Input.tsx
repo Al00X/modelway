@@ -14,9 +14,12 @@ const Input = forwardRef<HTMLInputElement, {
   const [input, setInput] = useState(props.value);
   const timeoutRef = useRef<any>(null);
 
-  // useEffect(() => {
-  //   setInput(props.value);
-  // }, [props.value])
+  useEffect(() => {
+    // lazy-ass fix for a bug where u need to update the input when value changes...
+    if (!props.debounce) {
+      setInput(props.value);
+    }
+  }, [props.value])
 
   function onInputChange(e: string) {
     setInput(e);
