@@ -43,7 +43,7 @@ const Input = forwardRef<HTMLInputElement, {
   return (
     <div
         style={{cursor: "text"}}
-      className={`w-full h-full flex items-center bg-gray-600 border border-gray-400 text-white rounded-lg gap-4 p-2 ${props.className ?? ''}`}
+      className={`w-full h-auto flex items-center bg-gray-600 border border-gray-400 text-white rounded-lg gap-4 p-2 ${props.className ?? ''}`}
     >
       {props.icon && <Icon className={`flex-none ml-2 opacity-60`} icon={props.icon} size={`1rem`} />}
       <input

@@ -87,10 +87,11 @@ export default function Browser() {
   }, [search, sortType, sortDirection, rawList]);
 
   return (
-    <div className={`flex flex-col h-full`}>
+    <div className={`flex flex-col h-full overflow-auto`}>
       <GlobalHotKeys keyMap={{ SEARCH: 'ctrl+f' }} handlers={{ SEARCH: () => searchInputRef.current?.focus() }} />
+
       <div
-        className={`flex flex-wrap p-4 items-center bg-gray-800 bg-opacity-90 backdrop-filter backdrop-blur-sm z-10 sticky top-0 shadow-lg gap-x-12 gap-y-3 `}
+        className={`flex flex-wrap p-4 items-center bg-gray-800 bg-opacity-90 backdrop-filter backdrop-blur-sm z-10 sticky top-0 w-full shadow-lg gap-x-12 gap-y-3 `}
       >
         <Input
           ref={searchInputRef}
@@ -124,7 +125,10 @@ export default function Browser() {
           SYNC
         </Button>
       </div>
-      <div className={`w-full h-full gap-1 overflow-auto ${view === 'grid' ? 'flex flex-wrap' : 'flex flex-col'}`}>
+
+      <div className={`w-full h-full gap-1 ${view === 'grid' ? 'flex flex-wrap px-2' : 'flex flex-col'}`}>
+
+
         {!list ? (
           <Loader />
         ) : (
@@ -132,12 +136,16 @@ export default function Browser() {
             <ModelCard key={item.metadata.name + item.hash + item.file} item={item} wide={view === 'list'} />
           ))
         )}
+
+
       </div>
+
       <div
-        className={`sticky bottom-0 flex items-center pt-0.5 pb-1.5 px-3 text-xs bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg text-white`}
+        className={`sticky bottom-0 w-full flex items-center pt-0.5 pb-1.5 px-3 text-xs bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg text-white`}
       >
         <span className={`ml-auto`}>Total: {rawList?.length ?? 0}</span>
       </div>
+
     </div>
   );
 }
