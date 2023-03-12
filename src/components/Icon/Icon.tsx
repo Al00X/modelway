@@ -7,7 +7,7 @@ export default function Icon(props: { icon: string; size?: string; className?: s
   const [svgData, setSvgData] = useState('');
 
   useEffect(() => {
-    axios.get(`/public/icons/${props.icon}.svg`).then((res) => {
+    axios.get(`/icons/${props.icon}.svg`).then((res) => {
       setSvgData(res.data.replace('<svg', '<svg class="icon"'));
     });
   }, [props.icon]);

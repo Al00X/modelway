@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" id="Isolation_Mode" data-name="Isolation Mode" viewBox="0 0 24 24" width="512" height="512">
+  <path transform="scale(0.6) translate(8, 8)" d="M24,24H0V0H24ZM3,21H21V3H3Z"/>
+  <rect y="10.5" x="10" width="4" height="3"/>
+</svg>

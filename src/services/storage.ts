@@ -11,6 +11,40 @@ interface StorageModels {
   models: Model[];
 }
 
+export const StorageEngine = (fileName: string) => {
+  const getPath = () => path.join(STORAGE_PATH, fileName + '.json');
+  const checkPath = async () => {
+    await waitForElectronCallback();
+    if (! await fileExists(getPath())) {
+      await fs.writeFile(getPath(), JSON.stringify({}))
+    }
+  }
+  const getFileContent = async () => {
+    await checkPath();
+    return JSON.parse((await fs.readFile(getPath())).toString());
+  }
+  const setFileContent = async (object: any) => {
+    await checkPath();
+    return await fs.writeFile(getPath(), JSON.stringify(object));
+  }
+
+  return {
+    getItem: async (key: string): Promise<any> => {
+      return (await getFileContent())[key] ?? undefined;
+    },
+    setItem: async (key: string, value: any) => {
+      const current = await getFileContent();
+      current[key] = value;
+      return await setFileContent(current);
+    },
+    removeItem: async (key: string) => {
+      const current = await getFileContent();
+      current[key] = undefined;
+      return await setFileContent(current);
+    }
+  }
+}
+
 export async function StorageGetModels() {
   await checkStorage();
   const file = await fs.readFile(STORAGE_MODELS_PATH);
@@ -24,8 +58,11 @@ export async function StorageSetModels(models: Model[]) {
   await fs.writeFile(STORAGE_MODELS_PATH, generateModelsJson({ models: models }));
 }
 
+async function waitForElectronCallback() {
+  return await until(() => API().UserDataPath !== null);
+}
+
 async function checkStorage() {
-  await until(() => API().UserDataPath !== null);
 
   STORAGE_PATH = path.join(API().UserDataPath!, 'Data');
   STORAGE_MODELS_PATH = path.join(STORAGE_PATH, 'models.json');

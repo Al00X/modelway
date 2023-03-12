@@ -126,7 +126,7 @@ export default function Browser() {
         </Button>
       </div>
 
-      <div className={`w-full h-full gap-1 ${view === 'grid' ? 'flex flex-wrap px-2' : 'flex flex-col'}`}>
+      <div className={`w-full gap-1 ${view === 'grid' ? 'flex flex-wrap px-2' : 'flex flex-col'}`}>
 
 
         {!list ? (

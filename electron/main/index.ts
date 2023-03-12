@@ -44,6 +44,8 @@ async function createWindow() {
   win = new BrowserWindow({
     title: 'ModelWay',
     icon: join(process.env.PUBLIC, 'favicon.ico'),
+    frame: false,
+    titleBarStyle: 'hidden',
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
@@ -51,7 +53,6 @@ async function createWindow() {
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       nodeIntegration: true,
       contextIsolation: false,
-
     },
   })
 
@@ -127,3 +128,17 @@ ipcMain.on('app', function (evt, messageObj) {
     evt.sender.send('app', app.getPath('userData'));
   }
 });
+ipcMain.on('window', (e, message) => {
+  const window = BrowserWindow.getFocusedWindow();
+  switch (message) {
+    case 'close': window.close(); break;
+    case 'maximize': window.isMaximized() ? window.unmaximize() : window.maximize(); break;
+    case 'minimize': window.minimize(); break;
+  }
+})
+ipcMain.handle('window', (e, message) => {
+  const window = BrowserWindow.getFocusedWindow();
+  switch (message) {
+    case 'isMaximized': return window.isMaximized();
+  }
+})

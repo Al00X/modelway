@@ -9,5 +9,7 @@ ipcRenderer.on('app', function (evt, messageObj) {
 });
 
 export const API = () => ({
-  UserDataPath
+  UserDataPath,
+  WindowAction: (action: string) => ipcRenderer.send('window', action),
+  IsWindowMaximized: () => ipcRenderer.invoke('window', 'isMaximized')
 })

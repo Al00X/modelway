@@ -34,17 +34,8 @@ body {
   position: relative;
 }
 #root {
-  @apply inset-0;
+  @apply inset-0 flex flex-col;
   position: absolute;
-}
-
-.swiper-scrollbar-drag {
-  background: rgba(255,255,255,0.6) !important;
-}
-.swiper.mousewheel-smooth {
-  .swiper-wrapper, .swiper-scrollbar-drag {
-    transition-duration: 300ms !important;
-  }
 }
 
 /* width */
