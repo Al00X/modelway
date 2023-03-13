@@ -35,6 +35,7 @@ export function ModelFileNamePrune(model: Model | string) {
     .trim();
 }
 
+export function CivitModelToModel(model: CivitModel, previousModel: Model): Model;
 export function CivitModelToModel(model: CivitModel, previousModel?: Model): Partial<Model> {
   // model.
   const imageMap = (v: CivitModelImage): ModelImage => {
@@ -120,20 +121,38 @@ export function CivitModelToModel(model: CivitModel, previousModel?: Model): Par
 
 export function MergeModelDetails(model: Model): Model {
   if (!model.metadata.originalValues) {
-    console.warn(`Model has no available server data for merging: ${model.file}`);
+    // console.warn(`Model has no available server data for merging: ${model.file}`);
     return model;
   }
+
+  const originalCurrentVersion = model.metadata.originalValues.currentVersion;
+  const currentVersion = model.metadata.currentVersion;
 
   return {
     ...model,
     metadata: {
       ...model.metadata.originalValues,
       ...model.metadata,
+      tags: mergeArray(model.metadata.tags, model.metadata.originalValues.tags),
       currentVersion: {
-        ...model.metadata.originalValues.currentVersion,
-        ...model.metadata.currentVersion,
+        ...originalCurrentVersion,
+        ...currentVersion,
+        images: mergeArray(currentVersion.images, originalCurrentVersion.images, 'url'),
+        triggers: mergeArray(currentVersion.triggers, originalCurrentVersion.triggers),
+        merges: mergeArray(currentVersion.merges, []),
       },
       versions: undefined,
     }
   }
+}
+
+function mergeArray<T>(a: T[] | undefined, b: T[] | undefined, key?: keyof T) {
+  const base = [...a ?? []];
+  const toMerge = [...b ?? []];
+  for (const i of toMerge) {
+    if (key && base.find(x => x[key] === i[key])) continue
+    else if (base.includes(i)) continue;
+    base.push(i);
+  }
+  return base;
 }

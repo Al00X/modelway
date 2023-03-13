@@ -36,9 +36,14 @@ export default function ModelCard(props: { item: Model; wide?: boolean }) {
     });
   }, [props.item]);
 
+  function openDetailsDialog() {
+    setOpenDetails(true);
+    console.log(props.item);
+  }
+
   return (
     <>
-      <div className={`model-card ${props.wide ? 'wide' : ''}`} onClick={() => setOpenDetails(true)}>
+      <div className={`model-card ${props.wide ? 'wide' : ''}`} onClick={openDetailsDialog}>
         {!props.wide ? (
           <>
             {info.img.single && <Image item={info.img.single} />}

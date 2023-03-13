@@ -42,6 +42,7 @@ const Input = forwardRef<HTMLInputElement, {
 
   return (
     <div
+      onClick={() => (ref as any)?.current?.focus()}
         style={{cursor: "text"}}
       className={`w-full h-auto flex items-center bg-gray-600 border border-gray-400 text-white rounded-lg gap-4 p-2 ${props.className ?? ''}`}
     >

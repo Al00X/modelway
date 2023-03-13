@@ -1,3 +1,5 @@
+import {Loader as LoaderMantine} from "@mantine/core";
+
 export default function Loader() {
-    return <span>Loading...</span>
+    return <LoaderMantine className={`h-full loader stroke-white`} variant={`oval`} />
 }

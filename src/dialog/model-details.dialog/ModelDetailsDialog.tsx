@@ -1,5 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
+import { useEffect, useRef, useState } from 'react';
 import { Model } from '@/interfaces/models.interface';
 import { ModelCardComputed } from '@/components/ModelCard/ModelCard';
 import TagList from '@/components/TagList/TagList';
@@ -8,7 +7,9 @@ import Image from '@/components/Image/Image';
 import { FreeMode, Mousewheel, Scrollbar } from 'swiper';
 import Button from '@/components/Button/Button';
 import Lightbox from '@/components/Lightbox/Lightbox';
-import { Modal } from '@mantine/core';
+import Modal from '@/components/Modal/Modal';
+
+const Separator = `    .    `;
 
 export default function ModelDetailsDialog(props: {
   open: boolean;
@@ -18,6 +19,7 @@ export default function ModelDetailsDialog(props: {
 }) {
   const [notes, setNotes] = useState(props.item.metadata.notes);
   const [lightbox, setLightbox] = useState(-1);
+  const [openDescriptionModal, setDescriptionModal] = useState(false);
 
   const swiperRef = useRef<SwiperRef>(null);
 
@@ -41,7 +43,13 @@ export default function ModelDetailsDialog(props: {
 
   return (
     <>
-      <Modal opened={props.open} onClose={props.onClose} centered={true} className={`app-modal`} withCloseButton={false} size={'90%'} classNames={{content: 'w-[90%] h-[90%]', overlay: 'bg-black bg-opacity-70 backdrop-filter backdrop-blur-xs'}}>
+      <Modal
+        open={props.open}
+        onClose={props.onClose}
+        className={`app-modal`}
+        width={`90%`}
+        height={`90%`}
+      >
         <div className="w-full h-full flex flex-col transform overflow-hidden rounded-2xl bg-gray-700 text-white p-6 text-left align-middle shadow-xl transition-all">
           <div className={`flex h-full max-h-[19rem] gap-5`}>
             <div className={`flex flex-col`} style={{ minWidth: '25rem' }}>
@@ -50,6 +58,11 @@ export default function ModelDetailsDialog(props: {
                 {props.computed.name}
               </h3>
               <p className={`text-lg opacity-70 mt-2`}>Base: {props.item.metadata.currentVersion.baseModel}</p>
+              {props.item.metadata.description && (
+                <Button className={`w-40 mt-4`} onClick={() => setDescriptionModal(true)}>
+                  View Description
+                </Button>
+              )}
               <div className={`relative mt-auto w-full p-4 bg-gray-800`}>
                 <p
                   style={{ zIndex: -1 }}
@@ -71,7 +84,7 @@ export default function ModelDetailsDialog(props: {
               <TagList tags={props.item.metadata.tags} label={`Tags`} />
             </div>
           </div>
-          <div>
+          <div className={`overflow-auto`}>
             <Swiper
               ref={swiperRef}
               className={`w-full h-[18rem] mt-8`}
@@ -85,14 +98,38 @@ export default function ModelDetailsDialog(props: {
             >
               {props.item.metadata.currentVersion.images?.map((x, index) => (
                 <SwiperSlide className={`w-auto`} key={x.url}>
-                  <Image item={x} fit={`height`} onClick={() => setLightbox(index)} />
+                  <Image item={x} fit={`height`} onClick={() => setLightbox(index)} onLoad={() => {
+                    try {
+                      setTimeout(() => {
+                        swiperRef.current?.swiper.update();
+                      }, 10)
+                    } catch {}
+
+                  }
+                  } />
                 </SwiperSlide>
               ))}
             </Swiper>
           </div>
           <div className="mt-auto flex items-center justify-end gap-2 pt-5">
-            <p className={`absolute bottom-4 left-4 text-sm opacity-70 select-text`}>
-              {props.item.file ? `${props.item.file} - (${props.item.hash})` : 'File not available'}
+            <p className={`absolute bottom-4 left-4 text-sm opacity-70 select-text whitespace-pre`}>
+              {props.item.file ? (
+                <>
+                  {props.item.file}
+                  {props.item.hash && (
+                    <span>
+                      {Separator}Hash: {props.item.hash}
+                    </span>
+                  )}
+                  {props.item.metadata.creator && (
+                    <span>
+                      {Separator}Creator: {props.item.metadata.creator}
+                    </span>
+                  )}
+                </>
+              ) : (
+                'File not available'
+              )}
             </p>
 
             <Button onClick={() => props.onClose()}>CLOSE</Button>
@@ -101,6 +138,18 @@ export default function ModelDetailsDialog(props: {
         </div>
       </Modal>
       <Lightbox index={lightbox} onChange={setLightbox} images={props.item.metadata.currentVersion.images ?? []} />
+      <Modal
+        className={`z-[6666]`}
+        width={`60%`}
+        height={`60%`}
+        open={openDescriptionModal}
+        onClose={() => setDescriptionModal(false)}
+        withCloseButton={true}
+      >
+        <div className={`flex flex-col overflow-auto`} dangerouslySetInnerHTML={{__html: props.item.metadata.description ?? ''}}>
+
+        </div>
+      </Modal>
     </>
   );
 }

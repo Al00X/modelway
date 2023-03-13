@@ -1,36 +1,125 @@
-import {createContext, useContext, useEffect, useRef, useState} from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { StorageGetModels, StorageSetModels } from '@/services/storage';
 import { Model, ModelType } from '@/interfaces/models.interface';
 import { GetModelHash, ScanModelDirectory } from '@/services/scan';
-import Progress from "@/components/Progress/Progress";
+import Progress from '@/components/Progress/Progress';
+import CivitGetModel from '@/services/api';
+import {CivitModelToModel, MergeModelDetails} from '@/helpers/model.helper';
+import Button from '@/components/Button/Button';
+
+export interface ProgressEvent {
+  current: number;
+  total: number;
+  message: string;
+}
+
+type ModelsListType = { [p in ModelType]?: Model[] };
 
 const AppContext = createContext({
-  list: {} as { [p in ModelType]: Model[] },
+  list: {} as ModelsListType,
+  clientSync: async () => {},
+  // filter is the list of model file names (model.file)
+  serverSync: async (type?: ModelType, filter?: string[]) => {},
+  progress: undefined as ProgressEvent | undefined,
 });
 
 export const useAppContext = () => useContext(AppContext);
 
 export function AppProvider(props: { children: any }) {
-  const isSyncing = useRef(false);
+  const isSyncing = useRef<'client' | 'server' | undefined>(undefined);
+  const cancelSyncing = useRef<boolean>(false);
+  const rawList = useRef<Model[]>([]);
   const [loading, setLoading] = useState(false);
-  const [list, setList] = useState({});
-  const [progress, setProgress] = useState<{
-    current: number,
-    total: number,
-    message: string,
-  } | undefined>(undefined);
+  const [list, _setList] = useState<ModelsListType>({});
+  const [progress, setProgress] = useState<ProgressEvent | undefined>(undefined);
 
-  async function serverSync() {}
+  function setList(models: Model[]) {
+    const list: any = {};
+    for (let i of models) {
+      const newItem = MergeModelDetails(i);
+      if ((list[newItem.metadata.type]?.length ?? 0) > 0) {
+        list[newItem.metadata.type].push(newItem);
+      } else {
+        list[newItem.metadata.type] = [newItem];
+      }
+    }
+    _setList(list);
+  }
+
+  function cancelSync() {
+    cancelSyncing.current = true;
+  }
+
+  function shouldCancelSync() {
+    let isCanceled = false;
+    if (cancelSyncing.current) {
+      isCanceled = true;
+      console.log('Sync canceled...');
+      cleanup();
+    }
+    return isCanceled;
+  }
+
+  function finalizeSyncing() {
+    setList(rawList.current);
+    console.log('Loaded:', rawList.current);
+    cleanup();
+  }
+
+  function cleanup() {
+    setProgress(undefined);
+    setLoading(false);
+    isSyncing.current = undefined;
+    cancelSyncing.current = false;
+  }
+
+  async function serverSync(category?: ModelType, filter?: string[]) {
+    if (isSyncing.current) {
+      return;
+    }
+
+    isSyncing.current = 'server';
+    setLoading(true);
+
+    let counter = 0;
+    let total = rawList.current.length;
+    setProgress({
+      current: counter,
+      total: total,
+      message: '',
+    });
+
+    for (let i = 0; i < total; i++) {
+      if (shouldCancelSync()) return;
+      counter++;
+      const item = rawList.current[i];
+      if ((filter ? !filter.includes(item.file) : false) || category ? item.metadata.type !== category : false)
+        continue;
+      setProgress({
+        current: counter,
+        total: total,
+        message: `${item.metadata.type} - ${item.file}`,
+      });
+      if (filter ? !filter.includes(item.file) : false) continue;
+      const result = await CivitGetModel(item);
+      if (!result) continue;
+      rawList.current[i] = await CivitModelToModel(result, item);
+    }
+
+    await StorageSetModels(rawList.current);
+
+    finalizeSyncing();
+  }
 
   async function clientSync() {
     if (isSyncing.current) {
       return;
     }
 
-    isSyncing.current = true;
+    isSyncing.current = 'client';
     setLoading(true);
 
-    const allModels = (await StorageGetModels()).models;
+    rawList.current = (await StorageGetModels()).models;
     setProgress({
       current: 0,
       total: 0,
@@ -47,24 +136,26 @@ export function AppProvider(props: { children: any }) {
         message: '',
       });
       for (let localModel of scanned) {
+        if (shouldCancelSync()) return;
+
         setProgress({
           current: i,
           total: scanned.length,
           message: `${type} - ${localModel.name}`,
-        })
-        const matchedIndex = allModels.findIndex((x) => x.file === localModel.name);
+        });
+        const matchedIndex = rawList.current.findIndex((x) => x.file === localModel.name);
         // console.log(`Hashing: ${localModel.name}`);
         const hash = await GetModelHash({ file: localModel.name, fullPath: localModel.path }, 'autoV1');
-        if (matchedIndex !== -1 && allModels[matchedIndex].hash !== hash) {
-          allModels[matchedIndex] = {
-            ...allModels[matchedIndex],
+        if (matchedIndex !== -1 && rawList.current[matchedIndex].hash !== hash) {
+          rawList.current[matchedIndex] = {
+            ...rawList.current[matchedIndex],
             hash: hash,
             fullPath: localModel.path,
             file: localModel.name,
           };
           // console.warn(`Hash of model ${localModel.name} updated, what should we do with it?`);
         } else if (matchedIndex === -1) {
-          allModels.push({
+          rawList.current.push({
             fullPath: localModel.path,
             file: localModel.name,
             hash: hash,
@@ -75,22 +166,9 @@ export function AppProvider(props: { children: any }) {
         i++;
       }
     }
-    await StorageSetModels(allModels);
+    await StorageSetModels(rawList.current);
 
-    const list: any = {};
-    for (let i of allModels) {
-      if ((list[i.metadata.type]?.length ?? 0) > 0) {
-        list[i.metadata.type].push(i);
-      } else {
-        list[i.metadata.type] = [i];
-      }
-    }
-
-    setList(list);
-    console.log('Loaded:', list);
-    setProgress(undefined);
-    setLoading(false);
-    isSyncing.current = false;
+    finalizeSyncing();
   }
 
   useEffect(() => {
@@ -101,14 +179,28 @@ export function AppProvider(props: { children: any }) {
     <>
       {loading && (
         <div
-          style={{zIndex: 9999}}
+          style={{ zIndex: 9999 }}
           className={`fixed inset-0 bg-black bg-opacity-60 backdrop-filter backdrop-blur-sm flex flex-col items-center justify-center`}
         >
-          { progress?.message ?? 'LOADING' }
+          {progress?.message ?? 'LOADING'}
           <Progress className={`mt-4`} current={progress?.current ?? 0} total={progress?.total ?? 1} />
+          {isSyncing.current !== 'client' && (
+            <Button className={`mt-6`} onClick={cancelSync}>
+              Cancel
+            </Button>
+          )}
         </div>
       )}
-      <AppContext.Provider value={{ list: list }}>{props.children}</AppContext.Provider>
+      <AppContext.Provider
+        value={{
+          list: list,
+          clientSync: () => clientSync(),
+          serverSync: (type, filter) => serverSync(type, filter),
+          progress: progress,
+        }}
+      >
+        {props.children}
+      </AppContext.Provider>
     </>
   );
 }

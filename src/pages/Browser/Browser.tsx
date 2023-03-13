@@ -7,7 +7,7 @@ import ButtonGroup from '@/components/ButtonGroup/ButtonGroup';
 import Input from '@/components/Input/Input';
 import Select from '@/components/Select/Select';
 import { KeyValue } from '@/interfaces/utils.interface';
-import Button from '@/components/Button/Button';
+import Button, { ButtonClickEvent } from '@/components/Button/Button';
 import { GlobalHotKeys } from 'react-hotkeys';
 
 type SortType = 'alphabet' | 'merges';
@@ -70,7 +70,13 @@ export default function Browser() {
     setList(listToSet);
   }
 
-  async function runServerSync() {}
+  async function runServerSync(e: ButtonClickEvent) {
+    e.setLoading(true);
+    const filter = list?.map((x) => x.file);
+    appContext.serverSync(category, filter).then(() => {
+      e.setLoading(false);
+    });
+  }
 
   function handleKeyBinds(e: KeyboardEvent) {
     if (e.ctrlKey && e.key === 'F') {
@@ -126,9 +132,7 @@ export default function Browser() {
         </Button>
       </div>
 
-      <div className={`w-full gap-1 ${view === 'grid' ? 'flex flex-wrap px-2' : 'flex flex-col'}`}>
-
-
+      <div className={`w-full flex-auto gap-1 ${view === 'grid' ? 'flex flex-wrap px-2' : 'flex flex-col'}`}>
         {!list ? (
           <Loader />
         ) : (
@@ -136,8 +140,6 @@ export default function Browser() {
             <ModelCard key={item.metadata.name + item.hash + item.file} item={item} wide={view === 'list'} />
           ))
         )}
-
-
       </div>
 
       <div
@@ -145,7 +147,6 @@ export default function Browser() {
       >
         <span className={`ml-auto`}>Total: {rawList?.length ?? 0}</span>
       </div>
-
     </div>
   );
 }

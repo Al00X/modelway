@@ -1,13 +1,34 @@
-export default function Button(props: { onClick?: () => void; children?: any; className?: string }) {
+import {MouseEvent, useEffect, useState} from "react";
+import Loader from "@/components/Loader/Loader";
+
+export interface ButtonClickEvent { setLoading: (v: boolean) => void };
+
+
+export default function Button(props: { onClick?: (e: ButtonClickEvent) => void; children?: any; className?: string, loading?: boolean }) {
+  const [loading, setLoading] = useState(props.loading);
+
+  function onClick(e: MouseEvent) {
+    if (loading) return;
+    props.onClick ? props.onClick({ setLoading: setLoading }) : null;
+  }
+
+  useEffect(() => {
+    setLoading(props.loading)
+  }, [props.loading])
   return (
     <button
       type="button"
-      className={`inline-flex justify-center rounded-md border border-transparent bg-gray-200 px-4 py-2 text-sm font-medium text-white hover:bg-gray-100 focus:outline-none ${
+      className={`inline-flex justify-center rounded-md border border-transparent bg-gray-200 px-4 py-2 text-sm font-medium text-white ${!loading ? 'hover:bg-gray-100' : 'pointer-events-none'} focus:outline-none relative ${
         props.className ?? ''
       }`}
-      onClick={() => (props.onClick ? props.onClick() : null)}
+      onClick={(e) => onClick(e as any)}
     >
-      {props.children}
+      <div className={`flex items-center justify-center ${loading ? 'opacity-0 pointer-events-none' : ''}`}>
+        {props.children}
+      </div>
+      {loading && <div className={`absolute inset-2 flex items-center justify-center`}>
+        <Loader />
+      </div>}
     </button>
   );
 }
