@@ -6,9 +6,8 @@ import './samples/node-api';
 
 import './index.scss';
 import './design-system.scss';
-import 'swiper/css';
-import 'swiper/css/scrollbar';
 import 'react-18-image-lightbox/style.css';
+import 'keen-slider/keen-slider.min.css'
 import TitleBar from "@/features/TitleBar/TitleBar";
 import {MantineProvider} from "@mantine/core";
 
