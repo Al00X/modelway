@@ -1,19 +1,16 @@
-import {
-  Menu,
-  useContextMenu
-} from "react-contexify";
+import {Menu} from "@mantine/core";
+
 
 export default function ContextMenu(props: {
-  id: string,
   children?: any,
+  open: boolean,
+  onClose: () => void,
 }) {
-  const { show } = useContextMenu({
-    id: props.id,
-  });
-
   return (
-    <div className={`contents`} onContextMenu={(e) => show({event: e})}>
-      {props.children}
-    </div>
+    <Menu opened={props.open} onChange={() => props.onClose()}>
+      <Menu.Dropdown>
+        <p>asdasd</p>
+      </Menu.Dropdown>
+    </Menu>
   );
 }

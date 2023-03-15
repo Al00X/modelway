@@ -2,7 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { Model } from '@/interfaces/models.interface';
 import { API } from '@/samples/node-api';
-import {until} from "@/helpers/promise.helper";
+import {until, wait} from "@/helpers/promise.helper";
 
 let STORAGE_PATH: string, STORAGE_MODELS_PATH: string, STORAGE_ASSETS_PATH: string;
 
@@ -77,6 +77,8 @@ async function checkStorage() {
   if (!(await fileExists(STORAGE_MODELS_PATH))) {
     await fs.writeFile(STORAGE_MODELS_PATH, generateModelsJson({ models: [] }));
   }
+
+  await wait(100);
 }
 
 async function fileExists(path: string) {

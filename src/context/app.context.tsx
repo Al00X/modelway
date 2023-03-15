@@ -21,6 +21,7 @@ const AppContext = createContext({
   // filter is the list of model file names (model.file)
   serverSync: async (type?: ModelType, filter?: string[]) => {},
   progress: undefined as ProgressEvent | undefined,
+  update: async (id: string, newData: Model) => false,
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -171,6 +172,17 @@ export function AppProvider(props: { children: any }) {
     finalizeSyncing();
   }
 
+  async function update(id: string, model: Model) {
+    const index = rawList.current.findIndex(x => x.file === id);
+    if (index === -1) {
+      console.error('Where dafuq u got this id from?', id, model);
+      return false;
+    }
+    rawList.current[index] = model;
+    await StorageSetModels(rawList.current);
+    return true;
+  }
+
   useEffect(() => {
     clientSync();
   }, []);
@@ -197,6 +209,7 @@ export function AppProvider(props: { children: any }) {
           clientSync: () => clientSync(),
           serverSync: (type, filter) => serverSync(type, filter),
           progress: progress,
+          update: (id, model) => update(id, model)
         }}
       >
         {props.children}

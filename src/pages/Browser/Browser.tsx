@@ -9,6 +9,7 @@ import Select from '@/components/Select/Select';
 import { KeyValue } from '@/interfaces/utils.interface';
 import Button, { ButtonClickEvent } from '@/components/Button/Button';
 import { GlobalHotKeys } from 'react-hotkeys';
+import {openToast} from "@/services/toast";
 
 type SortType = 'alphabet' | 'merges';
 type ViewType = 'grid' | 'list';
@@ -137,7 +138,14 @@ export default function Browser() {
           <Loader />
         ) : (
           list.map((item, index) => (
-            <ModelCard key={item.metadata.name + item.hash + item.file} item={item} wide={view === 'list'} />
+            <ModelCard key={item.metadata.name + item.hash + item.file} item={item} wide={view === 'list'} onUpdate={() => {
+              appContext.update(item.file, item).then(() => {
+                openToast('Saved Successfully!');
+              }).catch(() => {
+                openToast('Saving model changes to the disk failed...');
+              });
+            }
+            } />
           ))
         )}
       </div>

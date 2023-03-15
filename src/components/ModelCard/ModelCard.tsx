@@ -3,6 +3,8 @@ import './ModelCard.scss';
 import { useEffect, useState } from 'react';
 import Image from '@/components/Image/Image';
 import ModelDetailsDialog from '@/dialog/model-details.dialog/ModelDetailsDialog';
+import {Clone} from "@/helpers/object.helper";
+import {openToast} from "@/services/toast";
 
 export interface ModelCardComputed {
   name: string;
@@ -13,7 +15,7 @@ export interface ModelCardComputed {
   };
 }
 
-export default function ModelCard(props: { item: Model; wide?: boolean }) {
+export default function ModelCard(props: { item: Model; wide?: boolean, onUpdate?: () => void; }) {
   const [info, setInfo] = useState<ModelCardComputed>({ name: '', img: { single: null, double: [], triple: [] } });
   const [openDetails, setOpenDetails] = useState(false);
 
@@ -34,7 +36,7 @@ export default function ModelCard(props: { item: Model; wide?: boolean }) {
         triple: imagesArray,
       },
     });
-  }, [props.item]);
+  }, [props.item, props.item.metadata.coverImage]);
 
   function openDetailsDialog() {
     setOpenDetails(true);
@@ -55,7 +57,7 @@ export default function ModelCard(props: { item: Model; wide?: boolean }) {
                 {props.item.metadata.currentVersion.baseModel}
               </div>
             )}
-            {props.item.metadata.nsfw && <div className={`absolute text-sm font-medium shadow-sm top-0 right-0 py-1 px-2 bg-red-600 rounded-bl-xl bg-opacity-60 backdrop-blur-sm`}>NSFW</div>}
+            {props.item.metadata.nsfw && <div className={`absolute text-xs tracking-widest font-medium shadow-sm top-0 right-0 py-1.5 px-2 pl-3 bg-red-600 rounded-bl-xl bg-opacity-60 backdrop-blur-sm`}>NSFW</div>}
           </>
         ) : (
           <>
@@ -75,7 +77,12 @@ export default function ModelCard(props: { item: Model; wide?: boolean }) {
           </>
         )}
       </div>
-      <ModelDetailsDialog item={props.item} computed={info} open={openDetails} onClose={() => setOpenDetails(false)} />
+      <ModelDetailsDialog item={props.item} computed={info} open={openDetails} onClose={() => setOpenDetails(false)} onSave={(newItem) => {
+        setOpenDetails(false);
+        props.item.metadata = newItem.metadata;
+        props.onUpdate?.();
+      }
+      } />
     </>
   );
 }

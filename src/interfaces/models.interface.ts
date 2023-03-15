@@ -53,6 +53,7 @@ export interface ModelImage {
   width?: number;
   height?: number;
   hash?: string;
+  hide?: boolean;
   meta?: {
     seed?: number;
     steps?: number;
