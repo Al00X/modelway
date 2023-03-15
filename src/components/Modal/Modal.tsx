@@ -7,14 +7,15 @@ export default function Modal(props: {
   open: boolean;
   onClose: () => void;
   width?: string,
-  height: string,
+  height?: string,
   children: any;
   withCloseButton?: boolean
 }) {
   return <ModalMantine
     className={`app-modal relative ${props.className ?? ''}`}
     withCloseButton={false}
-    classNames={{ content: `w-[${props.width ?? '50%'}] h-[${props.height ?? '50%'}]`, overlay: 'bg-black bg-opacity-70 backdrop-filter backdrop-blur-xs' }}
+    classNames={{ overlay: 'bg-black bg-opacity-70 backdrop-filter backdrop-blur-xs' }}
+    styles={{content: { width: props.width ?? '50%', height: props.height ?? '50%' }}}
     centered={true}
     opened={props.open}
     onClose={props.onClose}
