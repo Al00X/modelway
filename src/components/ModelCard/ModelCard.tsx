@@ -3,8 +3,8 @@ import './ModelCard.scss';
 import { useEffect, useState } from 'react';
 import Image from '@/components/Image/Image';
 import ModelDetailsDialog from '@/dialog/model-details-dialog/ModelDetailsDialog';
-import {Clone} from "@/helpers/object.helper";
-import {openToast} from "@/services/toast";
+import { Clone } from '@/helpers/object.helper';
+import { openToast } from '@/services/toast';
 
 export interface ModelCardComputed {
   name: string;
@@ -15,7 +15,7 @@ export interface ModelCardComputed {
   };
 }
 
-export default function ModelCard(props: { item: Model; wide?: boolean, onUpdate?: () => void; }) {
+export default function ModelCard(props: { item: Model; wide?: boolean; onUpdate?: (immediate?: boolean) => void }) {
   const [info, setInfo] = useState<ModelCardComputed>({ name: '', img: { single: null, double: [], triple: [] } });
   const [openDetails, setOpenDetails] = useState(false);
 
@@ -49,7 +49,7 @@ export default function ModelCard(props: { item: Model; wide?: boolean, onUpdate
         {!props.wide ? (
           <>
             {info.img.single && <Image item={info.img.single} />}
-            <div className={`text-overlay font-medium tracking-wider`}>{info.name}</div>
+            <div className={`text-overlay font-semibold tracking-wide`}>{info.name}</div>
             {props.item.metadata.currentVersion.baseModel && (
               <div
                 className={`absolute left-0 top-0 py-1 px-2 bg-gray-900 text-white text-sm shadow-sm font-medium rounded-br-xl`}
@@ -57,13 +57,24 @@ export default function ModelCard(props: { item: Model; wide?: boolean, onUpdate
                 {props.item.metadata.currentVersion.baseModel}
               </div>
             )}
-            {props.item.metadata.nsfw && <div className={`absolute text-xs tracking-widest font-medium shadow-sm top-0 right-0 py-1.5 px-2 pl-3 bg-red-600 rounded-bl-xl bg-opacity-60 backdrop-blur-sm`}>NSFW</div>}
+            {props.item.metadata.nsfw && (
+              <div
+                className={`absolute text-xs tracking-widest font-medium shadow-sm top-0 right-0 py-1.5 px-2 pl-3 bg-red-600 rounded-bl-xl bg-opacity-60 backdrop-blur-sm`}
+              >
+                NSFW
+              </div>
+            )}
           </>
         ) : (
           <>
             <div className={`flex w-full h-full`}>
               <div className={`flex flex-col`}>
-                <p className={`text-2xl flex items-center`}>{info.name} {props.item.metadata.nsfw && <span className={`ml-4 bg-red-600 px-3 py-1 text-xs font-medium rounded-full`}>NSFW</span>}</p>
+                <p className={`text-2xl flex items-center font-medium`}>
+                  {info.name}{' '}
+                  {props.item.metadata.nsfw && (
+                    <span className={`ml-4 bg-red-600 px-3 py-1 text-xs font-medium rounded-full`}>NSFW</span>
+                  )}
+                </p>
                 {props.item.metadata.currentVersion.baseModel && (
                   <p className={`opacity-60 mt-2`}>Base: {props.item.metadata.currentVersion.baseModel}</p>
                 )}
@@ -77,12 +88,19 @@ export default function ModelCard(props: { item: Model; wide?: boolean, onUpdate
           </>
         )}
       </div>
-      <ModelDetailsDialog item={props.item} computed={info} open={openDetails} onClose={() => setOpenDetails(false)} onSave={(newItem) => {
-        setOpenDetails(false);
-        props.item.metadata = newItem.metadata;
-        props.onUpdate?.();
-      }
-      } />
+      <ModelDetailsDialog
+        item={props.item}
+        computed={info}
+        open={openDetails}
+        onClose={() => setOpenDetails(false)}
+        onSave={(newItem, close) => {
+          props.item.metadata = newItem.metadata;
+          if (close) {
+            setOpenDetails(false);
+          }
+          props.onUpdate?.(close === true);
+        }}
+      />
     </>
   );
 }

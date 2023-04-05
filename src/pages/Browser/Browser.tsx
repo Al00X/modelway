@@ -138,9 +138,11 @@ export default function Browser() {
           <Loader />
         ) : (
           list.map((item, index) => (
-            <ModelCard key={item.metadata.name + item.hash + item.file} item={item} wide={view === 'list'} onUpdate={() => {
-              appContext.update(item.file, item).then(() => {
-                openToast('Saved Successfully!');
+            <ModelCard key={item.metadata.name + item.hash + item.file} item={item} wide={view === 'list'} onUpdate={(immediate) => {
+              appContext.update(item.id, item, immediate).then(() => {
+                if (immediate) {
+                  openToast('Saved Successfully!');
+                }
               }).catch(() => {
                 openToast('Saving model changes to the disk failed...');
               });

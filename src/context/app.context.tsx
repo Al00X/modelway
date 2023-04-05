@@ -6,6 +6,7 @@ import Progress from '@/components/Progress/Progress';
 import CivitGetModel from '@/services/api';
 import {CivitModelToModel, MergeModelDetails} from '@/helpers/model.helper';
 import Button from '@/components/Button/Button';
+import {atom} from "jotai";
 
 export interface ProgressEvent {
   current: number;
@@ -15,13 +16,15 @@ export interface ProgressEvent {
 
 type ModelsListType = { [p in ModelType]?: Model[] };
 
+const STORAGE_SAVE_DEBOUNCE_TIME = 10000;
+
 const AppContext = createContext({
   list: {} as ModelsListType,
   clientSync: async () => {},
   // filter is the list of model file names (model.file)
   serverSync: async (type?: ModelType, filter?: string[]) => {},
   progress: undefined as ProgressEvent | undefined,
-  update: async (id: string, newData: Model) => false,
+  update: async (id: number, newData: Model, immediate?: boolean) => false,
 });
 
 export const useAppContext = () => useContext(AppContext);
@@ -33,6 +36,7 @@ export function AppProvider(props: { children: any }) {
   const [loading, setLoading] = useState(false);
   const [list, _setList] = useState<ModelsListType>({});
   const [progress, setProgress] = useState<ProgressEvent | undefined>(undefined);
+  const lastId = useRef(-1);
 
   function setList(models: Model[]) {
     const list: any = {};
@@ -127,6 +131,8 @@ export function AppProvider(props: { children: any }) {
       message: '',
     });
 
+    lastId.current = rawList.current.reduce((pre, cur) => pre > cur.id ? pre : cur.id, -1) ?? -1;
+
     let i = 0;
     for (let type of ['Checkpoint']) {
       const scanned = await ScanModelDirectory(type as any);
@@ -148,15 +154,25 @@ export function AppProvider(props: { children: any }) {
         // console.log(`Hashing: ${localModel.name}`);
         const hash = await GetModelHash({ file: localModel.name, fullPath: localModel.path }, 'autoV1');
         if (matchedIndex !== -1 && rawList.current[matchedIndex].hash !== hash) {
-          rawList.current[matchedIndex] = {
-            ...rawList.current[matchedIndex],
+          let item = rawList.current[matchedIndex];
+          item = {
+            ...item,
             hash: hash,
             fullPath: localModel.path,
             file: localModel.name,
           };
+
+          if (!item.id) {
+            lastId.current = lastId.current + 1;
+            item.id = lastId.current;
+          }
+          rawList.current[matchedIndex] = item;
           // console.warn(`Hash of model ${localModel.name} updated, what should we do with it?`);
         } else if (matchedIndex === -1) {
+          console.log(`New model added to the DB: ${localModel.name}`);
+          lastId.current = lastId.current + 1;
           rawList.current.push({
+            id: lastId.current,
             fullPath: localModel.path,
             file: localModel.name,
             hash: hash,
@@ -172,15 +188,28 @@ export function AppProvider(props: { children: any }) {
     finalizeSyncing();
   }
 
-  async function update(id: string, model: Model) {
-    const index = rawList.current.findIndex(x => x.file === id);
+  async function update(id: number, model: Model, immediate?: boolean) {
+    const index = rawList.current.findIndex(x => x.id === id);
     if (index === -1) {
       console.error('Where dafuq u got this id from?', id, model);
       return false;
     }
     rawList.current[index] = model;
-    await StorageSetModels(rawList.current);
+    await queueStorageSave(immediate);
     return true;
+  }
+
+  const storageSaveTimeout = useRef<any>(null);
+  function queueStorageSave(immediate?: boolean) {
+    const saveFn = async () => (await StorageSetModels(rawList.current));
+    storageSaveTimeout.current ? clearTimeout(storageSaveTimeout.current) : null;
+    if (!immediate) {
+      storageSaveTimeout.current = setTimeout(() => {
+        saveFn();
+      }, STORAGE_SAVE_DEBOUNCE_TIME);
+    } else {
+      return saveFn();
+    }
   }
 
   useEffect(() => {
@@ -209,7 +238,7 @@ export function AppProvider(props: { children: any }) {
           clientSync: () => clientSync(),
           serverSync: (type, filter) => serverSync(type, filter),
           progress: progress,
-          update: (id, model) => update(id, model)
+          update: (id, model, immediate) => update(id, model, immediate)
         }}
       >
         {props.children}

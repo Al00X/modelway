@@ -27,7 +27,7 @@ const Input = forwardRef<HTMLInputElement, {
     const changeFn = () => (props.onValue ? props.onValue(e) : null);
     if (props.debounce) {
       clearTimeout(timeoutRef.current);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         changeFn();
       }, props.debounce);
     } else {

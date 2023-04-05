@@ -54,6 +54,7 @@
     "keen-slider": "^6.8.5",
     "react-18-image-lightbox": "^5.1.4",
     "react-blurhash": "^0.3.0",
+    "react-dropzone": "^14.2.3",
     "react-hot-toast": "^2.4.0",
     "react-hotkeys": "^2.0.0",
     "react-modal": "^3.16.1",

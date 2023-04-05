@@ -15,7 +15,7 @@ export default function Image(props: {
   onUpdate?: (item: ModelImage) => void;
   onSetAsCover?: () => void;
   cursor?: 'auto' | 'pointer' | 'default',
-  legalize?: boolean
+  legalize?: boolean;
 }) {
   const [isNSFW, setNSFW] = useAtom(SettingsState.isNSFWToggled);
   const [loaded, setLoaded] = useState(false);
@@ -25,7 +25,7 @@ export default function Image(props: {
         text: () => `${props.item.nsfw ? 'Remove NSFW' : 'Set as NSFW'}`,
         action: () => {
           props.item.nsfw = !props.item.nsfw;
-          // props.onUpdate?.(props.item);
+          props.onUpdate?.(props.item);
         },
       },
       { text: 'Set as cover photo', action: () => {
@@ -35,7 +35,7 @@ export default function Image(props: {
         text: 'Remove from gallery',
         action: () => {
           props.item.hide = true;
-          // props.onUpdate?.(props.item);
+          props.onUpdate?.(props.item);
         },
       },
     ],

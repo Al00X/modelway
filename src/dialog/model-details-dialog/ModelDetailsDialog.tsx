@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Model } from '@/interfaces/models.interface';
 import { ModelCardComputed } from '@/components/ModelCard/ModelCard';
 import TagList from '@/components/TagList/TagList';
@@ -8,7 +8,7 @@ import Modal from '@/components/Modal/Modal';
 import { useKeenSlider } from 'keen-slider/react';
 import { Clone } from '@/helpers/object.helper';
 import { useForceUpdate } from '@mantine/hooks';
-import ImageDetailsDialog from "@/dialog/image-details-dialog/ImageDetailsDialog";
+import ImageDetailsDialog from '@/dialog/image-details-dialog/ImageDetailsDialog';
 
 const Separator = `    .    `;
 
@@ -17,7 +17,7 @@ type ModelDialogItem = Model & { computed: ModelCardComputed };
 export default function ModelDetailsDialog(props: {
   open: boolean;
   onClose: () => void;
-  onSave: (item: ModelDialogItem) => void;
+  onSave: (item: ModelDialogItem, close: boolean) => void;
   item: Model;
   computed: ModelCardComputed;
 }) {
@@ -40,11 +40,25 @@ export default function ModelDetailsDialog(props: {
     },
   });
 
+  function updateKeenSize() {
+    setTimeout(() => {
+      keenInstanceRef.current?.update();
+    }, 50);
+  }
+
   return (
     <>
       {currentItem && (
         <>
-          <Modal open={props.open} onClose={props.onClose} className={`app-modal`} width={`90%`} height={`90%`}>
+          <Modal
+            open={props.open}
+            onClose={props.onClose}
+            className={`app-modal`}
+            width={`90%`}
+            height={`90%`}
+            dropzone={{ 'image/*': ['.png', '.gif', '.webp', '.jpg', '.jpeg'] }}
+            onDrop={(e) => console.log(e)}
+          >
             <div className={`flex h-full max-h-[19rem] gap-5`}>
               <div className={`flex flex-col`} style={{ minWidth: '25rem' }}>
                 <p className={`-mt-3 text-sm opacity-50`}>{currentItem.metadata.type}</p>
@@ -84,19 +98,22 @@ export default function ModelDetailsDialog(props: {
                   <div className={`keen-slider__slide w-auto shrink-0 grow-0 basis-auto relative`} key={x.url}>
                     {(currentItem!.metadata.coverImage
                       ? currentItem!.metadata.coverImage!.url === x.url
-                      : index === 0) && <div className={`absolute inset-0 z-[100] border-4 border-white pointer-events-none`}></div>}
+                      : index === 0) && (
+                      <div className={`absolute inset-0 z-[49] border-4 border-white pointer-events-none`}></div>
+                    )}
                     <Image
                       item={x}
                       fit={`height`}
                       onClick={() => setLightbox(index)}
                       onLoad={() => {
-                        setTimeout(() => {
-                          keenInstanceRef.current?.update();
-                        }, 50);
+                        updateKeenSize();
                       }}
                       onSetAsCover={() => {
                         currentItem.metadata.coverImage = x;
                         forceUpdate();
+                      }}
+                      onUpdate={() => {
+                        props.onSave(currentItem, false);
                       }}
                     />
                   </div>
@@ -125,7 +142,7 @@ export default function ModelDetailsDialog(props: {
               </p>
 
               <Button onClick={() => props.onClose()}>CLOSE</Button>
-              <Button onClick={() => props.onSave(currentItem)}>SAVE</Button>
+              <Button onClick={() => props.onSave(currentItem, true)}>SAVE</Button>
             </div>
           </Modal>
           <Modal
@@ -141,7 +158,11 @@ export default function ModelDetailsDialog(props: {
               dangerouslySetInnerHTML={{ __html: currentItem.metadata.description ?? '' }}
             ></div>
           </Modal>
-          <ImageDetailsDialog open={lightbox} onClose={() => setLightbox(-1)} images={currentItem.metadata.currentVersion.images ?? []} />
+          <ImageDetailsDialog
+            open={lightbox}
+            onClose={() => setLightbox(-1)}
+            images={currentItem.metadata.currentVersion.images ?? []}
+          />
         </>
       )}
     </>

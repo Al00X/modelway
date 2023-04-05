@@ -2,8 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import * as buffer from 'node:buffer';
-import { StorageGetModels, StorageSetModels } from '@/services/storage';
-import { Model, ModelType } from '@/interfaces/models.interface';
+import { ModelType } from '@/interfaces/models.interface';
 
 const AUTOMATIC1111_PATH = path.join('E:', 'sources', 'automatic1111-sd-webui');
 const SD_MODELS_PATH = path.join(AUTOMATIC1111_PATH, 'models', 'Stable-diffusion');

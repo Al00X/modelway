@@ -27,6 +27,7 @@ export interface ModelVersion {
 }
 
 export interface Model {
+  id: number;
   fullPath: string;
   file: string;
   hash: string;
