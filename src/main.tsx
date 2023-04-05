@@ -8,6 +8,8 @@ import './index.scss';
 import './design-system.scss';
 import 'react-18-image-lightbox/style.css';
 import 'keen-slider/keen-slider.min.css'
+import "yet-another-react-lightbox/styles.css";
+
 import TitleBar from "@/features/TitleBar/TitleBar";
 import {MantineProvider} from "@mantine/core";
 import {ContextMenuProvider} from "@/hooks/useContextMenu";

@@ -56,6 +56,8 @@
     "react-blurhash": "^0.3.0",
     "react-hot-toast": "^2.4.0",
     "react-hotkeys": "^2.0.0",
-    "react-modal": "^3.16.1"
+    "react-modal": "^3.16.1",
+    "react-zoom-pan-pinch": "^3.0.6",
+    "yet-another-react-lightbox": "^3.3.0"
   }
 }

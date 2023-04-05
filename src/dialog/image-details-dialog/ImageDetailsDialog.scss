@@ -1,0 +1,10 @@
+.info-grid {
+  @apply w-full grid grid-cols-2 gap-4 gap-y-7 mt-auto select-text;
+  p {
+    @apply text-gray-100;
+  }
+  span {
+    margin-left: 0.5rem;
+    @apply text-white py-2 px-5 bg-gray-800 rounded-lg;
+  }
+}

@@ -2,7 +2,7 @@ import { Model, ModelImage } from '@/interfaces/models.interface';
 import './ModelCard.scss';
 import { useEffect, useState } from 'react';
 import Image from '@/components/Image/Image';
-import ModelDetailsDialog from '@/dialog/model-details.dialog/ModelDetailsDialog';
+import ModelDetailsDialog from '@/dialog/model-details-dialog/ModelDetailsDialog';
 import {Clone} from "@/helpers/object.helper";
 import {openToast} from "@/services/toast";
 
@@ -49,7 +49,7 @@ export default function ModelCard(props: { item: Model; wide?: boolean, onUpdate
         {!props.wide ? (
           <>
             {info.img.single && <Image item={info.img.single} />}
-            <div className={`text-overlay`}>{info.name}</div>
+            <div className={`text-overlay font-medium tracking-wider`}>{info.name}</div>
             {props.item.metadata.currentVersion.baseModel && (
               <div
                 className={`absolute left-0 top-0 py-1 px-2 bg-gray-900 text-white text-sm shadow-sm font-medium rounded-br-xl`}

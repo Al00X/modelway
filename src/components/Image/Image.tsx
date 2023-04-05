@@ -10,10 +10,12 @@ import useContextMenu from '@/hooks/useContextMenu';
 export default function Image(props: {
   item: ModelImage;
   fit?: 'width' | 'height';
-  onClick?: () => void;
+  onClick?: (e: MouseEvent) => void;
   onLoad?: () => void;
   onUpdate?: (item: ModelImage) => void;
   onSetAsCover?: () => void;
+  cursor?: 'auto' | 'pointer' | 'default',
+  legalize?: boolean
 }) {
   const [isNSFW, setNSFW] = useAtom(SettingsState.isNSFWToggled);
   const [loaded, setLoaded] = useState(false);
@@ -46,9 +48,9 @@ export default function Image(props: {
     <>
       <div
         ref={contextRef}
-        onClick={props.onClick}
+        onClick={(e) => props.onClick?.(e as any)}
         className={`model-image ${props.fit === 'width' ? 'fit-width' : props.fit === 'height' ? 'fit-height' : ''} ${
-          props.onClick ? 'cursor-pointer' : ''
+          props.cursor === 'auto' || props.cursor === undefined ? props.onClick ? 'cursor-pointer' : '' : props.cursor === 'pointer' ? 'cursor-pointer' : ''
         }`}
         style={{ aspectRatio: aspectRatio }}
       >
@@ -59,7 +61,8 @@ export default function Image(props: {
           </div>
         )}
         <img
-          className={`transition-all ${!isNSFW && props.item.nsfw ? 'blurry' : ''} ${
+          draggable={false}
+          className={`transition-all ${!isNSFW && props.item.nsfw && !props.legalize ? 'blurry' : ''} ${
             loaded ? '' : 'invisible absolute'
           }`}
           src={ResolveImage(props.item)}

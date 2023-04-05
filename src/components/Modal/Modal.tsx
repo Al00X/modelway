@@ -23,7 +23,7 @@ export default function Modal(props: {
     <div className={`w-full h-full flex flex-col transform overflow-hidden rounded-2xl bg-gray-700 text-white p-6 text-left align-middle shadow-xl transition-all`}>
       {props.withCloseButton && <>
         <Icon icon={`close`} className={`absolute top-4 right-4 cursor-pointer`} onCLick={props.onClose} />
-        <div className={`h-24`}></div>
+        <div className={`h-8 flex-none`}></div>
       </>}
       {props.children}
     </div>

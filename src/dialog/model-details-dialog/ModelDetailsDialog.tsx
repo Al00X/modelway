@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Model } from '@/interfaces/models.interface';
 import { ModelCardComputed } from '@/components/ModelCard/ModelCard';
 import TagList from '@/components/TagList/TagList';
 import Image from '@/components/Image/Image';
 import Button from '@/components/Button/Button';
-import Lightbox from '@/components/Lightbox/Lightbox';
 import Modal from '@/components/Modal/Modal';
 import { useKeenSlider } from 'keen-slider/react';
 import { Clone } from '@/helpers/object.helper';
-import {useForceUpdate} from "@mantine/hooks";
+import { useForceUpdate } from '@mantine/hooks';
+import ImageDetailsDialog from "@/dialog/image-details-dialog/ImageDetailsDialog";
 
 const Separator = `    .    `;
 
@@ -84,7 +84,7 @@ export default function ModelDetailsDialog(props: {
                   <div className={`keen-slider__slide w-auto shrink-0 grow-0 basis-auto relative`} key={x.url}>
                     {(currentItem!.metadata.coverImage
                       ? currentItem!.metadata.coverImage!.url === x.url
-                      : index === 0) && <div className={`absolute inset-0 z-[100] border-4 border-white`}></div>}
+                      : index === 0) && <div className={`absolute inset-0 z-[100] border-4 border-white pointer-events-none`}></div>}
                     <Image
                       item={x}
                       fit={`height`}
@@ -110,13 +110,13 @@ export default function ModelDetailsDialog(props: {
                     {currentItem.file}
                     {currentItem.hash && (
                       <span>
-                          {Separator}Hash: {currentItem.hash}
-                        </span>
+                        {Separator}Hash: {currentItem.hash}
+                      </span>
                     )}
                     {currentItem.metadata.creator && (
                       <span>
-                          {Separator}Creator: {currentItem.metadata.creator}
-                        </span>
+                        {Separator}Creator: {currentItem.metadata.creator}
+                      </span>
                     )}
                   </>
                 ) : (
@@ -128,7 +128,6 @@ export default function ModelDetailsDialog(props: {
               <Button onClick={() => props.onSave(currentItem)}>SAVE</Button>
             </div>
           </Modal>
-          <Lightbox index={lightbox} onChange={setLightbox} images={currentItem.metadata.currentVersion.images ?? []} />
           <Modal
             className={`z-[6666]`}
             width={`60%`}
@@ -142,6 +141,7 @@ export default function ModelDetailsDialog(props: {
               dangerouslySetInnerHTML={{ __html: currentItem.metadata.description ?? '' }}
             ></div>
           </Modal>
+          <ImageDetailsDialog open={lightbox} onClose={() => setLightbox(-1)} images={currentItem.metadata.currentVersion.images ?? []} />
         </>
       )}
     </>
