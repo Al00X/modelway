@@ -9,6 +9,12 @@ import { useKeenSlider } from 'keen-slider/react';
 import { Clone } from '@/helpers/object.helper';
 import { useForceUpdate } from '@mantine/hooks';
 import ImageDetailsDialog from '@/dialog/image-details-dialog/ImageDetailsDialog';
+import { ImportAssets } from '@/services/storage';
+import Input from '@/components/Input/Input';
+import {ClipboardSet} from "@/services/clipboard";
+import {OpenExternalModelLink, OpenExternalUser} from "@/services/shell";
+import './ModelDetailsDialog.scss';
+
 
 const Separator = `    .    `;
 
@@ -25,6 +31,8 @@ export default function ModelDetailsDialog(props: {
   const [notes, setNotes] = useState(props.item.metadata.notes);
   const [lightbox, setLightbox] = useState(-1);
   const [openDescriptionModal, setDescriptionModal] = useState(false);
+  const [openWrongModelModal, setWrongModelModal] = useState(false);
+  const [inputManualSyncLink, setInputManualSyncLink] = useState('');
   const forceUpdate = useForceUpdate();
 
   useEffect(() => {
@@ -57,7 +65,24 @@ export default function ModelDetailsDialog(props: {
             width={`90%`}
             height={`90%`}
             dropzone={{ 'image/*': ['.png', '.gif', '.webp', '.jpg', '.jpeg'] }}
-            onDrop={(e) => console.log(e)}
+            onDrop={(e) => {
+              return ImportAssets(e).then((assets) => {
+                setCurrentItem({
+                  ...currentItem,
+                  metadata: {
+                    ...currentItem?.metadata,
+                    currentVersion: {
+                      ...currentItem?.metadata?.currentVersion,
+                      images: [...(currentItem?.metadata?.currentVersion?.images ?? []), ...assets],
+                    },
+                  },
+                });
+                setTimeout(() => {
+                  // TODO: Amo avalan ke save nemishe :|, dovoman kir toosh, tartibe image a beham mikhore...!!!!
+                  props.onSave(currentItem, false);
+                }, 10);
+              });
+            }}
           >
             <div className={`flex h-full max-h-[19rem] gap-5`}>
               <div className={`flex flex-col`} style={{ minWidth: '25rem' }}>
@@ -109,8 +134,13 @@ export default function ModelDetailsDialog(props: {
                         updateKeenSize();
                       }}
                       onSetAsCover={() => {
-                        currentItem.metadata.coverImage = x;
-                        forceUpdate();
+                        setCurrentItem({
+                          ...currentItem,
+                          metadata: {
+                            ...currentItem?.metadata,
+                            coverImage: x,
+                          },
+                        });
                       }}
                       onUpdate={() => {
                         props.onSave(currentItem, false);
@@ -126,21 +156,28 @@ export default function ModelDetailsDialog(props: {
                   <>
                     {currentItem.file}
                     {currentItem.hash && (
-                      <span>
-                        {Separator}Hash: {currentItem.hash}
-                      </span>
+                      <>
+                        <span className={`select-none`}>{Separator}</span>
+                        <span onClick={() => ClipboardSet(currentItem?.hash)} className={`cursor-pointer`}>Hash: {currentItem.hash}</span>
+                      </>
                     )}
                     {currentItem.metadata.creator && (
-                      <span>
-                        {Separator}Creator: {currentItem.metadata.creator}
-                      </span>
+                      <>
+                        <span className={`select-none`}>{Separator}</span>
+                        <span onClick={() => OpenExternalUser(currentItem!.metadata.creator!)} className={`cursor-pointer`}>Creator: {currentItem.metadata.creator}</span>
+                      </>
                     )}
                   </>
                 ) : (
                   'File not available'
                 )}
               </p>
-
+              <a
+                className={`text-sm underline opacity-50 mr-6 cursor-pointer self-end`}
+                onClick={() => setWrongModelModal(true)}
+              >
+                Wrong synced model
+              </a>
               <Button onClick={() => props.onClose()}>CLOSE</Button>
               <Button onClick={() => props.onSave(currentItem, true)}>SAVE</Button>
             </div>
@@ -154,9 +191,34 @@ export default function ModelDetailsDialog(props: {
             withCloseButton={true}
           >
             <div
-              className={`flex flex-col overflow-auto`}
+              className={`description-panel`}
               dangerouslySetInnerHTML={{ __html: currentItem.metadata.description ?? '' }}
             ></div>
+          </Modal>
+          <Modal
+            className={`z-[6666]`}
+            width={`30rem`}
+            height={`auto`}
+            open={openWrongModelModal}
+            onClose={() => setWrongModelModal(false)}
+            withCloseButton={true}
+            title={`Enter a valid CivitAI link for this model :`}
+          >
+            <Input
+              className={`w-full mt-4`}
+              value={inputManualSyncLink}
+              onValue={(v) => setInputManualSyncLink(v)}
+              placeholder={`Input here...`}
+            />
+            <div className={`flex items-center justify-end mt-4`}>
+              {currentItem?.metadata?.id && <p
+                className={`mr-auto opacity-40 text-sm underline cursor-pointer`}
+                onClick={() => OpenExternalModelLink(currentItem!.metadata!.id!)}
+              >
+                Current ID: {currentItem.metadata.id}
+              </p>}
+              <Button>SAVE</Button>
+            </div>
           </Modal>
           <ImageDetailsDialog
             open={lightbox}

@@ -6,7 +6,6 @@ import Progress from '@/components/Progress/Progress';
 import CivitGetModel from '@/services/api';
 import {CivitModelToModel, MergeModelDetails} from '@/helpers/model.helper';
 import Button from '@/components/Button/Button';
-import {atom} from "jotai";
 
 export interface ProgressEvent {
   current: number;
@@ -106,6 +105,7 @@ export function AppProvider(props: { children: any }) {
         message: `${item.metadata.type} - ${item.file}`,
       });
       if (filter ? !filter.includes(item.file) : false) continue;
+      console.log(item);
       const result = await CivitGetModel(item);
       if (!result) continue;
       rawList.current[i] = await CivitModelToModel(result, item);

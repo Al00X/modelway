@@ -15,7 +15,7 @@ export default async function CivitGetModel(model: Model) {
   if (!model.hash && !model.file) return;
 
   // null => 404, false => Try more!, result => Profit
-  const req$ = async (query: string, page = 1): Promise<CivitModel | false | null> => {
+  const search$ = async (query: string, page = 1): Promise<CivitModel | false | null> => {
     const result = await http.get<CivitPaginatedResult<CivitModel>>(`models?query=${query}&page=${page}`);
     if (result.data.items.length === 0) {
       console.error(model.file, 'Not found :(');
@@ -41,8 +41,8 @@ export default async function CivitGetModel(model: Model) {
                   itemNamePruned === name
           } );
       }
-      if (!found && result.data.metadata.totalPages > 1 && page <= 3) {
-        return await req$(query, page + 1);
+      if (!found && result.data.metadata.totalPages > 1 && page !== result.data.metadata.totalPages) {
+        return await search$(query, page + 1);
       }
       if (!found) {
         console.warn(model.file, 'Dalas kodom vari?, has ya nis?', result.data.metadata.totalItems);
@@ -53,13 +53,28 @@ export default async function CivitGetModel(model: Model) {
       return found;
     }
   };
-
-  const result = await req$(model.hash);
-  if (result === false) {
-    const fullHash = await GetModelHash(model, 'sha256');
-    const hashResult = await req$(fullHash);
-    if (!hashResult) return null;
-    return hashResult;
+  const get$ = async (id: number): Promise<CivitModel> => {
+    const res = await http.get<CivitModel>(`models/${id}`);
+    return res.data;
   }
-  return result;
+
+  try {
+    let result;
+    if (model.metadata.originalValues?.id) {
+      console.log(`Using id: ${ModelFileNamePrune(model).toLowerCase()}`)
+      result = await get$(model.metadata.originalValues.id);
+    } else {
+      result = await search$(model.hash);
+    }
+
+    if (result === false) {
+      const fullHash = await GetModelHash(model, 'sha256');
+      const hashResult = await search$(fullHash);
+      if (!hashResult) return null;
+      return hashResult;
+    }
+    return result;
+  } catch {
+    return null
+  }
 }

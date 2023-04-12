@@ -12,6 +12,7 @@ const Input = forwardRef<HTMLInputElement, {
   readonly?: boolean;
 }>((props, ref) => {
   const [input, setInput] = useState(props.value);
+  const hostRef = useRef(null);
   const timeoutRef = useRef<any>(null);
 
   useEffect(() => {
@@ -42,13 +43,13 @@ const Input = forwardRef<HTMLInputElement, {
 
   return (
     <div
-      onClick={() => (ref as any)?.current?.focus()}
+      onClick={() => ((ref ?? hostRef) as any)?.current?.focus()}
         style={{cursor: "text"}}
       className={`w-full h-auto flex items-center bg-gray-600 border border-gray-400 text-white rounded-lg gap-4 p-2 ${props.className ?? ''}`}
     >
       {props.icon && <Icon className={`flex-none ml-2 opacity-60`} icon={props.icon} size={`1rem`} />}
       <input
-        ref={ref}
+        ref={ref ?? hostRef}
         className={`bg-transparent w-full outline-0`}
         style={{cursor: "inherit"}}
         value={input}

@@ -1,0 +1,6 @@
+.description-panel {
+  @apply flex flex-col overflow-auto;
+  & > * {
+    user-select: text !important;
+  }
+}

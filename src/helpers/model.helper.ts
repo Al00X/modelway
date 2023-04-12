@@ -1,7 +1,6 @@
 import { Model, ModelImage, ModelVersion } from '@/interfaces/models.interface';
 import path from 'node:path';
 import { CivitModel, CivitModelFile, CivitModelImage, CivitModelVersion } from '@/interfaces/api.interface';
-import { GetModelHash } from '@/services/scan';
 
 export function ModelFileNamePrune(model: Model | string) {
   let text = typeof model === 'string' ? model : model.file;
@@ -104,7 +103,7 @@ export function CivitModelToModel(model: CivitModel, previousModel?: Model): Par
     description: model.description,
     creator: model.creator.username,
     type: model.type,
-    tags: model.tags,
+    tags: [...new Set(model.tags.map(x => x.name))],
     currentVersion: currentVersion ? versionMap(currentVersion, currentVersionFile) : {},
     versions: model.modelVersions.map((x) => versionMap(x)),
   };

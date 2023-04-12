@@ -1,8 +1,9 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { Model } from '@/interfaces/models.interface';
+import {Model, ModelImage} from '@/interfaces/models.interface';
 import { API } from '@/samples/node-api';
 import {until, wait} from "@/helpers/promise.helper";
+import * as exif from 'exifr';
 
 let STORAGE_PATH: string, STORAGE_MODELS_PATH: string, STORAGE_ASSETS_PATH: string;
 
@@ -56,6 +57,57 @@ export async function StorageSetModels(models: Model[]) {
   await checkStorage();
   console.log('Writing models to disk...');
   await fs.writeFile(STORAGE_MODELS_PATH, generateModelsJson({ models: models }));
+}
+
+export async function ImportAssets(files: File[]): Promise<ModelImage[]> {
+  await checkStorage();
+
+  const unix = new Date().getTime();
+  const assets: ModelImage[] = [];
+  for (let file of files) {
+    const fileName = `${file.name.length > 5 ? file.name.slice(0, 6) : file.name}-${unix}${path.extname(file.name)}`;
+    const data = await fs.readFile(file.path);
+    const metadata = await generateModelImageBuffer(data);
+    const newPath = path.join(STORAGE_ASSETS_PATH, fileName);
+    await fs.writeFile(newPath, data);
+    assets.push({
+      url: fileName,
+      ...metadata
+    });
+  }
+  console.log('New Assets:', assets);
+  return assets;
+}
+
+async function generateModelImageBuffer(data: Buffer): Promise<Omit<ModelImage, 'url'>> {
+  const meta = await exif.parse(data, true);
+
+  let prompt, negative, steps, hash, cfg, seed, sampler;
+
+  if (meta.parameters) {
+    const chunks = meta.parameters.split('\n');
+    prompt = chunks.length > 0 ? chunks[0] : undefined;
+    negative = chunks.length > 1 ? chunks[1].substring(18) : undefined;
+    const infoChunk = chunks.length > 2 ? (chunks[2] as string).split(', ').reduce((pre, cur) => {
+      const entry = cur.split(': ');
+      if (entry.length <= 1) return pre;
+      pre[entry[0]] = entry[1];
+      return pre;
+    }, {} as any) : undefined;
+    if (infoChunk && Object.keys(infoChunk).length > 0) {
+      steps = infoChunk['Steps'];
+      hash = infoChunk['Model hash'];
+      cfg = infoChunk['CFG scale'];
+      seed = infoChunk['Seed'];
+      sampler = infoChunk['Sampler'];
+    }
+  }
+  console.log(meta);
+  return {
+    width: meta.ImageWidth,
+    height: meta.ImageHeight,
+    meta: {prompt, negativePrompt: negative, steps, hash, seed, sampler, cfgScale: cfg}
+  }
 }
 
 async function waitForElectronCallback() {

@@ -3,6 +3,7 @@ import Tag from '@/components/Tag/Tag';
 import { clipboard } from 'electron';
 import { openToast } from '@/services/toast';
 import { useEffect, useRef, useState } from 'react';
+import {ClipboardSet} from "@/services/clipboard";
 
 export default function TagList(props: { label?: string; tags?: string[]; className?: string }) {
   const [list, setList] = useState<string[]>(props.tags ?? []);
@@ -36,8 +37,7 @@ export default function TagList(props: { label?: string; tags?: string[]; classN
     }
   }
   function onCopyAll() {
-    clipboard.write({ text: list.join(', ') });
-    openToast('Copied!');
+    ClipboardSet(list.join(', '));
   }
   function onClearInput() {
     setInput('');

@@ -10,6 +10,7 @@ export default function Modal(props: {
   width?: string;
   height?: string;
   children: any;
+  title?: string;
   withCloseButton?: boolean;
   dropzone?: Accept;
   onDrop?: (files: any[]) => void;
@@ -34,11 +35,12 @@ export default function Modal(props: {
         {...(props.dropzone
           ? dropzone.getRootProps()
           : {})}
-        className={`w-full h-full flex flex-col transform overflow-hidden rounded-2xl bg-gray-700 text-white p-6 text-left align-middle shadow-xl transition-all`}
+        className={`w-full h-full flex flex-col transform overflow-hidden rounded-2xl bg-gray-700 text-white p-6 text-left align-middle shadow-xl transition-all outline-0`}
       >
         {props.dropzone && <input {...dropzone.getInputProps({})} />}
-        {props.withCloseButton && (
+        {(props.withCloseButton || props.title) && (
           <>
+            {props.title && <p className={`absolute top-4 left-4 text-xl font-semibold`}>{props.title}</p>}
             <Icon icon={`close`} className={`absolute top-4 right-4 cursor-pointer`} onCLick={props.onClose} />
             <div className={`h-8 flex-none`}></div>
           </>
