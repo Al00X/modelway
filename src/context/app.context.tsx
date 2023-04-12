@@ -6,6 +6,10 @@ import Progress from '@/components/Progress/Progress';
 import CivitGetModel from '@/services/api';
 import {CivitModelToModel, MergeModelDetails} from '@/helpers/model.helper';
 import Button from '@/components/Button/Button';
+import {DataState} from "@/states/Data";
+import {useAtom} from "jotai";
+import {types} from "sass";
+import String = types.String;
 
 export interface ProgressEvent {
   current: number;
@@ -37,6 +41,8 @@ export function AppProvider(props: { children: any }) {
   const [progress, setProgress] = useState<ProgressEvent | undefined>(undefined);
   const lastId = useRef(-1);
 
+  const [atomAvailableTags, setAtomAvailableTags] = useAtom(DataState.availableTags);
+
   function setList(models: Model[]) {
     const list: any = {};
     for (let i of models) {
@@ -48,6 +54,14 @@ export function AppProvider(props: { children: any }) {
       }
     }
     _setList(list);
+
+    // Post nonblocking operations after list update:
+    setTimeout(async () => {
+      setAtomAvailableTags([...new Set(models.reduce((pre, cur) => {
+        pre = [...pre, ...cur.metadata.tags ?? []];
+        return pre;
+      }, [] as string[]).filter(x => !!x))].sort((a, b) => a.localeCompare(b)));
+    }, 0);
   }
 
   function cancelSync() {

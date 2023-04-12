@@ -1,5 +1,5 @@
 export interface KeyValue<T> {
-    text: string;
+    label: string;
     value: T;
     icon?: string;
 }

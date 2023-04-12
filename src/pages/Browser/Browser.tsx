@@ -1,5 +1,5 @@
 import { useAppContext } from '@/context/app.context';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Model, ModelType } from '@/interfaces/models.interface';
 import Loader from '@/components/Loader/Loader';
 import ModelCard from '@/components/ModelCard/ModelCard';
@@ -9,23 +9,25 @@ import Select from '@/components/Select/Select';
 import { KeyValue } from '@/interfaces/utils.interface';
 import Button, { ButtonClickEvent } from '@/components/Button/Button';
 import { GlobalHotKeys } from 'react-hotkeys';
-import {openToast} from "@/services/toast";
+import { openToast } from '@/services/toast';
+import { atom, useAtom, useAtomValue } from 'jotai';
+import { DataState } from '@/states/Data';
 
 type SortType = 'alphabet' | 'merges';
 type ViewType = 'grid' | 'list';
 type SortDirection = 'asc' | 'desc';
 
 const SortList: KeyValue<SortType>[] = [
-  { text: 'Alphabet', value: 'alphabet' },
-  { text: 'Merges Count', value: 'merges' },
+  { label: 'Alphabet', value: 'alphabet' },
+  { label: 'Merges Count', value: 'merges' },
 ];
 const ViewList: KeyValue<ViewType>[] = [
-  { text: 'Grid', value: 'grid', icon: 'grid' },
-  { text: 'List', value: 'list', icon: 'list' },
+  { label: 'Grid', value: 'grid', icon: 'grid' },
+  { label: 'List', value: 'list', icon: 'list' },
 ];
 const SortDirectionList: KeyValue<SortDirection>[] = [
-  { text: 'Asc', value: 'asc', icon: 'asc' },
-  { text: 'Desc', value: 'desc', icon: 'desc' },
+  { label: 'Asc', value: 'asc', icon: 'asc' },
+  { label: 'Desc', value: 'desc', icon: 'desc' },
 ];
 
 export default function Browser() {
@@ -36,6 +38,12 @@ export default function Browser() {
   const [list, setList] = useState<Model[] | undefined>(undefined);
   const [rawList, setRawList] = useState<Model[] | undefined>(undefined);
   const [search, setSearch] = useState('');
+  const [atomAvailableTags] = useAtom<KeyValue<string>[]>(
+    useMemo(
+      () => atom((get) => get(DataState.availableTags).map((x) => ({ label: x, value: x }))),
+      [],
+    ),
+  );
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -98,39 +106,45 @@ export default function Browser() {
       <GlobalHotKeys keyMap={{ SEARCH: 'ctrl+f' }} handlers={{ SEARCH: () => searchInputRef.current?.focus() }} />
 
       <div
-        className={`flex flex-wrap p-4 items-center bg-gray-800 bg-opacity-90 backdrop-filter backdrop-blur-sm z-10 sticky top-0 w-full shadow-lg gap-x-12 gap-y-3 `}
+        className={`flex p-4 items-center bg-gray-800 bg-opacity-90 backdrop-filter backdrop-blur-sm z-10 sticky top-0 w-full shadow-lg gap-12`}
       >
-        <Input
-          ref={searchInputRef}
-          className={`w-full max-w-[20rem]`}
-          placeholder={`Search...`}
-          icon={`search`}
-          value={search}
-          onValue={(e) => setSearch(e)}
-          clearable={true}
-          debounce={200}
-        />
-        <div className={`flex items-center gap-3`}>
-          <p className={`opacity-80`}>View :</p>
-          <ButtonGroup items={ViewList} value={view} onValue={(e) => setView(e as any)} />
+        <div className={`flex flex-wrap items-center gap-x-12 gap-y-3 flex-auto`}>
+          <Input
+            ref={searchInputRef}
+            className={`w-full max-w-[20rem]`}
+            placeholder={`Search...`}
+            icon={`search`}
+            value={search}
+            onValue={(e) => setSearch(e)}
+            clearable={true}
+            debounce={200}
+          />
+          <div className={`flex items-center gap-3`}>
+            <p className={`opacity-80`}>View :</p>
+            <ButtonGroup items={ViewList} value={view} onValue={(e) => setView(e as any)} />
+          </div>
+          <div className={`flex items-center gap-3`}>
+            <p className={`opacity-80 flex-none`}>Sort :</p>
+            <Select
+              items={SortList}
+              value={sortType}
+              onValue={(e) => setSortType(e!)}
+              className={`w-full max-w-[20rem]`}
+              icon={`sort`}
+            ></Select>
+            <ButtonGroup className={`flex-none`} items={SortDirectionList} value={sortDirection} onValue={(e) => setSortDirection(e as any)} />
+          </div>
+          <div className={`flex items-center gap-3`}>
+            <p className={`opacity-80 flex-none`}>Filter :</p>
+            <Select items={atomAvailableTags} multiple={true} cols={3} className={`w-full max-w-[20rem]`} clearable={true} placeholder={'By tags...'}></Select>
+          </div>
+
         </div>
-        <div className={`flex items-center gap-3`}>
-          <p className={`opacity-80`}>Sort :</p>
-          <Select items={SortList} value={sortType} onValue={(e) => setSortType(e!)}>
-            {(prop: any) => (
-              <Input
-                className={`w-full max-w-[20rem] cursor-pointer`}
-                readonly={true}
-                value={prop.selected.text}
-                icon={`sort`}
-              />
-            )}
-          </Select>
-          <ButtonGroup items={SortDirectionList} value={sortDirection} onValue={(e) => setSortDirection(e as any)} />
+        <div className={`flex flex-col flex-none h-full`}>
+          <Button className={`ml-auto`} onClick={runServerSync}>
+            SYNC
+          </Button>
         </div>
-        <Button className={`ml-auto`} onClick={runServerSync}>
-          SYNC
-        </Button>
       </div>
 
       <div className={`w-full flex-auto gap-1 ${view === 'grid' ? 'flex flex-wrap px-2' : 'flex flex-col'}`}>
@@ -138,16 +152,23 @@ export default function Browser() {
           <Loader />
         ) : (
           list.map((item, index) => (
-            <ModelCard key={item.metadata.name + item.hash + item.file} item={item} wide={view === 'list'} onUpdate={(immediate) => {
-              appContext.update(item.id, item, immediate).then(() => {
-                if (immediate) {
-                  openToast('Saved Successfully!');
-                }
-              }).catch(() => {
-                openToast('Saving model changes to the disk failed...');
-              });
-            }
-            } />
+            <ModelCard
+              key={item.metadata.name + item.hash + item.file}
+              item={item}
+              wide={view === 'list'}
+              onUpdate={(immediate) => {
+                appContext
+                  .update(item.id, item, immediate)
+                  .then(() => {
+                    if (immediate) {
+                      openToast('Saved Successfully!');
+                    }
+                  })
+                  .catch(() => {
+                    openToast('Saving model changes to the disk failed...');
+                  });
+              }}
+            />
           ))
         )}
       </div>

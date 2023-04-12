@@ -1,7 +1,7 @@
 import './TitleBar.scss';
 import {MouseEvent} from "react";
 import Icon from "@/components/Icon/Icon";
-import {API} from "@/samples/node-api";
+import {API} from "@/api";
 import {useEffect, useState} from "react";
 import {useAtom} from "jotai";
 import {SettingsState} from "@/states/Settings";

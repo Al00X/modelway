@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import {Model, ModelImage} from '@/interfaces/models.interface';
-import { API } from '@/samples/node-api';
+import { API } from '@/api';
 import {until, wait} from "@/helpers/promise.helper";
 import * as exif from 'exifr';
 

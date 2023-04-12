@@ -1,4 +1,4 @@
-import { ipcRenderer } from 'electron'
+import { ipcRenderer } from 'electron';
 
 let UserDataPath: string | null = null;
 
@@ -11,5 +11,5 @@ ipcRenderer.on('app', function (evt, messageObj) {
 export const API = () => ({
   UserDataPath,
   WindowAction: (action: string) => ipcRenderer.send('window', action),
-  IsWindowMaximized: () => ipcRenderer.invoke('window', 'isMaximized')
-})
+  IsWindowMaximized: () => ipcRenderer.invoke('window', 'isMaximized'),
+});

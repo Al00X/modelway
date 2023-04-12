@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import Icon from '@/components/Icon/Icon';
+import {KeyValue} from "@/interfaces/utils.interface";
 
 export default function ButtonGroup(props: {
-  items: { text: string; value: string; icon?: string }[];
+  items: KeyValue<string>[];
   value?: string;
   onValue?: (e: string) => void;
   className?: string;
@@ -18,7 +19,7 @@ export default function ButtonGroup(props: {
           onClick={() => (props.onValue ? props.onValue(x.value) : null)}
         >
           {x.icon && <Icon icon={x.icon} />}
-          {x.text}
+          {x.label}
         </div>
       ))}
     </div>
