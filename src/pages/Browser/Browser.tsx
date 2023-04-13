@@ -13,6 +13,7 @@ import { openToast } from '@/services/toast';
 import {atom, useAtom, useAtomValue} from 'jotai';
 import { DataState } from '@/states/Data';
 import ModelDetailsDialog from '@/dialog/model-details-dialog/ModelDetailsDialog';
+import {useForceUpdate} from "@mantine/hooks";
 
 type SortType = 'alphabet' | 'merges';
 type ViewType = 'grid' | 'list';
@@ -48,8 +49,11 @@ export default function Browser() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const appContext = useAppContext();
+  const forceUpdate = useForceUpdate();
 
   function prepareList() {
+    if (atomList.length === 0) return;
+
     setList(undefined);
     setTimeout(() => {
       let listToSet = [...(atomList.filter(x => x.metadata.type === category) ?? [])];
@@ -91,8 +95,13 @@ export default function Browser() {
   }
 
   useEffect(() => {
+    if (list === undefined && atomList.length > 0) {
+      prepareList();
+    }
+  }, [atomList]);
+  useEffect(() => {
     prepareList();
-  }, [search, sortType, sortDirection, atomList]);
+  }, [search, sortType, sortDirection]);
 
   return (
     <div className={`flex flex-col h-full overflow-auto`}>
@@ -183,6 +192,10 @@ export default function Browser() {
         open={!!itemToViewDetails}
         onClose={() => setItemToViewDetails(undefined)}
         onSave={(newItem, close) => {
+          const index = list!.findIndex(x => x.id === newItem.id);
+          list![index] = newItem;
+          forceUpdate();
+
           const immediate = close === true;
           appContext
             .update(newItem.id, newItem, immediate)

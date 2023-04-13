@@ -193,13 +193,13 @@ export function AppProvider(props: { children: any }) {
     const newList = [...atomRawList];
     newList[index] = model;
     setAtomRawList(newList);
-    await queueStorageSave(immediate);
+    await queueStorageSave(newList,immediate);
     return true;
   }
 
   const storageSaveTimeout = useRef<any>(null);
-  function queueStorageSave(immediate?: boolean) {
-    const saveFn = async () => (await StorageSetModels(atomRawList));
+  function queueStorageSave(list: Model[], immediate?: boolean) {
+    const saveFn = async () => (await StorageSetModels(list));
     storageSaveTimeout.current ? clearTimeout(storageSaveTimeout.current) : null;
     if (!immediate) {
       storageSaveTimeout.current = setTimeout(() => {

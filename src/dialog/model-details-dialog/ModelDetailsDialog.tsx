@@ -6,7 +6,6 @@ import Button from '@/components/Button/Button';
 import Modal from '@/components/Modal/Modal';
 import { useKeenSlider } from 'keen-slider/react';
 import { Clone } from '@/helpers/object.helper';
-import { useForceUpdate } from '@mantine/hooks';
 import ImageDetailsDialog from '@/dialog/image-details-dialog/ImageDetailsDialog';
 import { ImportAssets } from '@/services/storage';
 import Input from '@/components/Input/Input';
@@ -30,15 +29,16 @@ export default function ModelDetailsDialog(props: {
   const [openDescriptionModal, setDescriptionModal] = useState(false);
   const [openWrongModelModal, setWrongModelModal] = useState(false);
   const [inputManualSyncLink, setInputManualSyncLink] = useState('');
-  const forceUpdate = useForceUpdate();
 
   useEffect(() => {
     setTimeout(() => {
       setOpen(props.open && !!props.item);
-    }, 1);
-
-    setCurrentItem(props.item ? Clone(props.item) : undefined);
-    setNotes(props.item?.metadata?.notes ?? '');
+    }, 10);
+    if (props.item) {
+      console.log(props.item);
+      setCurrentItem(Clone(props.item));
+      setNotes(props.item?.metadata?.notes ?? '');
+    }
   }, [props.open, props.item]);
 
   const [keenRef, keenInstanceRef] = useKeenSlider({

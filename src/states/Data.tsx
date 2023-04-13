@@ -13,23 +13,12 @@ export class DataState {
     for (let i of models) {
       const model = MergeModelDetails(i);
 
-      const imagesArray: ModelImage[] = [];
-      for (let i of [model.metadata.coverImage, ...(model.metadata.currentVersion.images?.slice(0, 3) ?? [])]) {
-        if (!i) continue;
-        imagesArray.push(i);
-      }
-
       list.push({
         ...model,
         computed: {
           name:
             model.metadata.name ??
             model.file.substring(0, model.file.lastIndexOf('.')).replaceAll('_', ' ').replaceAll('-', ' '),
-          keyImages: {
-            single: imagesArray.length > 0 ? imagesArray[0] : null,
-            double: imagesArray.length > 1 ? [imagesArray[0], imagesArray[1]] : imagesArray,
-            triple: imagesArray,
-          },
         }
       })
     }
