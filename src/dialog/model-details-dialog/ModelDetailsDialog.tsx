@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Model } from '@/interfaces/models.interface';
-import { ModelCardComputed } from '@/components/ModelCard/ModelCard';
+import {ModelExtended} from '@/interfaces/models.interface';
 import TagList from '@/components/TagList/TagList';
 import Image from '@/components/Image/Image';
 import Button from '@/components/Button/Button';
@@ -18,17 +17,15 @@ import './ModelDetailsDialog.scss';
 
 const Separator = `    .    `;
 
-type ModelDialogItem = Model & { computed: ModelCardComputed };
-
 export default function ModelDetailsDialog(props: {
   open: boolean;
   onClose: () => void;
-  onSave: (item: ModelDialogItem, close: boolean) => void;
-  item: Model;
-  computed: ModelCardComputed;
+  onSave: (item: ModelExtended, closed: boolean) => void;
+  item: ModelExtended | undefined;
 }) {
-  const [currentItem, setCurrentItem] = useState<ModelDialogItem>();
-  const [notes, setNotes] = useState(props.item.metadata.notes);
+  const [open, setOpen] = useState(false);
+  const [currentItem, setCurrentItem] = useState<ModelExtended>();
+  const [notes, setNotes] = useState<string>('');
   const [lightbox, setLightbox] = useState(-1);
   const [openDescriptionModal, setDescriptionModal] = useState(false);
   const [openWrongModelModal, setWrongModelModal] = useState(false);
@@ -36,8 +33,13 @@ export default function ModelDetailsDialog(props: {
   const forceUpdate = useForceUpdate();
 
   useEffect(() => {
-    setCurrentItem({ ...Clone(props.item), computed: { ...Clone(props.computed) } });
-  }, [props.open]);
+    setTimeout(() => {
+      setOpen(props.open && !!props.item);
+    }, 1);
+
+    setCurrentItem(props.item ? Clone(props.item) : undefined);
+    setNotes(props.item?.metadata?.notes ?? '');
+  }, [props.open, props.item]);
 
   const [keenRef, keenInstanceRef] = useKeenSlider({
     drag: true,
@@ -54,12 +56,19 @@ export default function ModelDetailsDialog(props: {
     }, 50);
   }
 
+  function onSave(close: boolean) {
+    if (close) {
+      props.onClose?.();
+    }
+    props.onSave?.(currentItem!, close);
+  }
+
   return (
     <>
       {currentItem && (
         <>
           <Modal
-            open={props.open}
+            open={open}
             onClose={props.onClose}
             className={`app-modal`}
             width={`90%`}
@@ -79,7 +88,7 @@ export default function ModelDetailsDialog(props: {
                 });
                 setTimeout(() => {
                   // TODO: Amo avalan ke save nemishe :|, dovoman kir toosh, tartibe image a beham mikhore...!!!!
-                  props.onSave(currentItem, false);
+                  onSave(false);
                 }, 10);
               });
             }}
@@ -143,7 +152,7 @@ export default function ModelDetailsDialog(props: {
                         });
                       }}
                       onUpdate={() => {
-                        props.onSave(currentItem, false);
+                        onSave(false);
                       }}
                     />
                   </div>
@@ -179,7 +188,7 @@ export default function ModelDetailsDialog(props: {
                 Wrong synced model
               </a>
               <Button onClick={() => props.onClose()}>CLOSE</Button>
-              <Button onClick={() => props.onSave(currentItem, true)}>SAVE</Button>
+              <Button onClick={() => onSave(true)}>SAVE</Button>
             </div>
           </Modal>
           <Modal

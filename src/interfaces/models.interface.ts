@@ -65,3 +65,14 @@ export interface ModelImage {
     negativePrompt?: string;
   };
 }
+
+export interface ModelExtended extends Model {
+  computed: {
+    name: string;
+    keyImages: {
+      single: ModelImage | null;
+      double: ModelImage[];
+      triple: ModelImage[];
+    };
+  }
+}

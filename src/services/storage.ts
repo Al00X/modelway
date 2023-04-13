@@ -55,8 +55,8 @@ export async function StorageGetModels() {
 
 export async function StorageSetModels(models: Model[]) {
   await checkStorage();
-  console.log('Writing models to disk...');
   await fs.writeFile(STORAGE_MODELS_PATH, generateModelsJson({ models: models }));
+  console.log('...New data saved to disk...');
 }
 
 export async function ImportAssets(files: File[]): Promise<ModelImage[]> {

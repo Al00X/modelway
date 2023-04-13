@@ -4,12 +4,10 @@ import { Model, ModelType } from '@/interfaces/models.interface';
 import { GetModelHash, ScanModelDirectory } from '@/services/scan';
 import Progress from '@/components/Progress/Progress';
 import CivitGetModel from '@/services/api';
-import {CivitModelToModel, MergeModelDetails} from '@/helpers/model.helper';
+import {CivitModelToModel} from '@/helpers/model.helper';
 import Button from '@/components/Button/Button';
 import {DataState} from "@/states/Data";
 import {useAtom} from "jotai";
-import {types} from "sass";
-import String = types.String;
 
 export interface ProgressEvent {
   current: number;
@@ -17,12 +15,9 @@ export interface ProgressEvent {
   message: string;
 }
 
-type ModelsListType = { [p in ModelType]?: Model[] };
-
 const STORAGE_SAVE_DEBOUNCE_TIME = 10000;
 
-const AppContext = createContext({
-  list: {} as ModelsListType,
+export const AppContext = createContext({
   clientSync: async () => {},
   // filter is the list of model file names (model.file)
   serverSync: async (type?: ModelType, filter?: string[]) => {},
@@ -35,34 +30,10 @@ export const useAppContext = () => useContext(AppContext);
 export function AppProvider(props: { children: any }) {
   const isSyncing = useRef<'client' | 'server' | undefined>(undefined);
   const cancelSyncing = useRef<boolean>(false);
-  const rawList = useRef<Model[]>([]);
   const [loading, setLoading] = useState(false);
-  const [list, _setList] = useState<ModelsListType>({});
   const [progress, setProgress] = useState<ProgressEvent | undefined>(undefined);
-  const lastId = useRef(-1);
 
-  const [atomAvailableTags, setAtomAvailableTags] = useAtom(DataState.availableTags);
-
-  function setList(models: Model[]) {
-    const list: any = {};
-    for (let i of models) {
-      const newItem = MergeModelDetails(i);
-      if ((list[newItem.metadata.type]?.length ?? 0) > 0) {
-        list[newItem.metadata.type].push(newItem);
-      } else {
-        list[newItem.metadata.type] = [newItem];
-      }
-    }
-    _setList(list);
-
-    // Post nonblocking operations after list update:
-    setTimeout(async () => {
-      setAtomAvailableTags([...new Set(models.reduce((pre, cur) => {
-        pre = [...pre, ...cur.metadata.tags ?? []];
-        return pre;
-      }, [] as string[]).filter(x => !!x))].sort((a, b) => a.localeCompare(b)));
-    }, 0);
-  }
+  const [atomRawList, setAtomRawList] = useAtom(DataState.rawList);
 
   function cancelSync() {
     cancelSyncing.current = true;
@@ -78,9 +49,10 @@ export function AppProvider(props: { children: any }) {
     return isCanceled;
   }
 
-  function finalizeSyncing() {
-    setList(rawList.current);
-    console.log('Loaded:', rawList.current);
+  async function finalizeSyncing(newList: Model[]) {
+    await StorageSetModels(newList);
+    setAtomRawList(newList);
+    console.log('Loaded:', newList);
     cleanup();
   }
 
@@ -99,8 +71,9 @@ export function AppProvider(props: { children: any }) {
     isSyncing.current = 'server';
     setLoading(true);
 
+    const tempRawList = [...atomRawList];
     let counter = 0;
-    let total = rawList.current.length;
+    let total = tempRawList.length;
     setProgress({
       current: counter,
       total: total,
@@ -110,7 +83,7 @@ export function AppProvider(props: { children: any }) {
     for (let i = 0; i < total; i++) {
       if (shouldCancelSync()) return;
       counter++;
-      const item = rawList.current[i];
+      const item = tempRawList[i];
       if ((filter ? !filter.includes(item.file) : false) || category ? item.metadata.type !== category : false)
         continue;
       setProgress({
@@ -122,12 +95,10 @@ export function AppProvider(props: { children: any }) {
       console.log(item);
       const result = await CivitGetModel(item);
       if (!result) continue;
-      rawList.current[i] = await CivitModelToModel(result, item);
+      tempRawList[i] = await CivitModelToModel(result, item);
     }
 
-    await StorageSetModels(rawList.current);
-
-    finalizeSyncing();
+    await finalizeSyncing(tempRawList);
   }
 
   async function clientSync() {
@@ -138,84 +109,97 @@ export function AppProvider(props: { children: any }) {
     isSyncing.current = 'client';
     setLoading(true);
 
-    rawList.current = (await StorageGetModels()).models;
+    const loadedList = (await StorageGetModels()).models;
     setProgress({
       current: 0,
       total: 0,
       message: '',
     });
 
-    lastId.current = rawList.current.reduce((pre, cur) => pre > cur.id ? pre : cur.id, -1) ?? -1;
+    let lastId = loadedList.reduce((pre, cur) => pre > cur.id ? pre : cur.id, -1) ?? -1;
 
+    const newSyncedList: Model[] = [];
     let i = 0;
     for (let type of ['Checkpoint']) {
       const scanned = await ScanModelDirectory(type as any);
+      const filteredList = loadedList.filter(x => x.metadata.type === type);
+      let entries = filteredList.map(x => [x, scanned.find((y) => y.name === x.file)]);
+      const newItems = scanned.filter(x => filteredList.findIndex(y => x.name === y.file) === -1);
+      entries = [...entries, ...newItems.map(x => [undefined, x])];
 
       setProgress({
         current: 0,
-        total: scanned.length,
+        total: entries.length,
         message: '',
       });
-      for (let localModel of scanned) {
+      for (let modelEntry of entries) {
         if (shouldCancelSync()) return;
+
+        let fromStorage = modelEntry[0] as Model | undefined;
+        const fromFile = modelEntry[1] as {name: string, path: string} | undefined;
 
         setProgress({
           current: i,
-          total: scanned.length,
-          message: `${type} - ${localModel.name}`,
+          total: entries.length,
+          message: `${type} - ${fromStorage?.metadata?.name ?? fromStorage?.file ?? fromFile?.name}`,
         });
-        const matchedIndex = rawList.current.findIndex((x) => x.file === localModel.name);
-        // console.log(`Hashing: ${localModel.name}`);
-        const hash = await GetModelHash({ file: localModel.name, fullPath: localModel.path }, 'autoV1');
-        if (matchedIndex !== -1 && rawList.current[matchedIndex].hash !== hash) {
-          let item = rawList.current[matchedIndex];
-          item = {
-            ...item,
-            hash: hash,
-            fullPath: localModel.path,
-            file: localModel.name,
-          };
 
-          if (!item.id) {
-            lastId.current = lastId.current + 1;
-            item.id = lastId.current;
-          }
-          rawList.current[matchedIndex] = item;
-          // console.warn(`Hash of model ${localModel.name} updated, what should we do with it?`);
-        } else if (matchedIndex === -1) {
-          console.log(`New model added to the DB: ${localModel.name}`);
-          lastId.current = lastId.current + 1;
-          rawList.current.push({
-            id: lastId.current,
-            fullPath: localModel.path,
-            file: localModel.name,
-            hash: hash,
-            metadata: { type: type as any, currentVersion: {} },
-          });
+        let hash: string | undefined = undefined;
+        if (fromFile) {
+          hash = await GetModelHash({ file: fromFile.name, fullPath: fromFile.path }, 'autoV1');
         }
+
+        if (fromStorage) {
+          if (!fromStorage.id) {
+            lastId++;
+            fromStorage.id = lastId;
+          }
+
+          if (fromFile) {
+            if (fromStorage.hash !== hash) {
+              fromStorage.hash = hash!;
+              fromStorage.fullPath = fromFile.path;
+              fromStorage.file = fromFile.name;
+            }
+          }
+        } else if (fromFile) {
+          console.log(`New model added to the DB: ${fromFile.name}`);
+          lastId++;
+          fromStorage = {
+            id: lastId,
+            fullPath: fromFile.path,
+            file: fromFile.name,
+            hash: hash!,
+            metadata: { type: type as any, currentVersion: {} },
+          };
+        }
+
+        newSyncedList.push(fromStorage!);
 
         i++;
       }
     }
-    await StorageSetModels(rawList.current);
 
-    finalizeSyncing();
+    await finalizeSyncing(newSyncedList);
   }
 
   async function update(id: number, model: Model, immediate?: boolean) {
-    const index = rawList.current.findIndex(x => x.id === id);
+    const index = atomRawList.findIndex(x => x.id === id);
     if (index === -1) {
       console.error('Where dafuq u got this id from?', id, model);
       return false;
     }
-    rawList.current[index] = model;
+    // TODO: Performance wise, i think i fucked it up...
+    const newList = [...atomRawList];
+    newList[index] = model;
+    setAtomRawList(newList);
     await queueStorageSave(immediate);
     return true;
   }
 
   const storageSaveTimeout = useRef<any>(null);
   function queueStorageSave(immediate?: boolean) {
-    const saveFn = async () => (await StorageSetModels(rawList.current));
+    const saveFn = async () => (await StorageSetModels(atomRawList));
     storageSaveTimeout.current ? clearTimeout(storageSaveTimeout.current) : null;
     if (!immediate) {
       storageSaveTimeout.current = setTimeout(() => {
@@ -248,7 +232,6 @@ export function AppProvider(props: { children: any }) {
       )}
       <AppContext.Provider
         value={{
-          list: list,
           clientSync: () => clientSync(),
           serverSync: (type, filter) => serverSync(type, filter),
           progress: progress,

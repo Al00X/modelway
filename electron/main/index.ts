@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell, ipcMain, protocol } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path';
+import installExtension, {REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS} from 'electron-devtools-installer';
 
 // The built directory structure
 //
@@ -57,6 +58,7 @@ async function createWindow() {
   })
 
   if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
+
     win.loadURL(url)
     // Open devTool if the app is not packaged
     win.webContents.openDevTools()
@@ -81,7 +83,13 @@ async function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow)
+app.whenReady().then(async () => {
+  if (process.env.VITE_DEV_SERVER_URL) {
+    await installExtension(REACT_DEVELOPER_TOOLS)
+      .then((name) => console.log(`Added Extension:  ${name}`))
+      .catch((err) => console.log('An error occurred: ', err));
+  }
+}).then(createWindow);
 
 app.on('window-all-closed', () => {
   win = null
