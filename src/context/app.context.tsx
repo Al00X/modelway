@@ -189,7 +189,7 @@ export function AppProvider(props: { children: any }) {
       console.error('Where dafuq u got this id from?', id, model);
       return false;
     }
-    // TODO: Performance wise, i think i fucked it up...
+    // TODO: Performance wise, this is fucked up...
     const newList = [...atomRawList];
     newList[index] = model;
     setAtomRawList(newList);
