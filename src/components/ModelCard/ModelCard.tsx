@@ -18,7 +18,7 @@ export default function ModelCard(props: { item: ModelExtended; wide?: boolean; 
   useEffect(() => {
     const imagesArray: ModelImage[] = [];
     for (let i of [props.item.metadata.coverImage, ...(props.item.metadata.currentVersion.images?.slice(0, 3) ?? [])]) {
-      if (!i) continue;
+      if (!i || imagesArray.findIndex(x => x.url === i?.url) !== -1) continue;
       imagesArray.push(i);
     }
 

@@ -1,5 +1,5 @@
 import { useAppContext } from '@/context/app.context';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import { ModelExtended, ModelType } from '@/interfaces/models.interface';
 import Loader from '@/components/Loader/Loader';
 import ModelCard from '@/components/ModelCard/ModelCard';
@@ -51,7 +51,7 @@ export default function Browser() {
   const appContext = useAppContext();
   const forceUpdate = useForceUpdate();
 
-  function prepareList() {
+  const prepareList = useCallback(() => {
     if (atomList.length === 0) return;
 
     setList(undefined);
@@ -76,7 +76,7 @@ export default function Browser() {
           return (first.metadata.name ?? first.file).localeCompare(last.metadata.name ?? last.file);
         else if (sortType === 'merges')
           return (first.metadata.currentVersion.merges?.filter((x) => x)?.length ?? 0) >
-            (last.metadata.currentVersion.merges?.filter((x) => x)?.length ?? 0)
+          (last.metadata.currentVersion.merges?.filter((x) => x)?.length ?? 0)
             ? 1
             : -1;
         return 1;
@@ -84,15 +84,15 @@ export default function Browser() {
 
       setList(listToSet);
     }, 0);
-  }
+  }, [atomList, category, sortType, sortDirection, search])
 
-  async function runServerSync(e: ButtonClickEvent) {
+  const runServerSync = useCallback((e: ButtonClickEvent) => {
     e.setLoading(true);
     const filter = list?.map((x) => x.file);
     appContext.serverSync(category, filter).then(() => {
       e.setLoading(false);
     });
-  }
+  }, [list]);
 
   useEffect(() => {
     if (list === undefined && atomList.length > 0) {
@@ -110,7 +110,7 @@ export default function Browser() {
       <div
         className={`flex p-4 items-center bg-gray-800 bg-opacity-90 backdrop-filter backdrop-blur-sm z-10 sticky top-0 w-full shadow-lg gap-12`}
       >
-        <div className={`flex flex-wrap items-center gap-x-12 gap-y-3 flex-auto`}>
+        <div className={`flex flex-wrap items-center gap-x-12 gap-y-4 flex-auto`}>
           <Input
             ref={searchInputRef}
             className={`w-full max-w-[20rem]`}
@@ -192,11 +192,14 @@ export default function Browser() {
         open={!!itemToViewDetails}
         onClose={() => setItemToViewDetails(undefined)}
         onSave={(newItem, close) => {
-          const index = list!.findIndex(x => x.id === newItem.id);
-          list![index] = newItem;
-          forceUpdate();
-
+          const localSaveFn = () => {
+            const index = list!.findIndex(x => x.id === newItem.id);
+            list![index] = newItem;
+            forceUpdate();
+          }
           const immediate = close === true;
+          localSaveFn();
+
           appContext
             .update(newItem.id, newItem, immediate)
             .then(() => {

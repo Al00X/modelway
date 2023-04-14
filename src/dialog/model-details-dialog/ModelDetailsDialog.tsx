@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import {ModelExtended} from '@/interfaces/models.interface';
+import { useCallback, useEffect, useState } from 'react';
+import { ModelExtended, ModelImage } from '@/interfaces/models.interface';
 import TagList from '@/components/TagList/TagList';
 import Image from '@/components/Image/Image';
 import Button from '@/components/Button/Button';
@@ -9,12 +9,18 @@ import { Clone } from '@/helpers/object.helper';
 import ImageDetailsDialog from '@/dialog/image-details-dialog/ImageDetailsDialog';
 import { ImportAssets } from '@/services/storage';
 import Input from '@/components/Input/Input';
-import {ClipboardSet} from "@/services/clipboard";
-import {OpenExternalModelLink, OpenExternalUser} from "@/services/shell";
+import { ClipboardSet } from '@/services/clipboard';
+import { OpenExternalModelLink, OpenExternalUser } from '@/services/shell';
 import './ModelDetailsDialog.scss';
-
+import { atom, useAtom } from 'jotai';
+import { useForceUpdate } from '@mantine/hooks';
 
 const Separator = `    .    `;
+
+const formAtom = atom({
+  notes: '' as string,
+  cover: undefined as ModelImage | undefined,
+});
 
 export default function ModelDetailsDialog(props: {
   open: boolean;
@@ -24,11 +30,13 @@ export default function ModelDetailsDialog(props: {
 }) {
   const [open, setOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<ModelExtended>();
-  const [notes, setNotes] = useState<string>('');
   const [lightbox, setLightbox] = useState(-1);
   const [openDescriptionModal, setDescriptionModal] = useState(false);
   const [openWrongModelModal, setWrongModelModal] = useState(false);
   const [inputManualSyncLink, setInputManualSyncLink] = useState('');
+  const [atomForm, setAtomForm] = useAtom(formAtom);
+
+  const forceUpdate = useForceUpdate();
 
   useEffect(() => {
     setTimeout(() => {
@@ -37,7 +45,10 @@ export default function ModelDetailsDialog(props: {
     if (props.item) {
       console.log(props.item);
       setCurrentItem(Clone(props.item));
-      setNotes(props.item?.metadata?.notes ?? '');
+      setAtomForm({
+        cover: props.item?.metadata?.coverImage,
+        notes: props.item?.metadata?.notes ?? '',
+      });
     }
   }, [props.open, props.item]);
 
@@ -50,18 +61,36 @@ export default function ModelDetailsDialog(props: {
     },
   });
 
-  function updateKeenSize() {
+  const updateKeenSize = useCallback(() => {
     setTimeout(() => {
       keenInstanceRef.current?.update();
     }, 50);
-  }
+  }, [keenInstanceRef.current]);
 
-  function onSave(close: boolean) {
-    if (close) {
-      props.onClose?.();
-    }
-    props.onSave?.(currentItem!, close);
-  }
+  const onSave = useCallback(
+    (close: boolean) => {
+      if (!currentItem) return;
+
+      let itemToSave = currentItem;
+      if (close) {
+        console.log(atomForm);
+        itemToSave = {
+          ...itemToSave,
+          metadata: {
+            ...itemToSave.metadata,
+            coverImage: atomForm.cover,
+            notes: atomForm.notes,
+          },
+        };
+      }
+      console.log(itemToSave);
+      props.onSave?.(itemToSave!, close);
+      if (close) {
+        props.onClose?.();
+      }
+    },
+    [currentItem, props.onSave, props.onClose, atomForm],
+  );
 
   return (
     <>
@@ -114,8 +143,8 @@ export default function ModelDetailsDialog(props: {
                   </p>
                   <textarea
                     className={`bg-transparent resize-none w-full outline-0`}
-                    value={notes}
-                    onInput={(e) => setNotes(e.currentTarget.value)}
+                    value={atomForm.notes}
+                    onInput={(e) => setAtomForm((v) => ({ ...v, notes: e.currentTarget.value }))}
                     rows={3}
                   ></textarea>
                 </div>
@@ -130,9 +159,7 @@ export default function ModelDetailsDialog(props: {
               <div ref={keenRef} className={`keen-slider w-full h-[18rem] mt-8`}>
                 {currentItem.metadata.currentVersion.images?.map((x, index) => (
                   <div className={`keen-slider__slide w-auto shrink-0 grow-0 basis-auto relative`} key={x.url}>
-                    {(currentItem!.metadata.coverImage
-                      ? currentItem!.metadata.coverImage!.url === x.url
-                      : index === 0) && (
+                    {(atomForm.cover ? atomForm.cover.url === x.url : index === 0) && (
                       <div className={`absolute inset-0 z-[49] border-4 border-white pointer-events-none`}></div>
                     )}
                     <Image
@@ -140,16 +167,12 @@ export default function ModelDetailsDialog(props: {
                       fit={`height`}
                       onClick={() => setLightbox(index)}
                       onLoad={() => {
-                        updateKeenSize();
+                        if (!x.width || !x.height) {
+                          updateKeenSize();
+                        }
                       }}
                       onSetAsCover={() => {
-                        setCurrentItem({
-                          ...currentItem,
-                          metadata: {
-                            ...currentItem?.metadata,
-                            coverImage: x,
-                          },
-                        });
+                        setAtomForm((v) => ({ ...v, cover: x }));
                       }}
                       onUpdate={() => {
                         onSave(false);
@@ -167,13 +190,20 @@ export default function ModelDetailsDialog(props: {
                     {currentItem.hash && (
                       <>
                         <span className={`select-none`}>{Separator}</span>
-                        <span onClick={() => ClipboardSet(currentItem?.hash)} className={`cursor-pointer`}>Hash: {currentItem.hash}</span>
+                        <span onClick={() => ClipboardSet(currentItem?.hash)} className={`cursor-pointer`}>
+                          Hash: {currentItem.hash}
+                        </span>
                       </>
                     )}
                     {currentItem.metadata.creator && (
                       <>
                         <span className={`select-none`}>{Separator}</span>
-                        <span onClick={() => OpenExternalUser(currentItem!.metadata.creator!)} className={`cursor-pointer`}>Creator: {currentItem.metadata.creator}</span>
+                        <span
+                          onClick={() => OpenExternalUser(currentItem!.metadata.creator!)}
+                          className={`cursor-pointer`}
+                        >
+                          Creator: {currentItem.metadata.creator}
+                        </span>
                       </>
                     )}
                   </>
@@ -220,12 +250,14 @@ export default function ModelDetailsDialog(props: {
               placeholder={`Input here...`}
             />
             <div className={`flex items-center justify-end mt-4`}>
-              {currentItem?.metadata?.id && <p
-                className={`mr-auto opacity-40 text-sm underline cursor-pointer`}
-                onClick={() => OpenExternalModelLink(currentItem!.metadata!.id!)}
-              >
-                Current ID: {currentItem.metadata.id}
-              </p>}
+              {currentItem?.metadata?.id && (
+                <p
+                  className={`mr-auto opacity-40 text-sm underline cursor-pointer`}
+                  onClick={() => OpenExternalModelLink(currentItem!.metadata!.id!)}
+                >
+                  Current ID: {currentItem.metadata.id}
+                </p>
+              )}
               <Button>SAVE</Button>
             </div>
           </Modal>
