@@ -13,6 +13,7 @@ import "yet-another-react-lightbox/styles.css";
 import TitleBar from "@/features/TitleBar/TitleBar";
 import {MantineProvider} from "@mantine/core";
 import {ContextMenuProvider} from "@/hooks/useContextMenu";
+import {Provider as JotaiProvider} from "jotai";
 
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
@@ -21,7 +22,9 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <Toaster />
     <ContextMenuProvider />
     <MantineProvider withNormalizeCSS>
-      <App />
+      <JotaiProvider>
+        <App />
+      </JotaiProvider>
     </MantineProvider>
   </React.StrictMode>,
 );

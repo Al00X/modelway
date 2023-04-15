@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import {createContext, useContext, useEffect, useRef, useState} from 'react';
 import { StorageGetModels, StorageSetModels } from '@/services/storage';
 import { Model, ModelType } from '@/interfaces/models.interface';
 import { GetModelHash, ScanModelDirectory } from '@/services/scan';
@@ -16,6 +16,7 @@ export interface ProgressEvent {
 }
 
 const STORAGE_SAVE_DEBOUNCE_TIME = 10000;
+const STARTUP_DELAY = 1;
 
 export const AppContext = createContext({
   clientSync: async () => {},
@@ -34,6 +35,7 @@ export function AppProvider(props: { children: any }) {
   const [progress, setProgress] = useState<ProgressEvent | undefined>(undefined);
 
   const [atomRawList, setAtomRawList] = useAtom(DataState.rawList);
+  const [render, setRender] = useState(false);
 
   function cancelSync() {
     cancelSyncing.current = true;
@@ -213,6 +215,9 @@ export function AppProvider(props: { children: any }) {
 
   useEffect(() => {
     clientSync();
+    setTimeout(() => {
+      setRender(true)
+    }, STARTUP_DELAY);
   }, []);
 
   return (
@@ -239,7 +244,7 @@ export function AppProvider(props: { children: any }) {
           update: (id, model, immediate) => update(id, model, immediate)
         }}
       >
-        {props.children}
+        {render ? props.children : null}
       </AppContext.Provider>
     </>
   );

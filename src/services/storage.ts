@@ -1,10 +1,10 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import {Model, ModelImage} from '@/interfaces/models.interface';
+import { Model, ModelImage } from '@/interfaces/models.interface';
 import { API } from '@/api';
-import {until, wait} from "@/helpers/promise.helper";
+import { until, wait } from '@/helpers/promise.helper';
 import * as exif from 'exifr';
-import {fileExists} from "@/helpers/node.helper";
+import { fileExists } from '@/helpers/node.helper';
 
 let STORAGE_PATH: string, STORAGE_MODELS_PATH: string, STORAGE_ASSETS_PATH: string;
 
@@ -13,39 +13,60 @@ interface StorageModels {
   models: Model[];
 }
 
-export const StorageEngine = (fileName: string) => {
-  const getPath = () => path.join(STORAGE_PATH, fileName + '.json');
-  const checkPath = async () => {
-    await waitForElectronCallback();
-    if (! await fileExists(getPath())) {
-      await fs.writeFile(getPath(), JSON.stringify({}))
-    }
-  }
-  const getFileContent = async () => {
-    await checkPath();
-    return JSON.parse((await fs.readFile(getPath())).toString());
-  }
-  const setFileContent = async (object: any) => {
-    await checkPath();
-    return await fs.writeFile(getPath(), JSON.stringify(object));
-  }
+// export class StorageEngine {
+//   private readonly _fileName;
+//   private handle?: fs.FileHandle;
+//
+//   constructor(fileName: string) {
+//     this._fileName = fileName;
+//     this.init();
+//   }
+//
+//   async getItem(key: string): Promise<any> {
+//     return (await getFileContent())[key] ?? undefined;
+//   }
+//   async setItem(key: string, value: any) {
+//     const current = await getFileContent();
+//     current[key] = value;
+//     console.log(current, value);
+//     return await setFileContent(current);
+//   }
+//   async removeItem(key: string) {
+//     const current = await getFileContent();
+//     current[key] = undefined;
+//     return await setFileContent(current);
+//   }
+//
+//   private getPath() {
+//     return path.join(STORAGE_PATH, this._fileName + '.json');
+//   }
+//
+//   private async init() {
+//     await waitForElectronCallback();
+//     this.handle = await fs.open(this._fileName, 'w+');
+//     if ((await this.handle.readFile()).toString().length < 2) {
+//       this.handle.writeFile()
+//     }
+//   }
+//
+//   private async checkPath()  {
+//
+//     if () {
+//       await fs.writeFile(getPath(), JSON.stringify({}));
+//     }
+//   }
+//   private async getFileContent() {
+//     await checkPath();
+//     console.log(JSON.parse((await fs.readFile(getPath())).toString()));
+//     return JSON.parse((await fs.readFile(getPath())).toString());
+//   }
+//   private async setFileContent (object: any) {
+//     await checkPath();
+//     console.log(object, JSON.stringify(object));
+//     return await fs.writeFile(getPath(), JSON.stringify(object));
+//   }
+// }
 
-  return {
-    getItem: async (key: string): Promise<any> => {
-      return (await getFileContent())[key] ?? undefined;
-    },
-    setItem: async (key: string, value: any) => {
-      const current = await getFileContent();
-      current[key] = value;
-      return await setFileContent(current);
-    },
-    removeItem: async (key: string) => {
-      const current = await getFileContent();
-      current[key] = undefined;
-      return await setFileContent(current);
-    }
-  }
-}
 
 export async function StorageGetModels() {
   await checkStorage();
@@ -73,7 +94,7 @@ export async function ImportAssets(files: File[]): Promise<ModelImage[]> {
     await fs.writeFile(newPath, data);
     assets.push({
       url: fileName,
-      ...metadata
+      ...metadata,
     });
   }
   console.log('New Assets:', assets);
@@ -89,12 +110,15 @@ async function generateModelImageBuffer(data: Buffer): Promise<Omit<ModelImage, 
     const chunks = meta.parameters.split('\n');
     prompt = chunks.length > 0 ? chunks[0] : undefined;
     negative = chunks.length > 1 ? chunks[1].substring(18) : undefined;
-    const infoChunk = chunks.length > 2 ? (chunks[2] as string).split(', ').reduce((pre, cur) => {
-      const entry = cur.split(': ');
-      if (entry.length <= 1) return pre;
-      pre[entry[0]] = entry[1];
-      return pre;
-    }, {} as any) : undefined;
+    const infoChunk =
+      chunks.length > 2
+        ? (chunks[2] as string).split(', ').reduce((pre, cur) => {
+            const entry = cur.split(': ');
+            if (entry.length <= 1) return pre;
+            pre[entry[0]] = entry[1];
+            return pre;
+          }, {} as any)
+        : undefined;
     if (infoChunk && Object.keys(infoChunk).length > 0) {
       steps = infoChunk['Steps'];
       hash = infoChunk['Model hash'];
@@ -107,8 +131,8 @@ async function generateModelImageBuffer(data: Buffer): Promise<Omit<ModelImage, 
   return {
     width: meta.ImageWidth,
     height: meta.ImageHeight,
-    meta: {prompt, negativePrompt: negative, steps, hash, seed, sampler, cfgScale: cfg}
-  }
+    meta: { prompt, negativePrompt: negative, steps, hash, seed, sampler, cfgScale: cfg },
+  };
 }
 
 async function waitForElectronCallback() {
@@ -116,7 +140,6 @@ async function waitForElectronCallback() {
 }
 
 async function checkStorage() {
-
   STORAGE_PATH = path.join(API().UserDataPath!, 'Data');
   STORAGE_MODELS_PATH = path.join(STORAGE_PATH, 'models.json');
   STORAGE_ASSETS_PATH = path.join(STORAGE_PATH, 'assets');

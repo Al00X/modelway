@@ -15,12 +15,9 @@ import { DataState } from '@/states/Data';
 import ModelDetailsDialog from '@/dialog/model-details-dialog/ModelDetailsDialog';
 import { useForceUpdate } from '@mantine/hooks';
 import Item from '@/components/Item/Item';
-import {arrayHasAll, arrayHasAny} from "@/helpers/native.helper";
-
-type SortType = 'alphabet' | 'merges';
-type ViewType = 'grid' | 'list';
-type SortDirection = 'asc' | 'desc';
-type TruncateViewType = 'all' | 'recognized' | 'synced' | 'unknown';
+import {arrayHasAll} from "@/helpers/native.helper";
+import {SettingsState} from "@/states/Settings";
+import {SortDirection, SortType, TruncateViewType, ViewType} from "@/interfaces/app.interface";
 
 const SortList: KeyValue<SortType>[] = [
   { label: 'Alphabet', value: 'alphabet' },
@@ -42,20 +39,20 @@ const TruncateViewList: KeyValue<TruncateViewType>[] = [
 ];
 
 export default function Browser() {
-  const [category, setCategory] = useState<ModelType>('Checkpoint');
-  const [sortType, setSortType] = useState<SortType>('alphabet');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-  const [view, setView] = useState<ViewType>('grid');
-  const [list, setList] = useState<ModelExtended[] | undefined>(undefined);
-  const [itemToViewDetails, setItemToViewDetails] = useState<ModelExtended | undefined>(undefined);
-  const [truncateView, setTruncateView] = useState<TruncateViewType>('recognized');
-  const [search, setSearch] = useState('');
-  const [filterTags, setFilterTags] = useState<string[] | null>(null);
-
   const [atomAvailableTags] = useAtom<KeyValue<string>[]>(
     useMemo(() => atom((get) => get(DataState.availableTags).map((x) => ({ label: x, value: x }))), []),
   );
   const atomList = useAtomValue(DataState.processedList);
+  const [atomViewMode, setAtomViewMode] = useAtom(SettingsState.viewMode);
+  const [atomTruncateViewMode, setAtomTruncateViewMode] = useAtom(SettingsState.truncateViewMode);
+  const [atomSortMode, setAtomSortMode] = useAtom(SettingsState.sortMode);
+  const [atomSortDirection, setAtomSortDirection] = useAtom(SettingsState.sortDirection);
+
+  const [category, setCategory] = useState<ModelType>('Checkpoint');
+  const [list, setList] = useState<ModelExtended[] | undefined>(undefined);
+  const [itemToViewDetails, setItemToViewDetails] = useState<ModelExtended | undefined>(undefined);
+  const [search, setSearch] = useState('');
+  const [filterTags, setFilterTags] = useState<string[] | null>(null);
 
   const searchInputRef = useRef<InputElementType>(null);
   const filterTagSelectRef = useRef<SelectElementType>(null);
@@ -75,11 +72,11 @@ export default function Browser() {
         return;
       }
 
-      if (truncateView !== 'all') {
+      if (atomTruncateViewMode !== 'all') {
         listToSet = listToSet.filter((x) =>
-          truncateView === 'synced'
+          atomTruncateViewMode === 'synced'
             ? !!x.metadata.id
-            : truncateView === 'recognized'
+            : atomTruncateViewMode === 'recognized'
             ? x.computed.recognized
             : !x.metadata.id,
         );
@@ -98,10 +95,10 @@ export default function Browser() {
       }
 
       listToSet.sort((a, b) => {
-        const first = sortDirection === 'asc' ? a : b;
-        const last = sortDirection === 'asc' ? b : a;
-        if (sortType === 'alphabet') return first.computed.name.localeCompare(last.computed.name);
-        else if (sortType === 'merges')
+        const first = atomSortDirection === 'asc' ? a : b;
+        const last = atomSortDirection === 'asc' ? b : a;
+        if (atomSortMode === 'alphabet') return first.computed.name.localeCompare(last.computed.name);
+        else if (atomSortMode === 'merges')
           return (first.metadata.currentVersion.merges?.filter((x) => x)?.length ?? 0) >
             (last.metadata.currentVersion.merges?.filter((x) => x)?.length ?? 0)
             ? 1
@@ -111,7 +108,7 @@ export default function Browser() {
       console.timeEnd('Prepare List');
       setList(listToSet);
     }, 0);
-  }, [atomList, category, sortType, sortDirection, search, truncateView, filterTags]);
+  }, [atomList, category, atomSortMode, atomSortDirection, search, atomTruncateViewMode, filterTags]);
 
   const runServerSync = useCallback(
     (e: ButtonClickEvent) => {
@@ -130,8 +127,9 @@ export default function Browser() {
     }
   }, [atomList]);
   useEffect(() => {
+    console.log(atomSortMode);
     prepareList();
-  }, [search, sortType, sortDirection, truncateView, filterTags]);
+  }, [search, atomSortMode, atomSortDirection, atomTruncateViewMode, filterTags]);
 
   return (
     <div className={`flex flex-col h-full overflow-auto`}>
@@ -152,20 +150,21 @@ export default function Browser() {
             debounce={200}
           />
           <Item label={`View`}>
-            <ButtonGroup items={ViewList} value={view} onValue={(e) => setView(e as any)} />
+            <ButtonGroup items={ViewList} value={atomViewMode} onValue={(e) => setAtomViewMode(e as any)} />
             <ButtonGroup
               className={`ml-2`}
               items={TruncateViewList}
-              value={truncateView}
-              onValue={(e) => setTruncateView(e as any)}
+              value={atomTruncateViewMode}
+              onValue={(e) => setAtomTruncateViewMode(e as any)}
             />
           </Item>
           <Item label={`Sort`}>
             <Select
               items={SortList}
-              value={sortType}
+              value={[atomSortMode]}
               onValue={(e) => {
-                setSortType(e![0]);
+                console.log(e, atomSortMode);
+                setAtomSortMode(e![0]);
               }}
               className={`w-full max-w-[20rem]`}
               icon={`sort`}
@@ -173,8 +172,8 @@ export default function Browser() {
             <ButtonGroup
               className={`flex-none absolute right-0.5 bottom-0.5 w-20 top-0.5`}
               items={SortDirectionList}
-              value={sortDirection}
-              onValue={(e) => setSortDirection(e as any)}
+              value={atomSortDirection}
+              onValue={(e) => setAtomSortDirection(e as any)}
               hideLabels={true}
             />
           </Item>
@@ -205,13 +204,13 @@ export default function Browser() {
       <div className={`w-full flex-auto relative`}>
         <Loader className={`transition-all top-40 fixed ${list ? 'opacity-0' : 'opacity-100'}`} />
         <div
-          className={`transition-opacity w-full gap-1 ${view === 'grid' ? 'flex flex-wrap px-2' : 'flex flex-col'} ${
+          className={`transition-opacity w-full gap-1 ${atomViewMode === 'grid' ? 'flex flex-wrap px-2' : 'flex flex-col'} ${
             list ? 'opacity-100' : 'opacity-0'
           }`}
         >
           {list &&
             list.map((item, index) => (
-              <ModelCard key={item.id} item={item} wide={view === 'list'} onClick={() => setItemToViewDetails(item)} />
+              <ModelCard key={item.id} item={item} wide={atomViewMode === 'list'} onClick={() => setItemToViewDetails(item)} />
             ))}
         </div>
       </div>

@@ -1,8 +1,9 @@
-import React, {ForwardedRef, forwardRef, useEffect, useImperativeHandle, useRef, useState} from 'react';
-import { KeyValue } from '@/interfaces/utils.interface';
-import Input, { InputElementType } from '@/components/Input/Input';
-import { Menu } from '@mantine/core';
-import { GlobalHotKeys } from 'react-hotkeys';
+import React, {ForwardedRef, forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
+import {KeyValue} from '@/interfaces/utils.interface';
+import Input, {InputElementType} from '@/components/Input/Input';
+import {Menu} from '@mantine/core';
+import {GlobalHotKeys} from 'react-hotkeys';
+import {arraysEqual} from "@/helpers/native.helper";
 
 interface SelectChildrenProp<T> {
   selected: KeyValue<T> | undefined;
@@ -15,7 +16,7 @@ export type SelectElementType = {
 interface SelectProps<T> {
   className?: string;
   items: KeyValue<T>[];
-  value?: T;
+  value?: T[];
   onValue?: (e: T[] | null) => void;
   children?: (props: SelectChildrenProp<T>) => any;
   multiple?: boolean;
@@ -35,18 +36,12 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(<T extends string
   const inputRef = useRef<InputElementType>(null);
 
   useEffect(() => {
-    if (props.value) {
-      const item = props.items.find((x) => props.value === x.value);
-      if (item) {
-        setSelected([item]);
-      }
+    // Goshadism is kicking hard, props.multi should be removed and add support...? we dont need it so we dont support it yet
+    if (props.value && !props.multi) {
+      const items = props.items.filter((x) => props.value?.includes(x.value));
+      setSelected(items ?? []);
     }
-  }, [])
-
-  useEffect(() => {
-    if (!props.clearable && selected.length === 0) return;
-    props.onValue?.(selected.length > 0 ? selected.map(x => x.value) : null);
-  }, [selected]);
+  }, [props.value])
 
   useEffect(() => {
     if (!search || search === '') {
@@ -55,25 +50,33 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(<T extends string
     setList(props.items.filter(x => x.value.includes(search)));
   }, [search, props.items])
 
-  function isSelected(item: KeyValue<T>): boolean {
+  const isSelected = useCallback((item: KeyValue<T>) => {
     return !!selected.find(x => x.value === item.value)
-  }
+  }, [selected])
 
   function select(item: KeyValue<T>, clear = true) {
     if (!props.multi) {
-      setSelected([item]);
+      emitValue([item]);
       setMenu(false);
       inputRef.current?.blur();
     } else {
       if (selected.includes(item)) {
-        setSelected(selected.filter(x => x !== item));
+        emitValue(selected.filter(x => x !== item));
       } else {
-        setSelected([...selected, item]);
+        emitValue([...selected, item]);
       }
       if (clear) {
         inputRef.current?.clear();
       }
     }
+  }
+
+  function emitValue(newList: typeof selected) {
+    setSelected(newList)
+    if (!props.clearable && newList.length === 0) return;
+    const newValues = newList.map(x => x.value);
+    if (arraysEqual(newValues, props.value ?? [])) return;
+    props.onValue?.(newList.length > 0 ? newList.map(x => x.value) : null);
   }
 
   function autoSelect() {
