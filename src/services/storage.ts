@@ -4,6 +4,7 @@ import {Model, ModelImage} from '@/interfaces/models.interface';
 import { API } from '@/api';
 import {until, wait} from "@/helpers/promise.helper";
 import * as exif from 'exifr';
+import {fileExists} from "@/helpers/node.helper";
 
 let STORAGE_PATH: string, STORAGE_MODELS_PATH: string, STORAGE_ASSETS_PATH: string;
 
@@ -131,13 +132,6 @@ async function checkStorage() {
   }
 
   await wait(100);
-}
-
-async function fileExists(path: string) {
-  return fs
-    .access(path, fs.constants.F_OK)
-    .then(() => true)
-    .catch(() => false);
 }
 
 function generateModelsJson(options: Omit<StorageModels, 'lastUpdate'>) {

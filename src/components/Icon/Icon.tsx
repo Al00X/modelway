@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import {MouseEvent, useEffect, useRef, useState} from 'react';
 import axios from 'axios';
 import './Icon.scss';
 
-export default function Icon(props: { icon: string; size?: string; className?: string, onCLick?: () => void; }) {
+export default function Icon(props: { icon: string; size?: string; className?: string, onMouseDown?: (e: MouseEvent) => void, onClick?: (e: MouseEvent) => void; }) {
   const ref = useRef<HTMLDivElement>(null);
   const [svgData, setSvgData] = useState('');
 
@@ -21,7 +21,8 @@ export default function Icon(props: { icon: string; size?: string; className?: s
       className={`${props.className ?? ''}`}
       ref={ref}
       dangerouslySetInnerHTML={{ __html: svgData }}
-      onClick={props.onCLick}
+      onMouseDown={(e) => props.onMouseDown?.(e as any)}
+      onMouseUp={(e) => props.onClick?.(e as any)}
     ></div>
   );
 }

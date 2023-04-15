@@ -1,19 +1,23 @@
-import { Model, ModelImage, ModelVersion } from '@/interfaces/models.interface';
+import { Model, ModelExtended, ModelImage, ModelVersion } from '@/interfaces/models.interface';
 import path from 'node:path';
 import { CivitModel, CivitModelFile, CivitModelImage, CivitModelVersion } from '@/interfaces/api.interface';
+import {findAllIndexes, mergeArray} from "@/helpers/native.helper";
+
+function CleanupTextFromShit(text: string) {
+  return text
+    .replaceAll(/ckpt/gi, '')
+    .replaceAll(/pruned/gi, '')
+    .replaceAll(/safetensor(s*)/gi, '')
+    .replaceAll('-', ' ')
+    .replaceAll('_', ' ');
+}
 
 export function ModelFileNamePrune(model: Model | string) {
   let text = typeof model === 'string' ? model : model.file;
   if (text.length <= 0) return '';
   text = path.parse(text).name;
   text = text.charAt(0).toUpperCase() + text.slice(1);
-  text = text
-    .replaceAll('ckpt', '')
-    .replaceAll('pruned', '')
-    .replaceAll('safetensor', '')
-    .replace('safetensors', '')
-    .replaceAll('-', ' ')
-    .replaceAll('_', ' ');
+  text = CleanupTextFromShit(text);
   let split = text.split(' ');
   let chunked: string[] = [];
   for (const i of split) {
@@ -34,6 +38,13 @@ export function ModelFileNamePrune(model: Model | string) {
     .trim();
 }
 
+export function ModelVersionNamePrune(model: Model | string) {
+  const text = typeof model === 'string' ? model : model.metadata.currentVersion.name;
+  if (!text) return '';
+  const semiResult = CleanupTextFromShit(text);
+  return semiResult;
+}
+
 export function CivitModelToModel(model: CivitModel, previousModel: Model): Model;
 export function CivitModelToModel(model: CivitModel, previousModel?: Model): Partial<Model> {
   // model.
@@ -44,15 +55,17 @@ export function CivitModelToModel(model: CivitModel, previousModel?: Model): Par
       width: v.width,
       height: v.height,
       nsfw: v.nsfw,
-      meta: v.meta ? {
-        seed: v.meta.seed,
-        steps: v.meta.steps,
-        sampler: v.meta.sampler,
-        prompt: v.meta.prompt,
-        negativePrompt: v.meta.negativePrompt,
-        cfgScale: v.meta.cfgScale,
-        hash: v.meta['Model hash'],
-      } : undefined,
+      meta: v.meta
+        ? {
+            seed: v.meta.seed,
+            steps: v.meta.steps,
+            sampler: v.meta.sampler,
+            prompt: v.meta.prompt,
+            negativePrompt: v.meta.negativePrompt,
+            cfgScale: v.meta.cfgScale,
+            hash: v.meta['Model hash'],
+          }
+        : undefined,
     };
   };
   const versionMap = (v: CivitModelVersion, file?: CivitModelFile | null): ModelVersion => {
@@ -69,7 +82,7 @@ export function CivitModelToModel(model: CivitModel, previousModel?: Model): Par
       updatedAt: v.updatedAt,
       files: file ? undefined : v.files,
       fileName: file?.name,
-      hashes: file?.hashes
+      hashes: file?.hashes,
     };
   };
 
@@ -79,7 +92,9 @@ export function CivitModelToModel(model: CivitModel, previousModel?: Model): Par
       : !previousModel
       ? model.modelVersions[0]
       : model.modelVersions.find((x) =>
-          x.files.find((y) => y.name === previousModel.file || y.hashes['AutoV1']?.toLowerCase() === previousModel.hash),
+          x.files.find(
+            (y) => y.name === previousModel.file || y.hashes['AutoV1']?.toLowerCase() === previousModel.hash,
+          ),
         ) ?? null;
   let currentVersionFile: CivitModelFile | null = null;
   if (!currentVersion && previousModel) {
@@ -88,11 +103,12 @@ export function CivitModelToModel(model: CivitModel, previousModel?: Model): Par
   }
   if (currentVersion) {
     currentVersionFile = previousModel
-      ? currentVersion.files.find((x) => x.name === previousModel.file || x.hashes['AutoV1']?.toLowerCase() === previousModel.hash) ??
-        null
+      ? currentVersion.files.find(
+          (x) => x.name === previousModel.file || x.hashes['AutoV1']?.toLowerCase() === previousModel.hash,
+        ) ?? null
       : currentVersion.files.find((x) => x.primary) ?? null;
     if (!currentVersionFile) {
-        currentVersionFile = currentVersion.files[0]
+      currentVersionFile = currentVersion.files[0];
     }
   }
 
@@ -103,7 +119,7 @@ export function CivitModelToModel(model: CivitModel, previousModel?: Model): Par
     description: model.description,
     creator: model.creator.username,
     type: model.type,
-    tags: [...new Set(model.tags.map(x => x.name))],
+    tags: [...new Set(model.tags.map((x) => x.name))],
     currentVersion: currentVersion ? versionMap(currentVersion, currentVersionFile) : {},
     versions: model.modelVersions.map((x) => versionMap(x)),
   };
@@ -141,17 +157,47 @@ export function MergeModelDetails(model: Model): Model {
         merges: mergeArray(currentVersion.merges, []),
       },
       versions: undefined,
-    }
-  }
+    },
+  };
 }
 
-function mergeArray<T>(a: T[] | undefined, b: T[] | undefined, key?: keyof T) {
-  const base = [...a ?? []];
-  const toMerge = [...b ?? []];
-  for (const i of toMerge) {
-    if (key && base.find(x => x[key] === i[key])) continue
-    else if (base.includes(i)) continue;
-    base.push(i);
+export function ModelPopulateComputedValues(model: Model): ModelExtended {
+  let name = model.metadata.name ??
+    model.file.substring(0, model.file.lastIndexOf('.')).replaceAll('_', ' ').replaceAll('-', ' ');
+  let version = model.metadata?.currentVersion?.name ? ModelVersionNamePrune(model.metadata?.currentVersion?.name) : undefined;
+  version = version?.replaceAll(new RegExp(`${name}`, 'gi'), '').trim();
+  name = name.replaceAll(new RegExp(`${version}`, 'gi'), '').trim();
+
+  return {
+    ...model,
+    computed: {
+      name: name,
+      recognized: model.metadata.currentVersion && Object.values(model.metadata.currentVersion).length > 0,
+      version: version
+    },
+  };
+}
+
+export function ModelsDeduplicate(models: Model[]) {
+  let toRemove: number[] = [];
+  for (let i = 0; i < models.length; i++) {
+    if (toRemove.includes(i)) continue;
+
+    const model = models[i];
+
+    const matches = findAllIndexes(
+      models,
+      (x, index) => {
+        return i !== index &&
+          ((x.file !== '' && model.file === x.file) ||
+            (x.metadata.id !== -1 && !!x.metadata.id && model.metadata.id === x.metadata.id))
+      }
+        ,
+    );
+    toRemove = toRemove.concat(matches);
   }
-  return base;
+  for (let qwe of toRemove) {
+    console.log('DEDUP', models[qwe]);
+  }
+  return models.filter((x, i) => !toRemove.includes(i));
 }

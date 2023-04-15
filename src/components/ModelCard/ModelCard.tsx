@@ -1,10 +1,7 @@
-import {Model, ModelExtended, ModelImage} from '@/interfaces/models.interface';
+import {ModelExtended, ModelImage} from '@/interfaces/models.interface';
 import './ModelCard.scss';
 import { useEffect, useState } from 'react';
 import Image from '@/components/Image/Image';
-import ModelDetailsDialog from '@/dialog/model-details-dialog/ModelDetailsDialog';
-import { Clone } from '@/helpers/object.helper';
-import { openToast } from '@/services/toast';
 
 interface ModelCardKeyImages {
   single: ModelImage | null;
@@ -35,7 +32,12 @@ export default function ModelCard(props: { item: ModelExtended; wide?: boolean; 
         {!props.wide ? (
           <>
             {keyImages.single && <Image item={keyImages.single} />}
-            <div className={`text-overlay font-semibold tracking-wide`}>{props.item.computed.name}</div>
+            <div className={`flex flex-col text-overlay font-semibold tracking-wide`}>
+              {props.item.computed.name}
+              {props.item.computed.version && <span className={`text-sm font-bold tracking-wider px-2 text-white py-1 bg-black bg-opacity-80 rounded-xl mt-1`}>
+                {props.item.computed.version}
+              </span>}
+            </div>
             {props.item.metadata.currentVersion.baseModel && (
               <div
                 className={`absolute left-0 top-0 py-1 px-2 bg-gray-900 text-white text-sm shadow-sm font-medium rounded-br-xl`}

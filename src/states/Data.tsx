@@ -1,6 +1,6 @@
 import {atom} from "jotai";
-import {Model, ModelExtended, ModelImage, ModelType} from "@/interfaces/models.interface";
-import {MergeModelDetails} from "@/helpers/model.helper";
+import {Model, ModelExtended, ModelType} from "@/interfaces/models.interface";
+import {MergeModelDetails, ModelPopulateComputedValues} from "@/helpers/model.helper";
 
 type ModelsListType = { [p in ModelType]?: Model[] };
 
@@ -13,14 +13,7 @@ export class DataState {
     for (let i of models) {
       const model = MergeModelDetails(i);
 
-      list.push({
-        ...model,
-        computed: {
-          name:
-            model.metadata.name ??
-            model.file.substring(0, model.file.lastIndexOf('.')).replaceAll('_', ' ').replaceAll('-', ' '),
-        }
-      })
+      list.push(ModelPopulateComputedValues(model))
     }
     return list;
   });

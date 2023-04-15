@@ -5,7 +5,6 @@ import Image from '@/components/Image/Image';
 import Button from '@/components/Button/Button';
 import Modal from '@/components/Modal/Modal';
 import { useKeenSlider } from 'keen-slider/react';
-import { Clone } from '@/helpers/object.helper';
 import ImageDetailsDialog from '@/dialog/image-details-dialog/ImageDetailsDialog';
 import { ImportAssets } from '@/services/storage';
 import Input from '@/components/Input/Input';
@@ -14,6 +13,7 @@ import { OpenExternalModelLink, OpenExternalUser } from '@/services/shell';
 import './ModelDetailsDialog.scss';
 import { atom, useAtom } from 'jotai';
 import { useForceUpdate } from '@mantine/hooks';
+import {Clone} from "@/helpers/native.helper";
 
 const Separator = `    .    `;
 

@@ -69,5 +69,7 @@ export interface ModelImage {
 export interface ModelExtended extends Model {
   computed: {
     name: string;
+    recognized: boolean;
+    version?: string;
   }
 }

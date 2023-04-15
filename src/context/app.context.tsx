@@ -4,7 +4,7 @@ import { Model, ModelType } from '@/interfaces/models.interface';
 import { GetModelHash, ScanModelDirectory } from '@/services/scan';
 import Progress from '@/components/Progress/Progress';
 import CivitGetModel from '@/services/api';
-import {CivitModelToModel} from '@/helpers/model.helper';
+import {CivitModelToModel, ModelsDeduplicate} from '@/helpers/model.helper';
 import Button from '@/components/Button/Button';
 import {DataState} from "@/states/Data";
 import {useAtom} from "jotai";
@@ -179,6 +179,7 @@ export function AppProvider(props: { children: any }) {
         i++;
       }
     }
+    console.log(ModelsDeduplicate(newSyncedList));
 
     await finalizeSyncing(newSyncedList);
   }

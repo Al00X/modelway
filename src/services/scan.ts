@@ -3,6 +3,8 @@ import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import * as buffer from 'node:buffer';
 import { ModelType } from '@/interfaces/models.interface';
+import {getFiles} from "@/helpers/node.helper";
+import {textIncludesArray} from "@/helpers/native.helper";
 
 const AUTOMATIC1111_PATH = path.join('E:', 'sources', 'automatic1111-sd-webui');
 const SD_MODELS_PATH = path.join(AUTOMATIC1111_PATH, 'models', 'Stable-diffusion');
@@ -12,6 +14,8 @@ const EMBEDDINGS_PATH = path.join(AUTOMATIC1111_PATH, 'embeddings');
 const MODEL_EXTENSIONS = ['.safetensors', '.ckpt', '.pt', '.base'];
 
 type HashAlgorithms = 'autoV1' | 'sha256';
+
+const IGNORE_LIST = ['pix2pix','.vae', '_vae.', 'inpainting', 'x4-upscaler', 'v2-512-depth']
 
 export async function ScanModelDirectory(type: ModelType) {
   const dir =
@@ -39,8 +43,7 @@ export async function ScanModelDirectory(type: ModelType) {
   for (let filePath of files) {
     if (
       !MODEL_EXTENSIONS.includes(path.extname(filePath)) ||
-      filePath.includes('.vae') ||
-      filePath.includes('inpainting')
+      textIncludesArray(filePath, IGNORE_LIST)
     )
       continue;
     try {
@@ -61,17 +64,6 @@ export async function ScanModelDirectory(type: ModelType) {
     }
   }
   return models;
-}
-
-async function getFiles(dir: string): Promise<string[]> {
-  const dirents = await fs.readdir(dir, { withFileTypes: true });
-  const files = await Promise.all(
-    dirents.map((dirent) => {
-      const res = path.resolve(dir, dirent.name);
-      return dirent.isDirectory() ? getFiles(res) : res;
-    }),
-  );
-  return Array.prototype.concat(...files);
 }
 
 export async function GetModelHash(model: {fullPath: string, file: string}, algorithm: HashAlgorithms) {
