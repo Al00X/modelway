@@ -1,4 +1,4 @@
-import {CivitFileHashes, CivitModelFile} from "@/interfaces/api.interface";
+import { CivitFileHashes, CivitModelFile } from '@/interfaces/api.interface';
 
 export type ModelType =
   | 'Checkpoint'
@@ -22,8 +22,8 @@ export interface ModelVersion {
   images?: ModelImage[];
   createdAt?: string;
   updatedAt?: string;
-  files?: CivitModelFile[],
-  hashes?: CivitFileHashes
+  files?: CivitModelFile[];
+  hashes?: CivitFileHashes;
 }
 
 export interface Model {
@@ -42,9 +42,9 @@ export interface Model {
     tags?: string[];
     coverImage?: ModelImage;
     notes?: string;
-    currentVersion: ModelVersion,
-    versions?: ModelVersion[],
-    originalValues?: Model['metadata'],
+    currentVersion: ModelVersion;
+    versions?: ModelVersion[];
+    originalValues?: Model['metadata'];
   };
 }
 
@@ -71,5 +71,5 @@ export interface ModelExtended extends Model {
     name: string;
     recognized: boolean;
     version?: string;
-  }
+  };
 }

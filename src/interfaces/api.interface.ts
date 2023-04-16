@@ -83,7 +83,7 @@ export interface CivitModelImage {
       isCategory: boolean;
     };
     automated: boolean;
-  }[]
+  }[];
 }
 
 export interface CivitModelFile {

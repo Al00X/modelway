@@ -15,7 +15,8 @@
     justify-content: center;
     background: transparent !important;
     border-radius: initial !important;
-    & > div, & > div > div {
+    & > div,
+    & > div > div {
       display: contents !important;
     }
   }

@@ -1,8 +1,9 @@
 .swiper-scrollbar-drag {
-  background: rgba(255,255,255,0.6) !important;
+  background: rgba(255, 255, 255, 0.6) !important;
 }
 .swiper.mousewheel-smooth {
-  .swiper-wrapper, .swiper-scrollbar-drag {
+  .swiper-wrapper,
+  .swiper-scrollbar-drag {
     transition-duration: 300ms !important;
   }
 }
