@@ -54,11 +54,12 @@ export function arrayHasAny(term: string[], array: string[]) {
 }
 
 // Checks if the first array has all the items inside the second array (is a subset)
-export function arrayHasAll(term: string[], array: string[]) {
+export function arrayHasAll(term: string[], array: any[], ignoreCase?: boolean) {
   if (term.length === 0 || array.length === 0) return false;
+  const transformedArray = ignoreCase ? array.map(x => typeof x === 'string' ? x.toLowerCase() : x) : array;
   let pass = 0;
   for(let i of term) {
-    if (array.includes(i)) {
+    if (transformedArray.includes(i)) {
       pass++;
     }
   }

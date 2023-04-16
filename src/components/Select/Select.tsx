@@ -16,7 +16,7 @@ export type SelectElementType = {
 interface SelectProps<T> {
   className?: string;
   items: KeyValue<T>[];
-  value?: T[];
+  value?: T[] | null;
   onValue?: (e: T[] | null) => void;
   children?: (props: SelectChildrenProp<T>) => any;
   multiple?: boolean;
@@ -36,7 +36,7 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(<T extends string
   const inputRef = useRef<InputElementType>(null);
 
   useEffect(() => {
-    // Goshadism is kicking hard, props.multi should be removed and add support...? we dont need it so we dont support it yet
+    // Goshadism is kicking hard, '!props.multi' should be removed and add support...? we dont need it so we dont support it :3
     if (props.value && !props.multi) {
       const items = props.items.filter((x) => props.value?.includes(x.value));
       setSelected(items ?? []);
@@ -99,9 +99,9 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(<T extends string
 
   useImperativeHandle(ref, () => ({
     clear: () => {
-      setSelected([]);
+      emitValue([]);
     }
-  }), [])
+  }), [props.clearable, props.value, props.onValue])
 
   return (
     <>

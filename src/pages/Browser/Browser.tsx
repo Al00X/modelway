@@ -1,5 +1,5 @@
 import { useAppContext } from '@/context/app.context';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ModelExtended, ModelType } from '@/interfaces/models.interface';
 import Loader from '@/components/Loader/Loader';
 import ModelCard from '@/components/ModelCard/ModelCard';
@@ -10,7 +10,7 @@ import { KeyValue } from '@/interfaces/utils.interface';
 import Button, { ButtonClickEvent } from '@/components/Button/Button';
 import { GlobalHotKeys } from 'react-hotkeys';
 import { openToast } from '@/services/toast';
-import { atom, useAtom, useAtomValue } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { DataState } from '@/states/Data';
 import ModelDetailsDialog from '@/dialog/model-details-dialog/ModelDetailsDialog';
 import { useForceUpdate } from '@mantine/hooks';
@@ -39,9 +39,8 @@ const TruncateViewList: KeyValue<TruncateViewType>[] = [
 ];
 
 export default function Browser() {
-  const [atomAvailableTags] = useAtom<KeyValue<string>[]>(
-    useMemo(() => atom((get) => get(DataState.availableTags).map((x) => ({ label: x, value: x }))), []),
-  );
+  const [atomAvailableTags] = useAtom(DataState.availableTagsKeyValue);
+  const [atomAvailableMerges] = useAtom(DataState.availableMergesKeyValue);
   const atomList = useAtomValue(DataState.processedList);
   const [atomViewMode, setAtomViewMode] = useAtom(SettingsState.viewMode);
   const [atomTruncateViewMode, setAtomTruncateViewMode] = useAtom(SettingsState.truncateViewMode);
@@ -53,9 +52,11 @@ export default function Browser() {
   const [itemToViewDetails, setItemToViewDetails] = useState<ModelExtended | undefined>(undefined);
   const [search, setSearch] = useState('');
   const [filterTags, setFilterTags] = useState<string[] | null>(null);
+  const [filterMerges, setFilterMerges] = useState<string[] | null>(null);
 
   const searchInputRef = useRef<InputElementType>(null);
   const filterTagSelectRef = useRef<SelectElementType>(null);
+  const filterMergesSelectRef = useRef<SelectElementType>(null);
 
   const appContext = useAppContext();
   const forceUpdate = useForceUpdate();
@@ -83,7 +84,10 @@ export default function Browser() {
       }
 
       if (filterTags && filterTags.length > 0) {
-        listToSet = listToSet.filter((x) => arrayHasAll(filterTags, x.metadata.tags ?? []))
+        listToSet = listToSet.filter((x) => arrayHasAll(filterTags, x.metadata.tags ?? [], true));
+      }
+      if (filterMerges && filterMerges.length > 0) {
+        listToSet = listToSet.filter((x) => arrayHasAll(filterMerges, x.metadata.currentVersion?.merges ?? [], true));
       }
 
       if (search) {
@@ -108,7 +112,7 @@ export default function Browser() {
       console.timeEnd('Prepare List');
       setList(listToSet);
     }, 0);
-  }, [atomList, category, atomSortMode, atomSortDirection, search, atomTruncateViewMode, filterTags]);
+  }, [atomList, category, atomSortMode, atomSortDirection, search, atomTruncateViewMode, filterTags, filterMerges]);
 
   const runServerSync = useCallback(
     (e: ButtonClickEvent) => {
@@ -127,9 +131,8 @@ export default function Browser() {
     }
   }, [atomList]);
   useEffect(() => {
-    console.log(atomSortMode);
     prepareList();
-  }, [search, atomSortMode, atomSortDirection, atomTruncateViewMode, filterTags]);
+  }, [search, atomSortMode, atomSortDirection, atomTruncateViewMode, filterTags, filterMerges]);
 
   return (
     <div className={`flex flex-col h-full overflow-auto`}>
@@ -187,11 +190,29 @@ export default function Browser() {
               clearable={true}
               placeholder={'By tags...'}
               multi={true}
+              value={filterTags}
               onValue={(e) => {
                 setFilterTags(e);
               }}
             ></Select>
-            <Button onClick={() => filterTagSelectRef.current?.clear()}>CLEAR</Button>
+            <Select
+              ref={filterMergesSelectRef}
+              items={atomAvailableMerges}
+              multiple={true}
+              cols={2}
+              className={`w-full max-w-[20rem]`}
+              clearable={true}
+              placeholder={'By Merges...'}
+              multi={true}
+              value={filterMerges}
+              onValue={(e) => {
+                setFilterMerges(e);
+              }}
+            ></Select>
+            <Button onClick={() => {
+              filterTagSelectRef.current?.clear()
+              filterMergesSelectRef.current?.clear()
+            }}>CLEAR</Button>
           </Item>
         </div>
         <div className={`flex flex-col flex-none h-full`}>
