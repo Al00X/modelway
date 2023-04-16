@@ -1,4 +1,4 @@
-import Icon from '@/components/Icon/Icon';
+import { Icon } from '@/components/Icon/Icon';
 import { KeyValue } from '@/interfaces/utils.interface';
 
 export const ButtonGroup = (props: {
