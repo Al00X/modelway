@@ -71,7 +71,7 @@
     "yet-another-react-lightbox": "^3.3.0"
   },
   "lint-staged": {
-    "*.{js,ts,tsx,jsx}": "eslint --cache --fix",
+    "*.{js,ts,tsx,jsx}": "eslint --cache --fix -c eslint.config.js",
     "*.{js,ts,tsx,jsx,html,css,scss}": "prettier --write \"src/**/*\""
   }
 }

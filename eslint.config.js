@@ -14,6 +14,7 @@ module.exports = defineFlatConfig([
   ...sheriff(sheriffOptions),
   {
     files: ['src/**'],
+    ignores: ['electron/**'],
     rules: {
       'react/destructuring-assignment': 0,
       '@typescript-eslint/consistent-type-imports': 0,

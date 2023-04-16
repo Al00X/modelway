@@ -1,4 +1,4 @@
-import { forwardRef, KeyboardEvent, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, KeyboardEvent, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Icon } from '@/components/Icon/Icon';
 
 export type InputElementType = {
@@ -56,10 +56,10 @@ const Input = forwardRef<
     }
   }
 
-  function clearInput() {
+  const clearInput = useCallback(() => {
     setInput('');
     props.onValue?.('');
-  }
+  }, [props.onValue]);
 
   function focus() {
     inputRef.current?.focus();

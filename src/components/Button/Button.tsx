@@ -1,5 +1,5 @@
 import { MouseEvent, useEffect, useState } from 'react';
-import Loader from '@/components/Loader/Loader';
+import { Loader } from '@/components/Loader/Loader';
 
 export interface ButtonClickEvent {
   setLoading: (v: boolean) => void;
