@@ -1,22 +1,22 @@
-import { ModelImage } from '@/interfaces/models.interface';
 import './Image.scss';
-import { ResolveImage } from '@/services/image-asset';
 import { useAtom } from 'jotai';
-import { SettingsState } from '@/states/Settings';
 import { useState } from 'react';
 import { Blurhash } from 'react-blurhash';
+import { resolveImage } from '@/services/image-asset';
+import { SettingsState } from '@/states/Settings';
 import useContextMenu from '@/hooks/useContextMenu';
+import { ModelImage } from '@/interfaces/models.interface';
 
-export default function Image(props: {
+export const Image = (props: {
   item: ModelImage;
   fit?: 'width' | 'height';
   onClick?: (e: MouseEvent) => void;
   onLoad?: () => void;
   onUpdate?: (item: ModelImage) => void;
   onSetAsCover?: () => void;
-  cursor?: 'auto' | 'pointer' | 'default',
+  cursor?: 'auto' | 'pointer' | 'default';
   legalize?: boolean;
-}) {
+}) => {
   const [isNSFW, setNSFW] = useAtom(SettingsState.isNSFWToggled);
   const [loaded, setLoaded] = useState(false);
   const [contextRef] = useContextMenu({
@@ -28,9 +28,12 @@ export default function Image(props: {
           props.onUpdate?.(props.item);
         },
       },
-      { text: 'Set as cover photo', action: () => {
-        props.onSetAsCover?.();
-        } },
+      {
+        text: 'Set as cover photo',
+        action: () => {
+          props.onSetAsCover?.();
+        },
+      },
       {
         text: 'Remove from gallery',
         action: () => {
@@ -45,37 +48,42 @@ export default function Image(props: {
   );
 
   return (
-    <>
-      <div
-        ref={contextRef}
-        onClick={(e) => props.onClick?.(e as any)}
-        className={`model-image ${props.fit === 'width' ? 'fit-width' : props.fit === 'height' ? 'fit-height' : ''} ${
-          props.cursor === 'auto' || props.cursor === undefined ? props.onClick ? 'cursor-pointer' : '' : props.cursor === 'pointer' ? 'cursor-pointer' : ''
+    <div
+      role={`presentation`}
+      ref={contextRef}
+      style={{ aspectRatio }}
+      className={`model-image ${props.fit === 'width' ? 'fit-width' : props.fit === 'height' ? 'fit-height' : ''} ${
+        props.cursor === 'auto' || props.cursor === undefined
+          ? props.onClick
+            ? 'cursor-pointer'
+            : ''
+          : props.cursor === 'pointer'
+          ? 'cursor-pointer'
+          : ''
+      }`}
+      onClick={(e) => props.onClick?.(e as never)}
+    >
+      <div className={`transition-all absolute inset-0 pointer-events-none`}></div>
+      {!loaded && (
+        <div style={{ aspectRatio }} className={`h-full w-auto bg-gray-800`}>
+          {!!props.item.hash && <Blurhash className={`w-full h-full`} hash={props.item.hash} />}
+        </div>
+      )}
+      <img
+        draggable={false}
+        src={resolveImage(props.item)}
+        width={props.item.width ?? undefined}
+        height={props.item.height ?? undefined}
+        alt=""
+        loading="eager"
+        className={`transition-all ${!isNSFW && props.item.nsfw && !props.legalize ? 'blurry' : ''} ${
+          loaded ? '' : 'invisible absolute'
         }`}
-        style={{ aspectRatio: aspectRatio }}
-      >
-        <div className={`transition-all absolute inset-0 pointer-events-none`}></div>
-        {!loaded && (
-          <div style={{ aspectRatio: aspectRatio }} className={`h-full w-auto bg-gray-800`}>
-            {props.item.hash && <Blurhash className={`w-full h-full`} hash={props.item.hash} />}
-          </div>
-        )}
-        <img
-          draggable={false}
-          className={`transition-all ${!isNSFW && props.item.nsfw && !props.legalize ? 'blurry' : ''} ${
-            loaded ? '' : 'invisible absolute'
-          }`}
-          src={ResolveImage(props.item)}
-          width={props.item.width ?? undefined}
-          height={props.item.height ?? undefined}
-          alt=""
-          onLoad={() => {
-            props.onLoad?.();
-            setLoaded(true);
-          }}
-          loading="eager"
-        />
-      </div>
-    </>
+        onLoad={() => {
+          props.onLoad?.();
+          setLoaded(true);
+        }}
+      />
+    </div>
   );
-}
+};

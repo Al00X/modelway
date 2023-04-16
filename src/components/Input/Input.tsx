@@ -1,9 +1,9 @@
-import Icon from '@/components/Icon/Icon';
-import {forwardRef, KeyboardEvent, useEffect, useImperativeHandle, useRef, useState} from 'react';
+import { forwardRef, KeyboardEvent, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { Icon } from '@/components/Icon/Icon';
 
 export type InputElementType = {
   focus: () => void;
-  getBoundingClientRect: () => DOMRect,
+  getBoundingClientRect: () => DOMRect;
   blur: () => void;
   clear: () => void;
 };
@@ -37,12 +37,15 @@ const Input = forwardRef<
     if (!props.debounce) {
       setInput(props.value);
     }
-  }, [props.value]);
+  }, [props.debounce, props.value]);
 
   function onInputChange(e: string) {
     setInput(e);
 
-    const changeFn = () => (props.onValue ? props.onValue(e) : null);
+    const changeFn = () => {
+      props.onValue?.(e);
+    };
+
     if (props.debounce) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
@@ -55,7 +58,7 @@ const Input = forwardRef<
 
   function clearInput() {
     setInput('');
-    props.onValue ? props.onValue('') : null;
+    props.onValue?.('');
   }
 
   function focus() {
@@ -72,24 +75,26 @@ const Input = forwardRef<
       getBoundingClientRect: () => wrapperRef.current!.getBoundingClientRect(),
       focus,
       blur,
-      clear: clearInput
+      clear: clearInput,
     }),
-    [wrapperRef.current],
+    [clearInput],
   );
 
   return (
     <div
+      tabIndex={0}
+      role={`textbox`}
       ref={wrapperRef}
-      onClick={() => {
-        focus();
-        props.onClick?.();
-      }}
       style={{ cursor: 'text' }}
       className={`w-full min-h-[2.75rem] h-auto flex items-center bg-gray-600 border border-gray-400 text-white rounded-lg gap-4 p-2 overflow-auto ${
         props.className ?? ''
       }`}
+      onClick={() => {
+        focus();
+        props.onClick?.();
+      }}
     >
-      {props.icon && (
+      {!!props.icon && (
         <Icon className={`flex-none ml-2 opacity-60 pointer-events-none`} icon={props.icon} size={`1rem`} />
       )}
       {props.startEl}
@@ -98,7 +103,14 @@ const Input = forwardRef<
         className={`bg-transparent w-full outline-0`}
         style={{ cursor: 'inherit', minWidth: '3rem' }}
         value={input}
-        onInput={(e) => onInputChange(e.currentTarget.value)}
+        placeholder={props.placeholder}
+        readOnly={props.readonly}
+        onFocus={() => props.onFocus?.()}
+        onBlur={() => props.onBlur?.()}
+        onKeyDown={props.onKeyDown}
+        onInput={(e) => {
+          onInputChange(e.currentTarget.value);
+        }}
         onMouseDown={(e) => {
           if (props.setCursorToEnd) {
             e.preventDefault();
@@ -107,23 +119,18 @@ const Input = forwardRef<
             }
           }
         }}
-        onFocus={() => props.onFocus?.()}
-        onBlur={() => props.onBlur?.()}
-        onKeyDown={props.onKeyDown}
-        placeholder={props.placeholder}
-        readOnly={props.readonly}
       />
-      {props.clearable && (
+      {!!props.clearable && (
         <div className={`w-6 flex-none`}>
           <Icon
+            className={`transition-all cursor-pointer ${input ? 'w-6' : 'w-0'}`}
+            icon={'close'}
             onMouseDown={(e) => {
               e.preventDefault();
             }}
-            onClick={(e) => {
+            onClick={() => {
               clearInput();
             }}
-            className={`transition-all cursor-pointer ${input ? 'w-6' : 'w-0'}`}
-            icon={'close'}
           />
         </div>
       )}

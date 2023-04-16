@@ -1,8 +1,16 @@
-import {shell} from "electron";
+import { shell } from 'electron';
 
-export function OpenExternalModelLink(id: number) {
-  shell.openExternal(`https://civitai.com/models/${id}`)
+export function openExternalModelLink(id: number) {
+  shell.openExternal(`https://civitai.com/models/${id}`).catch(() => {
+    errorLog();
+  });
 }
-export function OpenExternalUser(username: string) {
-  shell.openExternal(`https://civitai.com/user/${username}`)
+export function openExternalUser(username: string) {
+  shell.openExternal(`https://civitai.com/user/${username}`).catch(() => {
+    errorLog();
+  });
+}
+
+function errorLog() {
+  console.error('Error opening an external link (Electron Shell API)');
 }

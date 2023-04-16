@@ -1,9 +1,9 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { parse } from 'exifr';
 import { Model, ModelImage } from '@/interfaces/models.interface';
 import { API } from '@/api';
 import { until, wait } from '@/helpers/promise.helper';
-import * as exif from 'exifr';
 import { fileExists } from '@/helpers/node.helper';
 
 let STORAGE_PATH: string, STORAGE_MODELS_PATH: string, STORAGE_ASSETS_PATH: string;
@@ -67,30 +67,33 @@ interface StorageModels {
 //   }
 // }
 
-
-export async function StorageGetModels() {
+export async function storageGetModels() {
   await checkStorage();
   const file = await fs.readFile(STORAGE_MODELS_PATH);
+
   console.log('Reading models from disk...');
+
   return JSON.parse(file.toString()) as StorageModels;
 }
 
-export async function StorageSetModels(models: Model[]) {
+export async function storageSetModels(models: Model[]) {
   await checkStorage();
-  await fs.writeFile(STORAGE_MODELS_PATH, generateModelsJson({ models: models }));
+  await fs.writeFile(STORAGE_MODELS_PATH, generateModelsJson({ models }));
   console.log('...New data saved to disk...');
 }
 
-export async function ImportAssets(files: File[]): Promise<ModelImage[]> {
+export async function importAssets(files: File[]): Promise<ModelImage[]> {
   await checkStorage();
 
-  const unix = new Date().getTime();
+  const unix = Date.now();
   const assets: ModelImage[] = [];
-  for (let file of files) {
+
+  for (const file of files) {
     const fileName = `${file.name.length > 5 ? file.name.slice(0, 6) : file.name}-${unix}${path.extname(file.name)}`;
     const data = await fs.readFile(file.path);
     const metadata = await generateModelImageBuffer(data);
     const newPath = path.join(STORAGE_ASSETS_PATH, fileName);
+
     await fs.writeFile(newPath, data);
     assets.push({
       url: fileName,
@@ -98,36 +101,42 @@ export async function ImportAssets(files: File[]): Promise<ModelImage[]> {
     });
   }
   console.log('New Assets:', assets);
+
   return assets;
 }
 
 async function generateModelImageBuffer(data: Buffer): Promise<Omit<ModelImage, 'url'>> {
-  const meta = await exif.parse(data, true);
+  const meta = await parse(data, true);
 
   let prompt, negative, steps, hash, cfg, seed, sampler;
 
   if (meta.parameters) {
     const chunks = meta.parameters.split('\n');
+
     prompt = chunks.length > 0 ? chunks[0] : undefined;
     negative = chunks.length > 1 ? chunks[1].substring(18) : undefined;
     const infoChunk =
       chunks.length > 2
         ? (chunks[2] as string).split(', ').reduce((pre, cur) => {
             const entry = cur.split(': ');
+
             if (entry.length <= 1) return pre;
             pre[entry[0]] = entry[1];
+
             return pre;
           }, {} as any)
         : undefined;
+
     if (infoChunk && Object.keys(infoChunk).length > 0) {
-      steps = infoChunk['Steps'];
+      steps = infoChunk.Steps;
       hash = infoChunk['Model hash'];
       cfg = infoChunk['CFG scale'];
-      seed = infoChunk['Seed'];
-      sampler = infoChunk['Sampler'];
+      seed = infoChunk.Seed;
+      sampler = infoChunk.Sampler;
     }
   }
   console.log(meta);
+
   return {
     width: meta.ImageWidth,
     height: meta.ImageHeight,
@@ -136,7 +145,7 @@ async function generateModelImageBuffer(data: Buffer): Promise<Omit<ModelImage, 
 }
 
 async function waitForElectronCallback() {
-  return await until(() => API().UserDataPath !== null);
+  return until(() => API().UserDataPath !== null);
 }
 
 async function checkStorage() {

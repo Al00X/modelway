@@ -1,37 +1,40 @@
-import "./Tag.scss";
-import {useRef} from "react";
+import './Tag.scss';
+import { useRef } from 'react';
 
-export default function Tag(props: { tag: string, onClick?: () => void, onRightClick?: () => void, onDoubleClick?: () => void; }) {
+export const Tag = (props: {
+  tag: string;
+  onClick?: () => void;
+  onRightClick?: () => void;
+  onDoubleClick?: () => void;
+}) => {
   const clickTimeout = useRef<any>(null);
-
-  function onClick() {
-    props.onClick ? props.onClick() : null;
-  }
-  function onRightClick() {
-      props.onRightClick ? props.onRightClick() : null;
-  }
-  function onDoubleClick() {
-    props.onDoubleClick ? props.onDoubleClick() : null;
-  }
 
   function onHandleClick(e: MouseEvent) {
     clearTimeout(clickTimeout.current);
 
     if (e.detail === 1) {
-      clickTimeout.current = setTimeout(() => onClick(), 300)
+      clickTimeout.current = setTimeout(() => {
+        props.onClick?.();
+      }, 300);
     } else if (e.detail === 2) {
-      onDoubleClick()
+      props.onDoubleClick?.();
     }
   }
 
   return (
     <div
+      tabIndex={-1}
+      role={`button`}
       className={`tag`}
       key={props.tag}
-      onClick={(e) => onHandleClick(e as any)}
-      onContextMenu={() => onRightClick()}
+      onClick={(e) => {
+        onHandleClick(e as any);
+      }}
+      onContextMenu={() => {
+        props.onRightClick?.();
+      }}
     >
       {props.tag}
     </div>
   );
-}
+};

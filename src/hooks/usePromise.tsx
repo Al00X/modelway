@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 // if you pass a function as opt (second parameter), it'll act like onSuccess() callback,
 // or you can pass an object for more callbacks, just like .subscribe() in RXJS.
@@ -15,7 +15,7 @@ export default function usePromise<R, A>(
         onError?: (error: any) => void;
         onFinally?: () => void;
       }
-    | ((result: R) => void)
+    | ((result: R) => void),
 ) {
   const [result, setResult] = useState<R | null>(null);
   const [error, setError] = useState<any | null>(null);
@@ -28,13 +28,14 @@ export default function usePromise<R, A>(
       setResult(null);
       setLoading(true);
 
-      const isOptFn = opt && typeof opt === "function";
-      promiseFn(args)
-        .then((result) => {
-          if (isOptFn) opt(result);
-          else if (opt?.onSuccess) opt.onSuccess(result);
+      const isOptFn = opt && typeof opt === 'function';
 
-          setResult(result);
+      promiseFn(args)
+        .then((res) => {
+          if (isOptFn) opt(res);
+          else if (opt?.onSuccess) opt.onSuccess(res);
+
+          setResult(res);
         })
         .catch((error) => {
           if (!isOptFn && opt?.onError) opt.onError(error);
@@ -46,8 +47,8 @@ export default function usePromise<R, A>(
         });
     },
     {
-      error: error,
-      loading: loading,
+      error,
+      loading,
     },
   ] as [
     R | null,
@@ -55,6 +56,6 @@ export default function usePromise<R, A>(
     {
       error: any | null;
       loading: boolean;
-    }
+    },
   ];
 }

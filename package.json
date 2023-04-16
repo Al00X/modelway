@@ -17,7 +17,10 @@
     "build": "tsc && vite build && electron-builder",
     "preview": "vite preview",
     "pree2e": "vite build --mode=test",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "lint": "npx eslint -c eslint.config.js \"src/**\"",
+    "lint:fix": "npx eslint -c eslint.config.js \"src/**\" --fix",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@playwright/test": "^1.31.0",
@@ -29,6 +32,11 @@
     "electron": "^23.1.1",
     "electron-builder": "^23.6.0",
     "electron-devtools-installer": "^3.2.0",
+    "eslint": "^8.38.0",
+    "eslint-config-sheriff": "^11.7.0",
+    "eslint-define-config": "^1.18.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.2.1",
     "postcss": "^8.4.21",
     "prettier": "^2.8.4",
     "react": "^18.2.0",
@@ -61,5 +69,9 @@
     "react-modal": "^3.16.1",
     "react-zoom-pan-pinch": "^3.0.6",
     "yet-another-react-lightbox": "^3.3.0"
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx,jsx}": "eslint --cache --fix",
+    "*": "prettier --write"
   }
 }

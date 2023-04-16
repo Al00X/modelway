@@ -1,9 +1,9 @@
-import { Model, ModelExtended, ModelImage, ModelVersion } from '@/interfaces/models.interface';
 import path from 'node:path';
+import { Model, ModelExtended, ModelImage, ModelVersion } from '@/interfaces/models.interface';
 import { CivitModel, CivitModelFile, CivitModelImage, CivitModelVersion } from '@/interfaces/api.interface';
-import {findAllIndexes, mergeArray} from "@/helpers/native.helper";
+import { findAllIndexes, mergeArray } from '@/helpers/native.helper';
 
-function CleanupTextFromShit(text: string) {
+function cleanupTextFromShit(text: string) {
   return text
     .replaceAll(/ckpt/gi, '')
     .replaceAll(/pruned/gi, '')
@@ -12,41 +12,43 @@ function CleanupTextFromShit(text: string) {
     .replaceAll('_', ' ');
 }
 
-export function ModelFileNamePrune(model: Model | string) {
+export function modelFileNamePrune(model: Model | string) {
   let text = typeof model === 'string' ? model : model.file;
+
   if (text.length <= 0) return '';
   text = path.parse(text).name;
   text = text.charAt(0).toUpperCase() + text.slice(1);
-  text = CleanupTextFromShit(text);
-  let split = text.split(' ');
+  text = cleanupTextFromShit(text);
+  const split = text.split(' ');
   let chunked: string[] = [];
+
   for (const i of split) {
-    let words = i.split(/([A-Z]+|[A-Z]?[a-z]+)(?=[A-Z]|\b)/); //TitleCase to words
+    const words = i.split(/([A-Z]+|[A-Z]?[a-z]+)(?=[A-Z]|\b)/); //TitleCase to words
+
     chunked = [...chunked, ...words];
   }
 
   for (let i = 0; i < chunked.length; i++) {
     const chunk = chunked[i];
 
-    if (/^(v?[0-9.]+$)/i.test(chunk)) {
+    if (/^(v?[\d.]+$)/i.test(chunk)) {
       chunked[i] = '';
     }
   }
-  return chunked
-    .filter((x) => x)
-    .join(' ')
-    .trim();
+
+  return chunked.filter(Boolean).join(' ').trim();
 }
 
-export function ModelVersionNamePrune(model: Model | string) {
+export function modelVersionNamePrune(model: Model | string) {
   const text = typeof model === 'string' ? model : model.metadata.currentVersion.name;
+
   if (!text) return '';
-  const semiResult = CleanupTextFromShit(text);
-  return semiResult;
+
+  return cleanupTextFromShit(text);
 }
 
-export function CivitModelToModel(model: CivitModel, previousModel: Model): Model;
-export function CivitModelToModel(model: CivitModel, previousModel?: Model): Partial<Model> {
+export function civitModelToModel(model: CivitModel, previousModel: Model): Model;
+export function civitModelToModel(model: CivitModel, previousModel?: Model): Partial<Model> {
   // model.
   const imageMap = (v: CivitModelImage): ModelImage => {
     return {
@@ -92,11 +94,10 @@ export function CivitModelToModel(model: CivitModel, previousModel?: Model): Par
       : !previousModel
       ? model.modelVersions[0]
       : model.modelVersions.find((x) =>
-          x.files.find(
-            (y) => y.name === previousModel.file || y.hashes['AutoV1']?.toLowerCase() === previousModel.hash,
-          ),
+          x.files.find((y) => y.name === previousModel.file || y.hashes.AutoV1?.toLowerCase() === previousModel.hash),
         ) ?? null;
   let currentVersionFile: CivitModelFile | null = null;
+
   if (!currentVersion && previousModel) {
     // const sha256 = GetModelHash(previousModel, 'sha256');
     console.error(`Version YOKH NIGGA: ${previousModel.file ?? model.name}`);
@@ -104,7 +105,7 @@ export function CivitModelToModel(model: CivitModel, previousModel?: Model): Par
   if (currentVersion) {
     currentVersionFile = previousModel
       ? currentVersion.files.find(
-          (x) => x.name === previousModel.file || x.hashes['AutoV1']?.toLowerCase() === previousModel.hash,
+          (x) => x.name === previousModel.file || x.hashes.AutoV1?.toLowerCase() === previousModel.hash,
         ) ?? null
       : currentVersion.files.find((x) => x.primary) ?? null;
     if (!currentVersionFile) {
@@ -123,25 +124,26 @@ export function CivitModelToModel(model: CivitModel, previousModel?: Model): Par
     currentVersion: currentVersion ? versionMap(currentVersion, currentVersionFile) : {},
     versions: model.modelVersions.map((x) => versionMap(x)),
   };
+
   return {
     ...previousModel,
     metadata: {
       ...previousModel?.metadata,
-      type: previousModel?.metadata?.type ?? model.type,
-      currentVersion: previousModel?.metadata?.currentVersion ?? {},
+      type: previousModel?.metadata.type ?? model.type,
+      currentVersion: previousModel?.metadata.currentVersion ?? {},
       originalValues: mapped,
     },
   };
 }
 
-export function MergeModelDetails(model: Model): Model {
+export function mergeModelDetails(model: Model): Model {
   if (!model.metadata.originalValues) {
     // console.warn(`Model has no available server data for merging: ${model.file}`);
     return model;
   }
 
   const originalCurrentVersion = model.metadata.originalValues.currentVersion;
-  const currentVersion = model.metadata.currentVersion;
+  const { currentVersion } = model.metadata;
 
   return {
     ...model,
@@ -161,43 +163,48 @@ export function MergeModelDetails(model: Model): Model {
   };
 }
 
-export function ModelPopulateComputedValues(model: Model): ModelExtended {
-  let name = model.metadata.name ??
+export function modelPopulateComputedValues(model: Model): ModelExtended {
+  let name =
+    model.metadata.name ??
     model.file.substring(0, model.file.lastIndexOf('.')).replaceAll('_', ' ').replaceAll('-', ' ');
-  let version = model.metadata?.currentVersion?.name ? ModelVersionNamePrune(model.metadata?.currentVersion?.name) : undefined;
+  let version = model.metadata.currentVersion.name
+    ? modelVersionNamePrune(model.metadata.currentVersion.name)
+    : undefined;
+
   version = version?.replaceAll(new RegExp(`${name}`, 'gi'), '').trim();
-  name = name.replaceAll(new RegExp(`${version}`, 'gi'), '').trim();
+  name = name.replaceAll(new RegExp(`${version ?? ''}`, 'gi'), '').trim();
 
   return {
     ...model,
     computed: {
-      name: name,
+      name,
       recognized: model.metadata.currentVersion && Object.values(model.metadata.currentVersion).length > 0,
-      version: version
+      version,
     },
   };
 }
 
-export function ModelsDeduplicate(models: Model[]) {
+export function modelsDeduplicate(models: Model[]) {
   let toRemove: number[] = [];
+
   for (let i = 0; i < models.length; i++) {
     if (toRemove.includes(i)) continue;
 
     const model = models[i];
 
-    const matches = findAllIndexes(
-      models,
-      (x, index) => {
-        return i !== index &&
-          ((x.file !== '' && model.file === x.file) ||
-            (x.metadata.id !== -1 && !!x.metadata.id && model.metadata.id === x.metadata.id))
-      }
-        ,
-    );
-    toRemove = toRemove.concat(matches);
+    const matches = findAllIndexes(models, (x, index) => {
+      return (
+        i !== index &&
+        ((x.file !== '' && model.file === x.file) ||
+          (x.metadata.id !== -1 && !!x.metadata.id && model.metadata.id === x.metadata.id))
+      );
+    });
+
+    toRemove = [...toRemove, ...matches];
   }
-  for (let qwe of toRemove) {
+  for (const qwe of toRemove) {
     console.log('DEDUP', models[qwe]);
   }
+
   return models.filter((x, i) => !toRemove.includes(i));
 }

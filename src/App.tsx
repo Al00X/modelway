@@ -1,14 +1,12 @@
 import './App.scss';
 import './services/storage';
-import Browser from '@/pages/Browser/Browser';
-import { AppProvider } from '@/context/app.context';
+import { Browser } from '@/pages/Browser/Browser';
+import { AppProvider } from '@/context/App';
 
-export default function App() {
+export const App = () => {
   return (
-    <>
-      <AppProvider>
-        <Browser />
-      </AppProvider>
-    </>
+    <AppProvider>
+      <Browser />
+    </AppProvider>
   );
-}
+};

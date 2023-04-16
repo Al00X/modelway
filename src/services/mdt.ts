@@ -1,4 +1,5 @@
-// @ts-ignore
+/* eslint-disable */
+// @ts-expect-error
 
 const data = `
 UMix 3 [Ultimate Mix] (1.5) | Novel AI, SF-EB1.1, F111, F222, Classic Animation, Modern Animation, SamDoesArt V3, OpenJourney Epoch3|-|-|![[width=400 1.jpg\\|75]]![[width=400 2.jpg\\|75]]
@@ -52,42 +53,52 @@ JIM JORCRAFT (1.5)|-|\`jimjorcraflogo art style\` , \`dan mumford style\`|Good p
 JIM EIDOMODE (1.5)|-|Optional:\`art by apterus, art by dan mumford, art by lovecraft\`, \`apterus anatomy\`|-|![[width=400 252.jpg\\|75]]![[width=400 253.jpg\\|75]]![[width=400 254.jpg\\|75]]![[width=400 255.jpg\\|75]]![[width=400 256.jpg\\|75]]![[width=400 257.jpg\\|75]]
 JIM TERUMODE (1.5)|-|\`illustration horror by apterus\`, \`apterus creepy anatomy\`, \`art horror by apterus\`|Negative prompts destroys the style|![[width=400 258.jpg\\|75]]![[width=400 259.jpg\\|75]]![[width=400 260.jpg\\|75]]![[width=400 261.jpg\\|75]]
 JIM DUCTMODE (1.5)|-|\`gradient lovecraft colors, dan mumford style\`|-|![[width=400 262.jpg\\|75]]![[width=400 263.jpg\\|75]]![[width=400 264.jpg\\|75]]![[width=400 265.jpg\\|75]]![[width=400 266.jpg\\|75]]![[width=400 267.jpg\\|75]]
-`
+`;
 
 const lines = data.split('\n');
-let arr: any[] = [];
-for(let line of lines) {
-    const segment = line.split('|');
-    if (segment.length <= 1) continue;
+const arr: any[] = [];
 
-    let obj = {
-        name: segment[0],
-        base: segment[0].slice(segment[0].indexOf('(') + 1, -1),
-        merges: segment[1].trim() === '-' ? [] : segment[1].split(',').map(x => x.includes('...') ? false : x.trim()),
-        triggers: segment[2].trim() === '-' ? [] : segment[2].split(',').map(x => x.replaceAll('`', '').trim()),
-        options: segment[3].trim() === '-' ? '' : segment[3].trim().replaceAll('`', ''),
-        images: segment.slice(4).join('|').split('!').map(x => {
-            const end = x.indexOf('\\');
-            return x.substring(2, end);
-        }).filter(x => x)
-    }
-    arr.push(obj);
+for (const line of lines) {
+  const segment = line.split('|');
+
+  if (segment.length <= 1) continue;
+
+  const obj = {
+    name: segment[0],
+    base: segment[0].slice(segment[0].indexOf('(') + 1, -1),
+    merges: segment[1].trim() === '-' ? [] : segment[1].split(',').map((x) => (x.includes('...') ? false : x.trim())),
+    triggers: segment[2].trim() === '-' ? [] : segment[2].split(',').map((x) => x.replaceAll('`', '').trim()),
+    options: segment[3].trim() === '-' ? '' : segment[3].trim().replaceAll('`', ''),
+    images: segment
+      .slice(4)
+      .join('|')
+      .split('!')
+      .map((x) => {
+        const end = x.indexOf('\\');
+
+        return x.substring(2, end);
+      })
+      .filter(Boolean),
+  };
+
+  arr.push(obj);
 }
 
-const models = arr.map(x => ({
-    file: '',
-    hash: '',
-    metadata: {
-        id: -1,
-        type: 'Checkpoint',
-        name: x.name,
-        baseModel: x.base,
-        merges: x.merges,
-        notes: x.options,
-        triggers: x.triggers,
-        images: x.images.map((y: any) => ({ url: y })),
-    }
+const models = arr.map((x) => ({
+  file: '',
+  hash: '',
+  metadata: {
+    id: -1,
+    type: 'Checkpoint',
+    name: x.name,
+    baseModel: x.base,
+    merges: x.merges,
+    notes: x.options,
+    triggers: x.triggers,
+    images: x.images.map((y: any) => ({ url: y })),
+  },
 }));
 
 const fs = require('fs');
-fs.writeFileSync('o', JSON.stringify({models}, undefined, 1));
+
+fs.writeFileSync('o', JSON.stringify({ models }, undefined, 1));
