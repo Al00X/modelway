@@ -14,4 +14,5 @@ export const API = () => ({
     ipcRenderer.send('window', action);
   },
   IsWindowMaximized: () => ipcRenderer.invoke('window', 'isMaximized'),
+  DialogOpenDir: (title?: string) => ipcRenderer.invoke('dialog', { title, key: 'open-dir' }),
 });

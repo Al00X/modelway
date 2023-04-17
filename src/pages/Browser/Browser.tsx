@@ -47,8 +47,10 @@ export const Browser = () => {
         .then(() => {
           e.setLoading(false);
         })
-        .catch(() => {
-          console.error('Server sync failed');
+        .catch((error) => {
+          e.setLoading(false);
+          if (error === undefined) return;
+          console.error('Server sync failed', error);
         });
     },
     [list, appContext, filters?.category],
@@ -113,7 +115,8 @@ export const Browser = () => {
                 openToast('Saved Successfully!');
               }
             })
-            .catch(() => {
+            .catch((e) => {
+              console.error('Saving model changes to disk failed', e);
               openToast('Saving model changes to disk failed...');
             });
         }}

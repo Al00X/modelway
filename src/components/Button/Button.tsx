@@ -10,11 +10,12 @@ export const Button = (props: {
   children?: any;
   className?: string;
   loading?: boolean;
+  disabled?: boolean;
 }) => {
   const [loading, setLoading] = useState(props.loading);
 
   function onClick(e: MouseEvent) {
-    if (loading) return;
+    if (loading || props.disabled) return;
     props.onClick?.({ setLoading });
   }
 
@@ -25,9 +26,10 @@ export const Button = (props: {
   return (
     <button
       type="button"
-      className={`inline-flex justify-center rounded-md border border-transparent bg-gray-200 px-4 py-2 text-sm font-medium text-white ${
-        !loading ? 'hover:bg-gray-100' : 'pointer-events-none'
-      } focus:outline-none relative ${props.className ?? ''}`}
+      style={{ fontSize: '0.875rem' }}
+      className={`transition-all duration-100 inline-flex justify-center items-center rounded-md border border-transparent bg-gray-200 px-4 py-2 font-medium text-white ${
+        !loading && !props.disabled ? 'hover:bg-gray-150' : 'pointer-events-none'
+      } ${props.disabled ? 'opacity-50' : ''} focus:outline-none relative ${props.className ?? ''}`}
       onClick={(e) => {
         onClick(e as never);
       }}

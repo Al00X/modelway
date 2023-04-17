@@ -59,6 +59,7 @@ module.exports = defineFlatConfig([
       '@typescript-eslint/no-non-null-assertion': 0,
       '@typescript-eslint/no-unsafe-call': 0,
       'fp/no-class': 0,
+      '@typescript-eslint/no-throw-literal': 0,
     },
   },
 ]);

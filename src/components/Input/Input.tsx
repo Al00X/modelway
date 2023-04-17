@@ -27,7 +27,7 @@ const Input = forwardRef<
     startEl?: any;
   }
 >((props, ref) => {
-  const [input, setInput] = useState(props.value);
+  const [input, setInput] = useState(props.value ?? '');
   const inputRef = useRef<HTMLInputElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<any>(null);
@@ -35,7 +35,7 @@ const Input = forwardRef<
   useEffect(() => {
     // lazy-ass fix for a bug where u need to update the input when value changes...
     if (!props.debounce) {
-      setInput(props.value);
+      setInput(props.value ?? '');
     }
   }, [props.debounce, props.value]);
 

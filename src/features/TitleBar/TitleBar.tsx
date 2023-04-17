@@ -28,15 +28,18 @@ export const TitleBar = () => {
       .then((state) => {
         setMaximized(!!state);
       })
-      .catch(() => {
-        console.error('Window Get State Failed (Electron API)');
+      .catch((e) => {
+        console.error('Window Get State Failed (Electron API)', e);
       });
   }, []);
 
   return (
     <div className={`title-bar-panel`} style={{ zIndex: 99999 }}>
       <div className={`draggable`}>
-        <p className={`ml-4 text-sm`}>ModelWay</p>
+        <div style={{ letterSpacing: '3.5px' }} className={`ml-4 text-sm relative`}>
+          MODELWAY
+          {/*<Icon className={`absolute -right-3 top-0`} icon={'y'} size={'1.125rem'} />*/}
+        </div>
       </div>
       <MiniSwitch value={isNSFW} trueText={`NSFW`} falseText={`SFW`} onValue={setNSFW} />
       <div className={`w-4`}>{/* Space */}</div>

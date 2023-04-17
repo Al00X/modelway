@@ -68,10 +68,11 @@
     "react-hotkeys": "^2.0.0",
     "react-modal": "^3.16.1",
     "react-zoom-pan-pinch": "^3.0.6",
+    "wouter": "^2.10.0",
     "yet-another-react-lightbox": "^3.3.0"
   },
   "lint-staged": {
-    "*.{js,ts,tsx,jsx}": "eslint --cache --fix -c eslint.config.js --ignore-pattern \"electron/**\"",
+    "*.{js,ts,tsx,jsx}": "eslint --cache --fix -c eslint.config.js --ignore-pattern \"!src/**\"",
     "*.{js,ts,tsx,jsx,html,css,scss}": "prettier --write \"src/**/*\""
   }
 }

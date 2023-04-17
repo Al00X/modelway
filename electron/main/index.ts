@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain, protocol } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, protocol, dialog } from 'electron';
 import { release } from 'node:os';
 import { join } from 'node:path';
 import installExtension, { REACT_DEVELOPER_TOOLS, REDUX_DEVTOOLS } from 'electron-devtools-installer';
@@ -115,7 +115,6 @@ app.on('activate', () => {
   }
 });
 
-// New window example arg: new windows url
 ipcMain.handle('open-win', (_, arg) => {
   const childWindow = new BrowserWindow({
     webPreferences: {
@@ -131,6 +130,8 @@ ipcMain.handle('open-win', (_, arg) => {
     childWindow.loadFile(indexHtml, { hash: arg });
   }
 });
+
+// --------------------------------------------------------------------------------
 
 ipcMain.on('app', function (evt, messageObj) {
   // Send message back to renderer.
@@ -157,5 +158,10 @@ ipcMain.handle('window', (e, message) => {
   switch (message) {
     case 'isMaximized':
       return window.isMaximized();
+  }
+});
+ipcMain.handle('dialog', async (e, message) => {
+  if (message.key === 'open-dir') {
+    return await dialog.showOpenDialog({ title: message.title, properties: ['openDirectory'] });
   }
 });

@@ -31,7 +31,7 @@ export interface CivitModel {
     username: string;
     image: string;
   };
-  tags: { name: string }[];
+  tags: (string | { name: string })[];
   modelVersions: CivitModelVersion[];
 }
 

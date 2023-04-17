@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAtom } from 'jotai';
+import { useLocation } from 'wouter';
+import { useForceUpdate } from '@mantine/hooks';
 import { storageGetModels, storageSetModels } from '@/services/storage';
 import { Model, ModelType } from '@/interfaces/models.interface';
 import { getModelHash, scanModelDirectory } from '@/services/scan';
@@ -9,6 +11,8 @@ import { civitModelToModel, modelsDeduplicate } from '@/helpers/model.helper';
 import { Button } from '@/components/Button/Button';
 import { DataState } from '@/states/Data';
 import { AppContext } from '@/context/App/app.context';
+import { SettingsState } from '@/states/Settings';
+import { Modal } from '@/components/Modal/Modal';
 
 export interface ProgressEvent {
   current: number;
@@ -22,13 +26,22 @@ const STARTUP_DELAY = 1;
 export const AppProvider = (props: { children: any }) => {
   const isSyncing = useRef<'client' | 'server' | undefined>();
   const cancelSyncing = useRef<boolean>(false);
+  const [isCanceling, setIsCanceling] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<ProgressEvent | undefined>();
+  const [openSyncDialog, setOpenSyncDialog] = useState(false);
 
   const [atomRawList, setAtomRawList] = useAtom(DataState.rawList);
+  const [atomUserPaths, setAtomUserPaths] = useAtom(SettingsState.userPaths);
+  const [atomIsFirstLaunch, setAtomIsFirstLaunch] = useAtom(SettingsState.isFirstLaunch);
   const [render, setRender] = useState(false);
+  const [location, setLocation] = useLocation();
+
+  const forceUpdate = useForceUpdate();
 
   function cancelSync() {
+    if (cancelSyncing.current) return;
+    setIsCanceling(true);
     cancelSyncing.current = true;
   }
 
@@ -44,6 +57,30 @@ export const AppProvider = (props: { children: any }) => {
     return canceled;
   }, []);
 
+  const greetForFirstLaunch = useCallback(() => {
+    if (atomIsFirstLaunch) {
+      setOpenSyncDialog(true);
+    }
+  }, [atomIsFirstLaunch]);
+
+  const endGreeting = useCallback(() => {
+    setAtomIsFirstLaunch(false);
+  }, [setAtomIsFirstLaunch]);
+
+  const closeSyncDialog = useCallback(
+    (result: boolean) => {
+      setOpenSyncDialog(false);
+      if (result) {
+        forceUpdate();
+        serverSync().catch((e) => {
+          console.error('Server sync failed', e);
+        });
+      }
+      endGreeting();
+    },
+    [endGreeting, forceUpdate, serverSync],
+  );
+
   const finalizeSyncing = useCallback(
     async (newList: Model[]) => {
       await storageSetModels(newList);
@@ -57,6 +94,7 @@ export const AppProvider = (props: { children: any }) => {
   function cleanup() {
     setProgress(undefined);
     setLoading(false);
+    setIsCanceling(false);
     isSyncing.current = undefined;
     cancelSyncing.current = false;
   }
@@ -80,7 +118,7 @@ export const AppProvider = (props: { children: any }) => {
     });
 
     for (let i = 0; i < total; i++) {
-      if (shouldCancelSync()) return;
+      if (shouldCancelSync()) throw undefined;
       counter++;
       const item = tempRawList[i];
 
@@ -92,7 +130,7 @@ export const AppProvider = (props: { children: any }) => {
         message: `${item.metadata.type} - ${item.file}`,
       });
       if (filter ? !filter.includes(item.file) : false) continue;
-      console.log(item);
+
       const result = await apiCivitGetModel(item);
 
       if (!result) continue;
@@ -104,7 +142,7 @@ export const AppProvider = (props: { children: any }) => {
 
   const clientSync = useCallback(async () => {
     if (isSyncing.current) {
-      return;
+      throw undefined;
     }
 
     isSyncing.current = 'client';
@@ -124,7 +162,7 @@ export const AppProvider = (props: { children: any }) => {
     let i = 0;
 
     for (const type of ['Checkpoint']) {
-      const scanned = await scanModelDirectory(type as any);
+      const scanned = await scanModelDirectory(atomUserPaths, type as any);
       const filteredList = loadedList.filter((x) => x.metadata.type === type);
       let entries = filteredList.map((x) => [x, scanned.find((y) => y.name === x.file)]);
       const newItems = scanned.filter((x) => filteredList.findIndex((y) => x.name === y.file) === -1);
@@ -137,7 +175,7 @@ export const AppProvider = (props: { children: any }) => {
         message: '',
       });
       for (const modelEntry of entries) {
-        if (shouldCancelSync()) return;
+        if (shouldCancelSync()) throw undefined;
 
         let fromStorage = modelEntry[0] as Model | undefined;
         const fromFile = modelEntry[1] as { name: string; path: string } | undefined;
@@ -215,8 +253,8 @@ export const AppProvider = (props: { children: any }) => {
     storageSaveTimeout.current ? clearTimeout(storageSaveTimeout.current) : null;
     if (!immediate) {
       storageSaveTimeout.current = setTimeout(() => {
-        saveFn().catch(() => {
-          console.error('Storage Save Error');
+        saveFn().catch((e) => {
+          console.error('Storage Save Error', e);
         });
       }, STORAGE_SAVE_DEBOUNCE_TIME);
     } else {
@@ -225,13 +263,28 @@ export const AppProvider = (props: { children: any }) => {
   }
 
   useEffect(() => {
-    clientSync().catch(() => {
-      console.error('Client Sync Error');
+    const navigateToStartup = () => {
+      setLocation('/');
+    };
+    const init = async () => {
+      await clientSync()
+        .then(() => {
+          greetForFirstLaunch();
+        })
+        .catch((e) => {
+          if (e === undefined) return;
+          console.error('Client Sync Error', e);
+        });
+
+      setTimeout(() => {
+        setRender(true);
+      }, STARTUP_DELAY);
+    };
+
+    init().catch((e) => {
+      console.error('App Provider init Failed', e);
     });
-    setTimeout(() => {
-      setRender(true);
-    }, STARTUP_DELAY);
-  }, [clientSync]);
+  }, []);
 
   return (
     <>
@@ -243,9 +296,14 @@ export const AppProvider = (props: { children: any }) => {
           {progress?.message ?? 'LOADING'}
           <Progress className={`mt-4`} current={progress?.current ?? 0} total={progress?.total ?? 1} />
           {isSyncing.current !== 'client' && (
-            <Button className={`mt-6`} onClick={cancelSync}>
-              Cancel
-            </Button>
+            <>
+              <Button className={`mt-6`} onClick={cancelSync}>
+                {isCanceling ? 'Canceling...' : 'Cancel'}
+              </Button>
+              <span className={`mt-5 px-4 py-2 bg-gray-900 font-semibold opacity-90 rounded-full text-xs`}>
+                Note: Some models may need full hashing for search, please be patient...
+              </span>
+            </>
           )}
         </div>
       )}
@@ -259,6 +317,38 @@ export const AppProvider = (props: { children: any }) => {
       >
         {render ? props.children : null}
       </AppContext.Provider>
+
+      <Modal
+        open={openSyncDialog}
+        width={`30rem`}
+        height={`auto`}
+        onClose={() => {
+          closeSyncDialog(false);
+        }}
+      >
+        <p className={`text-2xl`}>Do you want to sync all your models?</p>
+        <span className={`opacity-70 mt-6`}>
+          Syncing is done via CivitAI database, you can also skip syncing and fill the models data yourself!
+        </span>
+        <div className={`flex items-cemter justify-end gap-4 mt-12`}>
+          <Button
+            className={``}
+            onClick={() => {
+              closeSyncDialog(false);
+            }}
+          >
+            NOPE
+          </Button>
+          <Button
+            className={`bg-primary-600 hover:bg-primary-500`}
+            onClick={() => {
+              closeSyncDialog(true);
+            }}
+          >
+            SYNC NOW
+          </Button>
+        </div>
+      </Modal>
     </>
   );
 };

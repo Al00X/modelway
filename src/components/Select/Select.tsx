@@ -48,6 +48,8 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(
     useEffect(() => {
       if (!search || search === '') {
         setList(props.items);
+
+        return;
       }
       setList(props.items.filter((x) => x.value.includes(search)));
     }, [search, props.items]);
@@ -59,14 +61,17 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(
       [selected],
     );
 
-    function emitValue(newList: typeof selected) {
-      setSelected(newList);
-      if (!props.clearable && newList.length === 0) return;
-      const newValues = newList.map((x) => x.value);
+    const emitValue = useCallback(
+      (newList: typeof selected) => {
+        setSelected(newList);
+        if (!props.clearable && newList.length === 0) return;
+        const newValues = newList.map((x) => x.value);
 
-      if (arraysEqual(newValues, props.value ?? [])) return;
-      props.onValue?.(newList.length > 0 ? newList.map((x) => x.value) : null);
-    }
+        if (arraysEqual(newValues, props.value ?? [])) return;
+        props.onValue?.(newList.length > 0 ? newList.map((x) => x.value) : null);
+      },
+      [props.value, props.onValue, props.clearable],
+    );
 
     function setMenu(state: boolean) {
       setOpen(state);
@@ -110,15 +115,15 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(
           emitValue([]);
         },
       }),
-      [props.clearable, props.value, props.onValue],
+      [emitValue],
     );
 
     return (
       <>
         <GlobalHotKeys
-          keyMap={{ ESCAPE: 'esc' }}
+          keyMap={{ escape: 'esc' }}
           handlers={{
-            ESCAPE: () => {
+            escape: () => {
               setMenu(false);
             },
           }}

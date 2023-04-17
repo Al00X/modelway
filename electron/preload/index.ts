@@ -1,5 +1,7 @@
 /* eslint-disable */
 
+import { app, BrowserWindow, ipcMain } from 'electron';
+
 function domReady(condition: DocumentReadyState[] = ['complete', 'interactive']) {
   return new Promise((resolve) => {
     if (condition.includes(document.readyState)) {
@@ -91,4 +93,4 @@ window.onmessage = (ev) => {
   ev.data.payload === 'removeLoading' && removeLoading();
 };
 
-setTimeout(removeLoading, 4999);
+setTimeout(removeLoading, 9999);

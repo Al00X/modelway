@@ -1,12 +1,19 @@
 import './App.scss';
 import './services/storage';
+import { Route, useLocation } from 'wouter';
 import { Browser } from '@/pages/Browser/Browser';
 import { AppProvider } from '@/context/App';
+import { Startup } from '@/pages/Startup/Startup';
 
 export const App = () => {
   return (
-    <AppProvider>
-      <Browser />
-    </AppProvider>
+    <>
+      <Route path={'/'} component={Startup}></Route>
+      <Route path={'/browser'}>
+        <AppProvider>
+          <Browser />
+        </AppProvider>
+      </Route>
+    </>
   );
 };

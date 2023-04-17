@@ -1,33 +1,20 @@
 import fs from 'node:fs/promises';
-import { join, extname, basename } from 'node:path';
+import { extname, basename } from 'node:path';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import { ModelType } from '@/interfaces/models.interface';
 import { getFiles } from '@/helpers/node.helper';
 import { textIncludesArray } from '@/helpers/native.helper';
+import { UserPaths } from '@/states/Settings';
 
-const AUTOMATIC1111_PATH = join('E:', 'sources', 'automatic1111-sd-webui');
-const SD_MODELS_PATH = join(AUTOMATIC1111_PATH, 'models', 'Stable-diffusion');
-const LORA_MODELS_PATH = join(AUTOMATIC1111_PATH, 'models', 'Lora');
-const HYPERNETWORKS_PATH = join(AUTOMATIC1111_PATH, 'models', 'hypernetworks');
-const EMBEDDINGS_PATH = join(AUTOMATIC1111_PATH, 'embeddings');
 const MODEL_EXTENSIONS = ['.safetensors', '.ckpt', '.pt', '.base'];
 
 type HashAlgorithms = 'autoV1' | 'sha256';
 
 const IGNORE_LIST = ['pix2pix', '.vae', '_vae.', 'inpainting', 'x4-upscaler', 'v2-512-depth'];
 
-export async function scanModelDirectory(type: ModelType) {
-  const dir =
-    type === 'LORA'
-      ? LORA_MODELS_PATH
-      : type === 'Hypernetwork'
-      ? HYPERNETWORKS_PATH
-      : type === 'Checkpoint'
-      ? SD_MODELS_PATH
-      : type === 'TextualInversion'
-      ? EMBEDDINGS_PATH
-      : '';
+export async function scanModelDirectory(userPaths: UserPaths, type: ModelType) {
+  const dir = userPaths[type];
 
   if (!dir) {
     throw new Error(`We do no yet a ${type}`);

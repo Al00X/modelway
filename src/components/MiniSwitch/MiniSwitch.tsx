@@ -1,17 +1,18 @@
 export const MiniSwitch = (props: {
-  value: boolean;
-  onValue: (e: boolean) => void;
-  falseText: string;
-  trueText: string;
+  value?: boolean;
+  onValue?: (e: boolean) => void;
+  falseText?: string;
+  trueText?: string;
+  className?: string;
 }) => {
   return (
     <div
       tabIndex={-1}
       role={`switch`}
       style={{ width: '52px', height: '28px' }}
-      className={`transition-all relative p-0.5 border-white cursor-pointer`}
+      className={`transition-all relative p-0.5 border-white cursor-pointer outline-0 ${props.className ?? ''}`}
       onClick={() => {
-        props.onValue(!props.value);
+        props.onValue?.(!props.value);
       }}
     >
       <div
@@ -22,7 +23,7 @@ export const MiniSwitch = (props: {
             : 'bg-white bg-opacity-0 hover:bg-opacity-10 text-white border-white'
         }`}
       >
-        {props.value ? props.trueText : props.falseText}
+        <span className={`text-center`}>{props.value ? props.trueText : props.falseText}</span>
       </div>
     </div>
   );

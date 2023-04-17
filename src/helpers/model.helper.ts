@@ -49,7 +49,6 @@ export function modelVersionNamePrune(model: Model | string) {
 
 export function civitModelToModel(model: CivitModel, previousModel: Model): Model;
 export function civitModelToModel(model: CivitModel, previousModel?: Model): Partial<Model> {
-  // model.
   const imageMap = (v: CivitModelImage): ModelImage => {
     return {
       url: v.url,
@@ -120,7 +119,7 @@ export function civitModelToModel(model: CivitModel, previousModel?: Model): Par
     description: model.description,
     creator: model.creator.username,
     type: model.type,
-    tags: [...new Set(model.tags.map((x) => x.name))],
+    tags: model.tags.map((x) => (typeof x === 'string' ? x : x.name)),
     currentVersion: currentVersion ? versionMap(currentVersion, currentVersionFile) : {},
     versions: model.modelVersions.map((x) => versionMap(x)),
   };

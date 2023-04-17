@@ -18,8 +18,8 @@ export const Icon = (props: {
       .then((res) => {
         setSvgData(res.data.replace('<svg', '<svg class="icon"'));
       })
-      .catch(() => {
-        console.error('Icon fetch failed: ', props.icon);
+      .catch((e) => {
+        console.error('Icon fetch failed: ', props.icon, e);
       });
   }, [props.icon]);
 
