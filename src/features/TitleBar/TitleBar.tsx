@@ -1,6 +1,7 @@
 import './TitleBar.scss';
 import { MouseEvent, useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
+import { version } from '../../../package.json';
 import { Icon } from '@/components/Icon/Icon';
 import { API } from '@/api';
 import { SettingsState } from '@/states/Settings';
@@ -43,6 +44,11 @@ export const TitleBar = () => {
           MODELWAY
           {/*<Icon className={`absolute -right-3 top-0`} icon={'y'} size={'1.125rem'} />*/}
         </div>
+        <span
+          className={`transition-all absolute cursor-pointer tracking-normal text-xs opacity-40 hover:opacity-70 font-normal left-[8rem] mt-1 z-10 no-drag`}
+        >
+          v{version}
+        </span>
       </div>
       <MiniSwitch value={isNSFW} trueText={`NSFW`} falseText={`SFW`} onValue={setNSFW} />
       <div className={`w-4`}>{/* Space */}</div>

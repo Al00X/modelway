@@ -1,6 +1,6 @@
 {
   "name": "modelway",
-  "version": "2.1.0",
+  "version": "1.0.0",
   "main": "dist-electron/main/index.js",
   "description": "Handy utility for Stable Diffusion",
   "author": "Al00X",
