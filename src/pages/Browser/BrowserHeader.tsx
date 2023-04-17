@@ -1,6 +1,7 @@
 import { GlobalHotKeys } from 'react-hotkeys';
 import { useEffect, useRef, useState } from 'react';
 import { useAtom } from 'jotai';
+import { useForceUpdate } from '@mantine/hooks';
 import Input, { InputElementType } from '@/components/Input/Input';
 import { Item } from '@/components/Item/Item';
 import { ButtonGroup } from '@/components/ButtonGroup/ButtonGroup';
@@ -36,9 +37,11 @@ export interface BrowserHeaderChangeEvent extends FilterEngineInputs {
   viewMode: ViewType;
 }
 
+export type BrowserSyncEvent = ButtonClickEvent & { forceUpdate: () => void };
+
 export const BrowserHeader = (props: {
   onChange: (e: BrowserHeaderChangeEvent) => void;
-  onSync: (e: ButtonClickEvent) => void;
+  onSync: (e: BrowserSyncEvent) => void;
 }) => {
   const [atomAvailableTags] = useAtom(DataState.availableTagsKeyValue);
   const [atomAvailableMerges] = useAtom(DataState.availableMergesKeyValue);
@@ -55,6 +58,8 @@ export const BrowserHeader = (props: {
   const searchInputRef = useRef<InputElementType>(null);
   const filterTagSelectRef = useRef<SelectElementType>(null);
   const filterMergesSelectRef = useRef<SelectElementType>(null);
+
+  const forceUpdate = useForceUpdate();
 
   useEffect(() => {
     props.onChange({
@@ -147,7 +152,7 @@ export const BrowserHeader = (props: {
             items={atomAvailableTags}
             cols={3}
             className={`w-full max-w-[20rem]`}
-            placeholder={'By tags...'}
+            placeholder={'Tags...'}
             value={filterTags}
             onValue={(e) => {
               setFilterTags(e);
@@ -161,7 +166,7 @@ export const BrowserHeader = (props: {
             items={atomAvailableMerges}
             cols={2}
             className={`w-full max-w-[20rem]`}
-            placeholder={'By Merges...'}
+            placeholder={'Merges...'}
             value={filterMerges}
             onValue={(e) => {
               setFilterMerges(e);
@@ -178,7 +183,7 @@ export const BrowserHeader = (props: {
         </Item>
       </div>
       <div className={`flex flex-col flex-none h-full`}>
-        <Button className={`ml-auto`} onClick={props.onSync}>
+        <Button className={`ml-auto`} onClick={(e) => { props.onSync({ ...e, forceUpdate }); }}>
           SYNC
         </Button>
       </div>

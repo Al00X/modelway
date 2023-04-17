@@ -38,8 +38,8 @@ export const Modal = (props: {
         {!!props.dropzone && <input {...dropzone.getInputProps({})} />}
         {!!(props.withCloseButton ?? props.title) && (
           <>
-            {!!props.title && <p className={`absolute top-4 left-4 text-xl font-semibold`}>{props.title}</p>}
-            <Icon icon={`close`} className={`absolute top-4 right-4 cursor-pointer`} onClick={props.onClose} />
+            {!!props.title && <p className={`absolute top-4 left-6 text-xl font-semibold`}>{props.title}</p>}
+            <Icon icon={`close`} className={`absolute top-4 right-6 cursor-pointer`} onClick={props.onClose} />
             <div className={`h-8 flex-none`}></div>
           </>
         )}

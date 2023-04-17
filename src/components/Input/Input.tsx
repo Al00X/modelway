@@ -100,7 +100,7 @@ const Input = forwardRef<
       {props.startEl}
       <input
         ref={inputRef}
-        className={`bg-transparent w-full outline-0`}
+        className={`bg-transparent w-full outline-0 h-full`}
         style={{ cursor: 'inherit', minWidth: '3rem' }}
         value={input}
         placeholder={props.placeholder}

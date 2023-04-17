@@ -192,6 +192,12 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(
             />
           </Menu.Target>
           <Menu.Dropdown>
+            {list.length === 0 && (
+              <div className={`flex flex-col items-center`}>
+                <p className={`mx-auto opacity-80 mt-3 text-center`}>No item is available</p>
+                <p className={`text-xs text-center opacity-40 mt-1 mb-3`}>Sync or manually add data to your models</p>
+              </div>
+            )}
             {list.map((item, index, arr) => (
               <>
                 <div

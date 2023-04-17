@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { useForceUpdate } from '@mantine/hooks';
-import { BrowserHeader, BrowserHeaderChangeEvent } from './BrowserHeader';
+import { BrowserHeader, BrowserHeaderChangeEvent, BrowserSyncEvent } from './BrowserHeader';
 import { useAppContext } from '@/context/App';
 import { ModelExtended } from '@/interfaces/models.interface';
 import { Loader } from '@/components/Loader/Loader';
 import { ModelCard } from '@/components/ModelCard/ModelCard';
-import { ButtonClickEvent } from '@/components/Button/Button';
 import { openToast } from '@/services/toast';
 import { DataState } from '@/states/Data';
 import { ModelDetailsDialog } from '@/dialog/model-details-dialog/ModelDetailsDialog';
@@ -38,8 +37,9 @@ export const Browser = () => {
   }, [atomList, filters]);
 
   const runServerSync = useCallback(
-    (e: ButtonClickEvent) => {
+    (e: BrowserSyncEvent) => {
       e.setLoading(true);
+
       const filter = list?.map((x) => x.file);
 
       appContext
@@ -69,7 +69,7 @@ export const Browser = () => {
     <div className={`flex flex-col h-full overflow-auto`}>
       <BrowserHeader onChange={setFilters} onSync={runServerSync} />
       <div className={`w-full flex-auto relative`}>
-        <Loader className={`transition-all top-40 fixed ${list ? 'opacity-0' : 'opacity-100'}`} />
+        {!list && <Loader className={`transition-all mx-auto ${list ? 'opacity-0' : 'opacity-100'}`} />}
         <div
           className={`transition-opacity w-full gap-1 ${
             filters?.viewMode === 'grid' ? 'flex flex-wrap px-2' : 'flex flex-col'

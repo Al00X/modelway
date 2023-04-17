@@ -7,7 +7,7 @@ import { ModelType } from '@/interfaces/models.interface';
 
 type SetStateActionWithReset<Value> = Value | typeof RESET | ((prev: Value) => Value | typeof RESET);
 
-export type UserPaths = Partial<{ [key in ModelType]: string }> & { Client?: string };
+export type UserPaths = Partial<{ [key in ModelType]: string }> & { Client?: string; manual?: ModelType[] };
 
 const atomWithLocalStorage = <T,>(key: string, initialValue: T, storage: undefined) => {
   const getInitialValue = () => {

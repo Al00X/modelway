@@ -5,15 +5,18 @@ import { Icon } from '@/components/Icon/Icon';
 import { API } from '@/api';
 import { SettingsState } from '@/states/Settings';
 import { MiniSwitch } from '@/components/MiniSwitch/MiniSwitch';
+import { SettingsDialog } from '@/dialog/settings-dialog/SettingsDialog';
 
 export const TitleBar = () => {
   const [maximized, setMaximized] = useState(false);
   const [isNSFW, setNSFW] = useAtom(SettingsState.isNSFWToggled);
+  const [openSettings, setOpenSettings] = useState(false);
 
   function doAction(e: MouseEvent<HTMLButtonElement>, action: 'minimize' | 'close' | 'maximize' | 'settings') {
     e.stopPropagation();
     if (action === 'settings') {
-      // TODO: Settings
+      setOpenSettings(true);
+
       return;
     }
     API().WindowAction(action);
@@ -36,7 +39,7 @@ export const TitleBar = () => {
   return (
     <div className={`title-bar-panel`} style={{ zIndex: 99999 }}>
       <div className={`draggable`}>
-        <div style={{ letterSpacing: '3.5px' }} className={`ml-4 text-sm relative`}>
+        <div style={{ letterSpacing: '3.5px' }} className={`ml-4 text-sm relative font-medium`}>
           MODELWAY
           {/*<Icon className={`absolute -right-3 top-0`} icon={'y'} size={'1.125rem'} />*/}
         </div>
@@ -80,6 +83,12 @@ export const TitleBar = () => {
       >
         <Icon icon={`close`} />
       </button>
+      <SettingsDialog
+        open={openSettings}
+        onClose={() => {
+          setOpenSettings(false);
+        }}
+      />
     </div>
   );
 };

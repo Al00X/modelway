@@ -22,6 +22,7 @@ export const Image = (props: {
   const [contextRef] = useContextMenu({
     items: [
       {
+        key: 'nsfw',
         text: () => `${props.item.nsfw ? 'Remove NSFW' : 'Set as NSFW'}`,
         action: () => {
           props.item.nsfw = !props.item.nsfw;
@@ -29,12 +30,14 @@ export const Image = (props: {
         },
       },
       {
+        key: 'cover',
         text: 'Set as cover photo',
         action: () => {
           props.onSetAsCover?.();
         },
       },
       {
+        key: 'remove',
         text: 'Remove from gallery',
         action: () => {
           props.item.hide = true;

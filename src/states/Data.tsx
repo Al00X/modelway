@@ -37,7 +37,7 @@ export class DataState {
     return list;
   });
   static availableTags = atom<string[]>((get) => {
-    const models = get(DataState.rawList);
+    const models = get(DataState.processedList);
 
     return [
       ...new Set(
@@ -58,7 +58,7 @@ export class DataState {
     }));
   });
   static availableMerges = atom<string[]>((get) => {
-    const models = get(DataState.rawList);
+    const models = get(DataState.processedList);
 
     return [
       ...new Set(

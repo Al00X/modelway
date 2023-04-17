@@ -33,6 +33,19 @@ body {
   user-select: none;
   position: relative;
 }
+
+* {
+  font-family: inherit;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit !important;
+}
+
 #root {
   @apply inset-0 flex flex-col;
   position: absolute;
