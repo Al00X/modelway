@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import { parse } from 'exifr';
 import { Model, ModelImage } from '@/interfaces/models.interface';
 import { API } from '@/api';
-import { until, wait } from '@/helpers/promise.helper';
+import { wait } from '@/helpers/promise.helper';
 import { fileExists } from '@/helpers/node.helper';
 
 let STORAGE_PATH: string, STORAGE_MODELS_PATH: string, STORAGE_ASSETS_PATH: string;
@@ -144,12 +144,8 @@ async function generateModelImageBuffer(data: Buffer): Promise<Omit<ModelImage, 
   };
 }
 
-async function waitForElectronCallback() {
-  return until(() => API().UserDataPath !== null);
-}
-
 async function checkStorage() {
-  STORAGE_PATH = path.join(API().UserDataPath!, 'Data');
+  STORAGE_PATH = path.join(API.userDataPath!, 'Data');
   STORAGE_MODELS_PATH = path.join(STORAGE_PATH, 'models.json');
   STORAGE_ASSETS_PATH = path.join(STORAGE_PATH, 'assets');
 

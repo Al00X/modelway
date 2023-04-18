@@ -1,18 +1,23 @@
 import { ipcRenderer } from 'electron';
 
-let UserDataPath: string | null = null;
+export class API {
+  private static _userDataPath?: string;
 
-ipcRenderer.send('app', 'getUserDataPath');
+  static async init() {
+    this._userDataPath = await ipcRenderer.invoke('app', 'getUserDataPath');
+  }
 
-ipcRenderer.on('app', (evt, messageObj) => {
-  UserDataPath = messageObj;
-});
+  static get userDataPath() {
+    return this._userDataPath;
+  }
 
-export const API = () => ({
-  UserDataPath,
-  WindowAction: (action: string) => {
+  static doWindowAction(action: string) {
     ipcRenderer.send('window', action);
-  },
-  IsWindowMaximized: () => ipcRenderer.invoke('window', 'isMaximized'),
-  DialogOpenDir: (title?: string) => ipcRenderer.invoke('dialog', { title, key: 'open-dir' }),
-});
+  }
+  static isWindowMaximized() {
+    return ipcRenderer.invoke('window', 'isMaximized');
+  }
+  static showDialogOpenDir(title?: string) {
+    return ipcRenderer.invoke('dialog', { title, key: 'open-dir' });
+  }
+}

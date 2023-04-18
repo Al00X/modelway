@@ -60,10 +60,10 @@ export const Browser = () => {
     if (list === undefined && atomList.length > 0) {
       prepareList();
     }
-  }, [atomList, list, prepareList]);
+  }, [atomList, list]);
   useEffect(() => {
     prepareList();
-  }, [filters, prepareList]);
+  }, [filters]);
 
   return (
     <div className={`flex flex-col h-full overflow-auto`}>

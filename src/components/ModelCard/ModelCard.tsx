@@ -39,11 +39,11 @@ export const ModelCard = (props: { item: ModelExtended; wide?: boolean; onClick?
       {!props.wide ? (
         <>
           {!!keyImages.single && <Image item={keyImages.single} />}
-          <div className={`flex flex-col text-overlay font-semibold tracking-wide`}>
-            {props.item.computed.name}
+          <div className={`flex flex-col text-overlay font-bold tracking-wide`}>
+            <span className={`text-base`}>{props.item.computed.name}</span>
             {!!props.item.computed.version && (
               <span
-                className={`text-sm font-bold tracking-wider px-2 text-white py-1 bg-black bg-opacity-80 rounded-xl mt-1`}
+                className={`text-xs font-bold tracking-wider px-3 text-white py-1 bg-black bg-opacity-80 rounded-xl mt-1`}
               >
                 {props.item.computed.version}
               </span>

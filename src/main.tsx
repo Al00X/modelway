@@ -6,13 +6,15 @@ import { MantineProvider } from '@mantine/core';
 import { App } from './App';
 import { TitleBar } from '@/features/TitleBar/TitleBar';
 import { ContextMenuProvider } from '@/hooks/useContextMenu';
-import './api';
+import { API } from '@/api';
 
 import './index.scss';
 import './design-system.scss';
 import 'react-18-image-lightbox/style.css';
 import 'keen-slider/keen-slider.min.css';
 import 'yet-another-react-lightbox/styles.css';
+
+await API.init();
 
 ReactDOM.createRoot(document.querySelector('#root')!).render(
   <React.StrictMode>

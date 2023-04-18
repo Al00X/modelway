@@ -171,7 +171,11 @@ export function modelPopulateComputedValues(model: Model): ModelExtended {
     : undefined;
 
   version = version?.replaceAll(new RegExp(`${name}`, 'gi'), '').trim();
-  name = name.replaceAll(new RegExp(`${version ?? ''}`, 'gi'), '').trim();
+  name = name
+    .replaceAll(new RegExp(`${version ?? ''}`, 'gi'), '')
+    .replaceAll('()', '')
+    .replaceAll('[]', '')
+    .trim();
 
   return {
     ...model,

@@ -45,6 +45,8 @@ async function createWindow() {
     icon: join(process.env.PUBLIC, 'favicon.ico'),
     frame: false,
     titleBarStyle: 'hidden',
+    width: 1080,
+    height: 720,
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
@@ -133,10 +135,9 @@ ipcMain.handle('open-win', (_, arg) => {
 
 // --------------------------------------------------------------------------------
 
-ipcMain.on('app', function (evt, messageObj) {
-  // Send message back to renderer.
+ipcMain.handle('app', function (evt, messageObj) {
   if (messageObj === 'getUserDataPath') {
-    evt.sender.send('app', app.getPath('userData'));
+    return app.getPath('userData');
   }
 });
 ipcMain.on('window', (e, message) => {

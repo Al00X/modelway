@@ -7,11 +7,13 @@ import { API } from '@/api';
 import { SettingsState } from '@/states/Settings';
 import { MiniSwitch } from '@/components/MiniSwitch/MiniSwitch';
 import { SettingsDialog } from '@/dialog/settings-dialog/SettingsDialog';
+import { ChangelogDialog } from '@/dialog/changelog-dialog/ChangelogDialog';
 
 export const TitleBar = () => {
   const [maximized, setMaximized] = useState(false);
   const [isNSFW, setNSFW] = useAtom(SettingsState.isNSFWToggled);
   const [openSettings, setOpenSettings] = useState(false);
+  const [openChangelog, setOpenChangelog] = useState(false);
 
   function doAction(e: MouseEvent<HTMLButtonElement>, action: 'minimize' | 'close' | 'maximize' | 'settings') {
     e.stopPropagation();
@@ -20,15 +22,14 @@ export const TitleBar = () => {
 
       return;
     }
-    API().WindowAction(action);
+    API.doWindowAction(action);
     if (action === 'maximize') {
       setMaximized(!maximized);
     }
   }
 
   useEffect(() => {
-    API()
-      .IsWindowMaximized()
+    API.isWindowMaximized()
       .then((state) => {
         setMaximized(!!state);
       })
@@ -45,7 +46,10 @@ export const TitleBar = () => {
           {/*<Icon className={`absolute -right-3 top-0`} icon={'y'} size={'1.125rem'} />*/}
         </div>
         <span
+          tabIndex={-1}
+          role={`button`}
           className={`transition-all absolute cursor-pointer tracking-normal text-xs opacity-40 hover:opacity-70 font-normal left-[8rem] mt-1 z-10 no-drag`}
+          onClick={() => { setOpenChangelog(true); }}
         >
           v{version}
         </span>
@@ -95,6 +99,7 @@ export const TitleBar = () => {
           setOpenSettings(false);
         }}
       />
+      <ChangelogDialog open={openChangelog} onClose={() => { setOpenChangelog(false); }} />
     </div>
   );
 };

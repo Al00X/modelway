@@ -183,7 +183,12 @@ export const BrowserHeader = (props: {
         </Item>
       </div>
       <div className={`flex flex-col flex-none h-full`}>
-        <Button className={`ml-auto`} onClick={(e) => { props.onSync({ ...e, forceUpdate }); }}>
+        <Button
+          className={`ml-auto`}
+          onClick={(e) => {
+            props.onSync({ ...e, forceUpdate });
+          }}
+        >
           SYNC
         </Button>
       </div>

@@ -1,6 +1,6 @@
 import './App.scss';
 import './services/storage';
-import { Route, useLocation } from 'wouter';
+import { Route } from 'wouter';
 import { Browser } from '@/pages/Browser/Browser';
 import { AppProvider } from '@/context/App';
 import { Startup } from '@/pages/Startup/Startup';

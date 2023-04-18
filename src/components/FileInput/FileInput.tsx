@@ -10,7 +10,7 @@ export const FileInput = (props: {
   onValue?: (e: string) => void;
 }) => {
   const browse = useCallback(async () => {
-    const result = await API().DialogOpenDir(props.placeholder);
+    const result = await API.showDialogOpenDir(props.placeholder);
 
     if (!result.canceled) {
       props.onValue?.(result.filePaths[0]);
