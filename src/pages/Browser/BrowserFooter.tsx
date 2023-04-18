@@ -6,7 +6,7 @@ export const BrowserFooter = (props: { filteredListLength: number | undefined })
 
   return (
     <div
-      className={`sticky bottom-0 w-full flex items-center pt-0.5 pb-1.5 px-3 text-xs bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg text-white gap-8`}
+      className={`sticky bottom-0 w-full flex items-center pt-0.5 pb-1.5 px-3 text-xs bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg text-white gap-8 z-10`}
     >
       <div className={`ml-auto`}>{/* SpaceLaces */}</div>
       <span className={``}>Filtered: {props.filteredListLength ?? 0}</span>
