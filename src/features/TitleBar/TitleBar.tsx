@@ -48,10 +48,13 @@ export const TitleBar = () => {
         <span
           tabIndex={-1}
           role={`button`}
-          className={`transition-all absolute cursor-pointer tracking-normal text-xs opacity-40 hover:opacity-70 font-normal left-[8rem] mt-1 z-10 no-drag`}
-          onClick={() => { setOpenChangelog(true); }}
+          className={`transition-all absolute cursor-pointer text-xs opacity-40 hover:opacity-70 font-normal left-[8rem] mt-0 z-10 no-drag`}
+          style={{ letterSpacing: '1.5px' }}
+          onClick={() => {
+            setOpenChangelog(true);
+          }}
         >
-          v{version}
+          V{version}
         </span>
       </div>
       <MiniSwitch value={isNSFW} trueText={`NSFW`} falseText={`SFW`} onValue={setNSFW} />
@@ -99,7 +102,12 @@ export const TitleBar = () => {
           setOpenSettings(false);
         }}
       />
-      <ChangelogDialog open={openChangelog} onClose={() => { setOpenChangelog(false); }} />
+      <ChangelogDialog
+        open={openChangelog}
+        onClose={() => {
+          setOpenChangelog(false);
+        }}
+      />
     </div>
   );
 };

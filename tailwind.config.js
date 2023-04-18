@@ -7,6 +7,9 @@ module.exports = {
       backdropBlur: {
         xs: '2px',
       },
+      fontSize: {
+        '2xs': '0.625rem',
+      },
       colors: {
         white: '#f6f3f3',
         gray: {

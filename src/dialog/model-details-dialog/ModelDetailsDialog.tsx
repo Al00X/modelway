@@ -121,15 +121,18 @@ export const ModelDetailsDialog = (props: {
             }}
           >
             <div className={`flex h-full max-h-[19rem] gap-5`}>
-              <div className={`flex flex-col`} style={{ minWidth: '25rem' }}>
+              <div className={`flex flex-col relative`} style={{ minWidth: '25rem' }}>
                 <p className={`-mt-3 text-sm opacity-50`}>{currentItem.metadata.type}</p>
                 <h3 className="text-3xl mt-0 font-medium leading-10" style={{ wordBreak: 'break-word' }}>
                   {currentItem.computed.name}
                 </h3>
-                <p className={`text-lg opacity-70 mt-2`}>Base: {currentItem.metadata.currentVersion.baseModel}</p>
+                <p className={`text-lg opacity-70 mt-2`}>Version: {currentItem.computed.version ?? '-'}</p>
+                <p className={`text-lg opacity-70 mt-2`}>
+                  Base: {currentItem.metadata.currentVersion.baseModel ?? '-'}
+                </p>
                 {!!currentItem.metadata.description && (
                   <Button
-                    className={`w-40 mt-4`}
+                    className={`w-40 right-0 absolute self-end`}
                     onClick={() => {
                       setOpenDescriptionModal(true);
                     }}
@@ -161,32 +164,51 @@ export const ModelDetailsDialog = (props: {
               </div>
             </div>
             <div className={`overflow-auto`}>
-              <div ref={keenRef} className={`keen-slider w-full h-[18rem] mt-8`}>
-                {currentItem.metadata.currentVersion.images?.map((x, index) => (
-                  <div className={`keen-slider__slide w-auto shrink-0 grow-0 basis-auto relative`} key={x.url}>
-                    {!!(atomForm.cover ? atomForm.cover.url === x.url : index === 0) && (
-                      <div className={`absolute inset-0 z-[49] border-4 border-white pointer-events-none`}></div>
-                    )}
-                    <Image
-                      item={x}
-                      fit={`height`}
-                      onClick={() => {
-                        setLightbox(index);
-                      }}
-                      onLoad={() => {
-                        if (!x.width || !x.height) {
-                          updateKeenSize();
-                        }
-                      }}
-                      onSetAsCover={() => {
-                        setAtomForm((v) => ({ ...v, cover: x }));
-                      }}
-                      onUpdate={() => {
-                        onSave(false);
-                      }}
-                    />
-                  </div>
-                ))}
+              <div className={`w-full h-[18rem] mt-4 p-3 bg-gray-800`}>
+                <div ref={keenRef} className={`keen-slider w-full h-full`}>
+                  {(currentItem.metadata.currentVersion.images?.length ?? 0) === 0 && (
+                    <div className={`flex items-center justify-center text-lg w-full opacity-20`}>
+                      No image available
+                    </div>
+                  )}
+                  {currentItem.metadata.currentVersion.images?.map((x, index) => (
+                    <div className={`keen-slider__slide w-auto shrink-0 grow-0 basis-auto relative`} key={x.url}>
+                      {!!(atomForm.cover ? atomForm.cover.url === x.url : index === 0) && (
+                        <div
+                          className={`absolute inset-0 z-[49] border-4 border-white pointer-events-none`}
+                          style={{
+                            boxShadow: 'rgb(0 0 0 / 40%) 0px 0px 10px 2px inset',
+                            filter: 'drop-shadow(0px 0px 5px black)',
+                          }}
+                        >
+                          <div
+                            className={`inline-block absolute -top-1 text-2xs text-black bg-white font-bold pl-1 pr-2`}
+                          >
+                            COVER
+                          </div>
+                        </div>
+                      )}
+                      <Image
+                        item={x}
+                        fit={`height`}
+                        onClick={() => {
+                          setLightbox(index);
+                        }}
+                        onLoad={() => {
+                          if (!x.width || !x.height) {
+                            updateKeenSize();
+                          }
+                        }}
+                        onSetAsCover={() => {
+                          setAtomForm((v) => ({ ...v, cover: x }));
+                        }}
+                        onUpdate={() => {
+                          onSave(false);
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
             <div className="mt-auto flex items-center justify-end gap-2 pt-5">
@@ -257,6 +279,7 @@ export const ModelDetailsDialog = (props: {
           </Modal>
           <Modal
             withCloseButton
+            title={`Description`}
             className={`z-[6666]`}
             width={`60%`}
             height={`60%`}
@@ -266,7 +289,7 @@ export const ModelDetailsDialog = (props: {
             }}
           >
             <div
-              className={`description-panel`}
+              className={`description-panel mt-3 leading-9`}
               dangerouslySetInnerHTML={{ __html: currentItem.metadata.description ?? '' }}
             ></div>
           </Modal>

@@ -43,7 +43,7 @@ export const ModelCard = (props: { item: ModelExtended; wide?: boolean; onClick?
             <span className={`text-base`}>{props.item.computed.name}</span>
             {!!props.item.computed.version && (
               <span
-                className={`text-xs font-bold tracking-wider px-3 text-white py-1 bg-black bg-opacity-80 rounded-xl mt-1`}
+                className={`text-xs font-bold tracking-wider px-3 text-white py-1 bg-black bg-opacity-70 rounded-xl mt-1`}
               >
                 {props.item.computed.version}
               </span>

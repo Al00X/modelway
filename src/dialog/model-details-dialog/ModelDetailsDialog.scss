@@ -3,4 +3,10 @@
   & > * {
     user-select: text !important;
   }
+  a {
+    @apply text-primary-200;
+  }
+  em {
+    opacity: 0.7;
+  }
 }
