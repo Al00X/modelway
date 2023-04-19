@@ -6,18 +6,21 @@ import { openToast } from '@/services/toast';
 import { ClipboardActions } from '@/components/ClipboardActions/ClipboardActions';
 import { Modal } from '@/components/Modal/Modal';
 import { Button } from '@/components/Button/Button';
+import Select, { SelectElementType } from '@/components/Select/Select';
+import { KeyValue } from '@/interfaces/utils.interface';
 
 export const TagList = (props: {
   label?: string;
   tags?: string[];
   onTags?: (v: string[]) => void;
   className?: string;
+  autoCompleteList?: KeyValue<string>[];
 }) => {
   const [list, _setList] = useState<string[]>(props.tags ?? []);
   const [input, setInput] = useState('');
   const [toEdit, setToEdit] = useState<string>('');
   const [pastePreviewList, setPastePreviewList] = useState<string[] | undefined>(undefined);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<SelectElementType>(null);
 
   function onTagClick(tag: string) {
     clipboard.write({ text: tag });
@@ -31,16 +34,18 @@ export const TagList = (props: {
     setInput(tag);
     inputRef.current?.focus();
   }
-  function onTagAdd() {
-    if (list.includes(input)) {
+  function onTagAdd(val?: string) {
+    const value = val ?? input;
+
+    if (list.includes(value)) {
       return;
     }
     if (toEdit) {
-      editTag(toEdit, input);
+      editTag(toEdit, value);
       setToEdit('');
       setInput('');
     } else {
-      addTag(input);
+      addTag(value);
       setInput('');
     }
   }
@@ -149,18 +154,38 @@ export const TagList = (props: {
           >
             X
           </button>
-          <input
+          <Select
+            autocomplete
+            className={`bg-transparent p-1 outline-0 border-0 w-full min-h-0`}
             ref={inputRef}
-            value={input}
-            className={`bg-transparent p-1 outline-0 w-full`}
+            items={props.autoCompleteList ?? []}
+            input={input}
             placeholder={'Add new...'}
+            offset={10}
             onInput={(e) => {
-              setInput(e.currentTarget.value);
+              setInput(e);
             }}
             onKeyDown={(e) => {
               e.key === 'Enter' ? onTagAdd() : null;
             }}
+            onValue={(e) => {
+              if ((e?.length ?? 0) > 0) {
+                onTagAdd(e![0]);
+              }
+            }}
           />
+          {/*<input*/}
+          {/*  ref={inputRef}*/}
+          {/*  value={input}*/}
+          {/*  className={`bg-transparent p-1 outline-0 w-full`}*/}
+          {/*  placeholder={'Add new...'}*/}
+          {/*  onInput={(e) => {*/}
+          {/*    setInput(e.currentTarget.value);*/}
+          {/*  }}*/}
+          {/*  onKeyDown={(e) => {*/}
+          {/*    e.key === 'Enter' ? onTagAdd() : null;*/}
+          {/*  }}*/}
+          {/*/>*/}
           <button
             className={`block outline-0 px-2 py-2 text-xs bg-gray-700 h-full rounded-br-lg`}
             onClick={() => {

@@ -1,3 +1,4 @@
+import './Input.scss';
 import { forwardRef, KeyboardEvent, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Icon } from '@/components/Icon/Icon';
 
@@ -86,9 +87,7 @@ const Input = forwardRef<
       role={`textbox`}
       ref={wrapperRef}
       style={{ cursor: 'text' }}
-      className={`w-full min-h-[2.75rem] h-auto flex items-center bg-gray-600 border border-gray-400 text-white rounded-lg gap-4 p-2 overflow-auto ${
-        props.className ?? ''
-      }`}
+      className={`ui-input ${props.className ?? ''}`}
       onClick={() => {
         focus();
         props.onClick?.();

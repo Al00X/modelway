@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useKeenSlider } from 'keen-slider/react';
-import { atom, useAtom } from 'jotai';
+import { atom, useAtom, useAtomValue } from 'jotai';
 import { ModelExtended, ModelImage } from '@/interfaces/models.interface';
 import { TagList } from '@/components/TagList/TagList';
 import { Image } from '@/components/Image/Image';
@@ -13,6 +13,7 @@ import { clipboardSet } from '@/services/clipboard';
 import { openExternalModelLink, openExternalUser } from '@/services/shell';
 import './ModelDetailsDialog.scss';
 import { clone } from '@/helpers/native.helper';
+import { DataState } from '@/states/Data';
 
 const SEPARATOR = `    .    `;
 
@@ -38,6 +39,9 @@ export const ModelDetailsDialog = (props: {
   const [inputManualSyncLink, setInputManualSyncLink] = useState('');
   const [atomForm, setAtomForm] = useAtom(formAtom);
 
+  const atomMergesList = useAtomValue(DataState.availableMergesKeyValue);
+  const atomTagsList = useAtomValue(DataState.availableTagsKeyValue);
+
   useEffect(() => {
     setTimeout(() => {
       setOpen(props.open && !!props.item);
@@ -48,9 +52,9 @@ export const ModelDetailsDialog = (props: {
       setAtomForm({
         cover: props.item.metadata.coverImage,
         notes: props.item.metadata.notes ?? '',
-        merges: props.item.metadata.currentVersion.merges ?? [],
-        tags: props.item.metadata.tags ?? [],
-        triggers: props.item.metadata.currentVersion.triggers ?? [],
+        merges: props.item.metadata.currentVersion.merges?.filter((x) => !!x) ?? [],
+        tags: props.item.metadata.tags?.filter((x) => !!x) ?? [],
+        triggers: props.item.metadata.currentVersion.triggers?.filter((x) => !!x) ?? [],
       });
     }
   }, [props.open, props.item, setAtomForm]);
@@ -179,6 +183,7 @@ export const ModelDetailsDialog = (props: {
                 />
                 <TagList
                   tags={atomForm.merges}
+                  autoCompleteList={atomMergesList}
                   label={`Merges`}
                   onTags={(e) => {
                     setAtomForm((v) => ({ ...v, merges: e }));
@@ -186,6 +191,7 @@ export const ModelDetailsDialog = (props: {
                 />
                 <TagList
                   tags={atomForm.tags}
+                  autoCompleteList={atomTagsList}
                   label={`Tags`}
                   onTags={(e) => {
                     setAtomForm((v) => ({ ...v, tags: e }));
