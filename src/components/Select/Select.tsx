@@ -1,6 +1,7 @@
 import {
   ForwardedRef,
   forwardRef,
+  Fragment,
   KeyboardEvent,
   useCallback,
   useEffect,
@@ -12,7 +13,7 @@ import { Menu } from '@mantine/core';
 import { GlobalHotKeys } from 'react-hotkeys';
 import { KeyValue } from '@/interfaces/utils.interface';
 import Input, { InputElementType } from '@/components/Input/Input';
-import { arraysEqual } from '@/helpers/native.helper';
+import { arrayHasAll, arraysEqual } from '@/helpers/native.helper';
 
 interface SelectChildrenProp<T> {
   selected: KeyValue<T> | undefined;
@@ -274,7 +275,7 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(
                 </div>
               )}
               {list.map((item, index, arr) => (
-                <>
+                <Fragment key={item.value}>
                   <div
                     tabIndex={0}
                     role={`menuitem`}
@@ -315,7 +316,7 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(
                   {arr.length !== index - 1 && (
                     <div className={`w-full border-b border-white border-opacity-10 pointer-events-none`}></div>
                   )}
-                </>
+                </Fragment>
               ))}
             </div>
           </Menu.Dropdown>
@@ -325,4 +326,5 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(
   },
 );
 
+Select.displayName = 'Select';
 export default Select;
