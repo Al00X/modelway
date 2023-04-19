@@ -3,12 +3,20 @@ import { useEffect, useRef, useState } from 'react';
 import { Section } from '@/components/Section/Section';
 import { Tag } from '@/components/Tag/Tag';
 import { openToast } from '@/services/toast';
-import { clipboardSet } from '@/services/clipboard';
+import { ClipboardActions } from '@/components/ClipboardActions/ClipboardActions';
+import { Modal } from '@/components/Modal/Modal';
+import { Button } from '@/components/Button/Button';
 
-export const TagList = (props: { label?: string; tags?: string[]; className?: string }) => {
-  const [list, setList] = useState<string[]>(props.tags ?? []);
+export const TagList = (props: {
+  label?: string;
+  tags?: string[];
+  onTags?: (v: string[]) => void;
+  className?: string;
+}) => {
+  const [list, _setList] = useState<string[]>(props.tags ?? []);
   const [input, setInput] = useState('');
   const [toEdit, setToEdit] = useState<string>('');
+  const [pastePreviewList, setPastePreviewList] = useState<string[] | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function onTagClick(tag: string) {
@@ -36,11 +44,13 @@ export const TagList = (props: { label?: string; tags?: string[]; className?: st
       setInput('');
     }
   }
-  function onCopyAll() {
-    clipboardSet(list.join(', '));
-  }
   function onClearInput() {
     setInput('');
+  }
+
+  function setList(newList: string[]) {
+    props.onTags?.(newList);
+    _setList(newList);
   }
 
   function addTag(tag: string) {
@@ -48,11 +58,42 @@ export const TagList = (props: { label?: string; tags?: string[]; className?: st
   }
   function editTag(tag: string, newValue: string) {
     const index = list.indexOf(tag);
+    const newList = [...list];
 
-    list[index] = newValue;
+    newList[index] = newValue;
+    setList(newList);
   }
   function removeTag(tag: string) {
     setList(list.filter((x) => x !== tag));
+  }
+
+  function createPastePreview(content: string) {
+    const preview = content
+      // split by \n or ,
+      .split(/,|\n/)
+      .map((x) =>
+        x
+          // Replaces urls
+          .replaceAll(/[\w#%&+./:=?@~-]{2,256}\.[a-z]{2,4}\b(\/[\w#%&+./:=?@~-]*)?/gi, '')
+          // Replace : at the end of a string
+          .replaceAll(/(\w\.\n)*:/gi, '')
+          .trim(),
+      )
+      .filter((x) => !!x && x !== '');
+
+    if (preview.length === 0) {
+      openToast('Nothing To Paste!');
+
+      return;
+    }
+    setPastePreviewList(preview);
+  }
+
+  function doPastePreviewFromPreview() {
+    if (pastePreviewList === undefined) return;
+    setList([...list, ...pastePreviewList]);
+    setPastePreviewList(undefined);
+    openToast('Pasted!');
   }
 
   // useEffect(() => {
@@ -66,69 +107,97 @@ export const TagList = (props: { label?: string; tags?: string[]; className?: st
   }, [input]);
 
   return (
-    <Section
-      label={props.label}
-      className={`w-full ${props.className ?? ''} pb-12`}
-      wrapperClass={`max-h-[14rem] gap-1 gap-y-2`}
-    >
-      {list.map(
-        (x, index) =>
-          x && (
-            <Tag
-              key={x}
-              tag={x}
-              onClick={() => {
-                onTagClick(x);
-              }}
-              onRightClick={() => {
-                onTagRightClick(x);
-              }}
-              onDoubleClick={() => {
-                onTagDoubleClick(x);
-              }}
-            />
-          ),
-      )}
-      <div
-        tabIndex={-1}
-        role={`button`}
-        className={`absolute -top-4 right-0 bg-gray-800 text-sm rounded-lg px-4 py-1 pb-3 cursor-pointer`}
-        onClick={() => {
-          onCopyAll();
-        }}
+    <>
+      <Section
+        label={props.label}
+        className={`w-full ${props.className ?? ''} pb-12`}
+        wrapperClass={`max-h-[14rem] gap-1 gap-y-2`}
       >
-        COPY ALL
-      </div>
-      <div className={`absolute bottom-2 left-1 right-1 flex items-center`}>
-        <button
-          className={`transition-all outline-0 ml-1 mr-2 overflow-hidden ${input ? 'w-6' : 'w-0'}`}
-          onClick={() => {
-            onClearInput();
+        {list.map(
+          (x, index) =>
+            x && (
+              <Tag
+                key={x}
+                tag={x}
+                onClick={() => {
+                  onTagClick(x);
+                }}
+                onRightClick={() => {
+                  onTagRightClick(x);
+                }}
+                onDoubleClick={() => {
+                  onTagDoubleClick(x);
+                }}
+              />
+            ),
+        )}
+        <ClipboardActions
+          className={`absolute -top-4 right-0`}
+          onPaste={(fn) => {
+            createPastePreview(fn());
           }}
-        >
-          X
-        </button>
-        <input
-          ref={inputRef}
-          value={input}
-          className={`bg-transparent p-1 outline-0 w-full`}
-          placeholder={'Add new...'}
-          onInput={(e) => {
-            setInput(e.currentTarget.value);
-          }}
-          onKeyDown={(e) => {
-            e.key === 'Enter' ? onTagAdd() : null;
+          onCopy={(fn) => {
+            fn(list.join(', '));
           }}
         />
-        <button
-          className={`block outline-0 px-2 py-2 text-xs bg-gray-700 h-full rounded-br-lg`}
-          onClick={() => {
-            onTagAdd();
-          }}
-        >
-          SAVE
-        </button>
-      </div>
-    </Section>
+        <div className={`absolute bottom-2 left-1 right-1 flex items-center`}>
+          <button
+            className={`transition-all outline-0 ml-1 mr-2 overflow-hidden ${input ? 'w-6' : 'w-0'}`}
+            onClick={() => {
+              onClearInput();
+            }}
+          >
+            X
+          </button>
+          <input
+            ref={inputRef}
+            value={input}
+            className={`bg-transparent p-1 outline-0 w-full`}
+            placeholder={'Add new...'}
+            onInput={(e) => {
+              setInput(e.currentTarget.value);
+            }}
+            onKeyDown={(e) => {
+              e.key === 'Enter' ? onTagAdd() : null;
+            }}
+          />
+          <button
+            className={`block outline-0 px-2 py-2 text-xs bg-gray-700 h-full rounded-br-lg`}
+            onClick={() => {
+              onTagAdd();
+            }}
+          >
+            SAVE
+          </button>
+        </div>
+      </Section>
+      <Modal
+        withCloseButton
+        title={`Paste Safety Assurance Agent`}
+        className={`z-[6667]`}
+        width={`34rem`}
+        height={`auto`}
+        open={!!pastePreviewList}
+        onClose={() => {
+          setPastePreviewList(undefined);
+        }}
+      >
+        <p className={`opacity-90 mt-2`}>
+          You are going to paste the items below inside <span className={`font-bold underline`}>{props.label}</span>,
+          continue?
+        </p>
+        <div className={`flex flex-wrap mt-7 gap-2`}>
+          {pastePreviewList?.map((x) => (
+            <Tag key={x} tag={x} />
+          ))}
+        </div>
+        <div className={`flex items-center justify-end gap-4 mt-10`}>
+          {/*<Button>CANCEL</Button>*/}
+          <Button className={`w-32`} onClick={doPastePreviewFromPreview}>
+            PASTE
+          </Button>
+        </div>
+      </Modal>
+    </>
   );
 };

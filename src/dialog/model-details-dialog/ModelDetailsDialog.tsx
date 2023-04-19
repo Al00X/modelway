@@ -19,6 +19,9 @@ const SEPARATOR = `    .    `;
 const formAtom = atom({
   notes: '' as string,
   cover: undefined as ModelImage | undefined,
+  triggers: [] as string[],
+  merges: [] as (false | string)[],
+  tags: [] as string[],
 });
 
 export const ModelDetailsDialog = (props: {
@@ -45,6 +48,9 @@ export const ModelDetailsDialog = (props: {
       setAtomForm({
         cover: props.item.metadata.coverImage,
         notes: props.item.metadata.notes ?? '',
+        merges: props.item.metadata.currentVersion.merges ?? [],
+        tags: props.item.metadata.tags ?? [],
+        triggers: props.item.metadata.currentVersion.triggers ?? [],
       });
     }
   }, [props.open, props.item, setAtomForm]);
@@ -78,6 +84,12 @@ export const ModelDetailsDialog = (props: {
             ...itemToSave.metadata,
             coverImage: atomForm.cover,
             notes: atomForm.notes,
+            tags: atomForm.tags,
+            currentVersion: {
+              ...itemToSave.metadata.currentVersion,
+              merges: atomForm.merges,
+              triggers: atomForm.triggers,
+            },
           },
         };
       }
@@ -158,9 +170,27 @@ export const ModelDetailsDialog = (props: {
                 </div>
               </div>
               <div className={`flex gap-2 w-full`}>
-                <TagList tags={currentItem.metadata.currentVersion.triggers} label={`Triggers`} />
-                <TagList tags={currentItem.metadata.currentVersion.merges} label={`Merges`} />
-                <TagList tags={currentItem.metadata.tags} label={`Tags`} />
+                <TagList
+                  tags={atomForm.triggers}
+                  label={`Triggers`}
+                  onTags={(e) => {
+                    setAtomForm((v) => ({ ...v, triggers: e }));
+                  }}
+                />
+                <TagList
+                  tags={atomForm.merges}
+                  label={`Merges`}
+                  onTags={(e) => {
+                    setAtomForm((v) => ({ ...v, merges: e }));
+                  }}
+                />
+                <TagList
+                  tags={atomForm.tags}
+                  label={`Tags`}
+                  onTags={(e) => {
+                    setAtomForm((v) => ({ ...v, tags: e }));
+                  }}
+                />
               </div>
             </div>
             <div className={`overflow-auto`}>

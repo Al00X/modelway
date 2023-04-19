@@ -35,6 +35,7 @@ export const ChangelogDialog = (props: { open: boolean; onClose: () => void }) =
       width={`30rem`}
       height={`70vh`}
       open={props.open}
+      className={`z-[6666]`}
       onClose={props.onClose}
     >
       <div className={`flex flex-col bg-gray-800 overflow-hidden p-4 rounded-xl mt-4 relative h-full`}>

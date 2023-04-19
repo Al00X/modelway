@@ -19,7 +19,15 @@ export const SettingsDialog = (props: { open: boolean; onClose: () => void }) =>
   }, [setAtomUserPaths, props.onClose]);
 
   return (
-    <Modal withCloseButton title={`Settings`} open={props.open} width={`45rem`} height={`auto`} onClose={props.onClose}>
+    <Modal
+      withCloseButton
+      title={`Settings`}
+      open={props.open}
+      className={`z-[6666]`}
+      width={`45rem`}
+      height={`auto`}
+      onClose={props.onClose}
+    >
       <UserPathsForm className={`mt-5`} ref={userPathsFormRef} />
       <div className={`w-full flex items-center justify-end`}>
         <Button className={`mt-12 h-10 w-32 bg-gray-800 hover:bg-gray-900 justify-center`} onClick={save}>

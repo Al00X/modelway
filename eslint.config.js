@@ -60,6 +60,8 @@ module.exports = defineFlatConfig([
       '@typescript-eslint/no-unsafe-call': 0,
       'fp/no-class': 0,
       '@typescript-eslint/no-throw-literal': 0,
+      'unicorn/no-unsafe-regex': 0,
+      'react/hook-use-state': 0,
     },
   },
 ]);
