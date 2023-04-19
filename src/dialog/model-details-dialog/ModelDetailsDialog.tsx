@@ -21,7 +21,7 @@ const formAtom = atom({
   notes: '' as string,
   cover: undefined as ModelImage | undefined,
   triggers: [] as string[],
-  merges: [] as (false | string)[],
+  merges: [] as string[],
   tags: [] as string[],
 });
 

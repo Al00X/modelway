@@ -18,7 +18,7 @@ export interface ModelVersion {
   baseModel?: string;
   name?: string;
   description?: string | null;
-  merges?: (string | false)[];
+  merges?: string[];
   images?: ModelImage[];
   createdAt?: string;
   updatedAt?: string;
