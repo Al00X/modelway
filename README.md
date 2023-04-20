@@ -1,9 +1,25 @@
 # MODELWAY
-Organize your Stable Diffusion models on the fly!
+> _Organize your Stable Diffusion models on the fly!_
+___
 
-### Running From Source Codes?
-This project built on `Node v16.18.0`. to avoid unwanted things to happen, make sure you're using this version of Node.
+## Features
+___
+- It's a good boi
+- It listens to what ever you say to him
+- It fetches the stick you've just thrown...
 
-`npm i`
-`npm start`
-`profit`
+## Contribute
+___
+This project is built on `Node v16.18.0`. to avoid unwanted things to happen, make sure you're using this version of Node.
+
+### How To Run?
+
+```
+npm install
+```
+```
+npm start
+```
+```
+profit
+```
