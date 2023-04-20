@@ -26,3 +26,31 @@ export async function fileExists(path: string) {
     .then(() => true)
     .catch(() => false);
 }
+
+export async function checkFilePermission(file: string, permissions: 'read' | 'readwrite') {
+  return access(file, permissions === 'read' ? constants.R_OK : constants.R_OK | constants.W_OK)
+    .then(() => true)
+    .catch(() => false);
+}
+
+export async function checkDirPermission(dir: string, permissions: 'read' | 'readwrite') {
+  const dirHasPerm = await checkFilePermission(dir, permissions);
+
+  if (!dirHasPerm) return false;
+  try {
+    const dirFiles = await readdir(dir, { withFileTypes: true });
+
+    for (const i of dirFiles) {
+      if (i.isFile()) {
+        const path = resolve(dir, i.name);
+        const filePerm = await checkFilePermission(path, permissions);
+
+        return filePerm;
+      }
+    }
+  } catch {
+    return false;
+  }
+
+  return true;
+}

@@ -35,7 +35,7 @@ export const AppProvider = (props: { children: any }) => {
   const [atomUserPaths, setAtomUserPaths] = useAtom(SettingsState.userPaths);
   const [atomIsFirstLaunch, setAtomIsFirstLaunch] = useAtom(SettingsState.isFirstLaunch);
   const [render, setRender] = useState(false);
-  const [location, setLocation] = useLocation();
+  const [location, navigate] = useLocation();
 
   const forceUpdate = useForceUpdate();
 
@@ -142,6 +142,10 @@ export const AppProvider = (props: { children: any }) => {
 
   const clientSync = useCallback(async () => {
     if (isSyncing.current) {
+      throw undefined;
+    }
+    if (atomUserPaths === undefined || Object.values(atomUserPaths).filter((t) => !!t).length === 0) {
+      navigate('/');
       throw undefined;
     }
 
@@ -264,7 +268,7 @@ export const AppProvider = (props: { children: any }) => {
 
   useEffect(() => {
     const navigateToStartup = () => {
-      setLocation('/');
+      navigate('/');
     };
     const init = async () => {
       await clientSync()

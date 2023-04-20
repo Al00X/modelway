@@ -144,7 +144,7 @@ async function generateModelImageBuffer(data: Buffer): Promise<Omit<ModelImage, 
   };
 }
 
-async function checkStorage() {
+export async function checkStorage() {
   STORAGE_PATH = path.join(API.userDataPath!, 'Data');
   STORAGE_MODELS_PATH = path.join(STORAGE_PATH, 'models.json');
   STORAGE_ASSETS_PATH = path.join(STORAGE_PATH, 'assets');
