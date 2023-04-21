@@ -68,7 +68,28 @@ export const Browser = () => {
           openToast('Synced Failed :(');
         });
     },
-    [list, appContext, filters?.category, itemToViewDetails, prepareList, atomList],
+    [list, appContext, filters?.category],
+  );
+
+  const runClientSync = useCallback(
+    (e: ButtonClickEvent) => {
+      e.setLoading(true);
+
+      appContext
+        .clientSync()
+        .then(() => {
+          openToast('Refreshed!');
+          e.setLoading(false);
+          setTriggerListUpdate(true);
+        })
+        .catch((error) => {
+          e.setLoading(false);
+          if (error === undefined) return;
+          console.error('Disk refresh failed', error);
+          openToast('Refresh Failed :(');
+        });
+    },
+    [appContext],
   );
 
   useEffect(() => {
@@ -87,7 +108,7 @@ export const Browser = () => {
 
   return (
     <div ref={containerRef} className={`flex flex-col h-full overflow-auto`}>
-      <BrowserHeader onChange={setFilters} onSync={runServerSync} />
+      <BrowserHeader onChange={setFilters} onSync={runServerSync} onRefresh={runClientSync} />
       <div className={`w-full flex-auto relative`}>
         {!list && <Loader className={`transition-all mx-auto ${list ? 'opacity-0' : 'opacity-100'}`} />}
         <div
@@ -120,6 +141,7 @@ export const Browser = () => {
         }}
         onSave={(newItem, close) => {
           const localSaveFn = () => {
+            // TODO: Wave for the performance
             const newList = [...(list ?? [])];
             const index = newList.findIndex((x) => x.id === newItem.id);
 

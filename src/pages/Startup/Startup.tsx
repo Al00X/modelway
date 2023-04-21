@@ -98,14 +98,21 @@ export const Startup = () => {
         height={`auto`}
         title={`Permission Error`}
         open={!!openPathsPermissionErrorModal}
-        onClose={() => { setOpenPathsPermissionErrorModal(undefined); }}
+        onClose={() => {
+          setOpenPathsPermissionErrorModal(undefined);
+        }}
       >
         <p className={`mt-3`}>
           ModelWay needs <strong>Read</strong> and <strong>Write</strong> access for the following folder. Please update
           the permissions and try again.
         </p>
         <p className={`mt-3 opacity-90`}>{openPathsPermissionErrorModal}</p>
-        <Button className={`w-32 mx-auto mt-8`} onClick={() => { setOpenPathsPermissionErrorModal(undefined); }}>
+        <Button
+          className={`w-32 mx-auto mt-8`}
+          onClick={() => {
+            setOpenPathsPermissionErrorModal(undefined);
+          }}
+        >
           OKAY
         </Button>
       </Modal>
@@ -115,14 +122,21 @@ export const Startup = () => {
         height={`auto`}
         title={`Storage Permission Error`}
         open={openStoragePermissionErrorModal}
-        onClose={() => { setOpenStoragePermissionErrorModal(false); }}
+        onClose={() => {
+          setOpenStoragePermissionErrorModal(false);
+        }}
       >
         <p className={`mt-3`}>
           ModelWay cannot access its storage folder for saving models info. Make sure <strong>Read</strong> and{' '}
           <strong>Write</strong> permissions are given to the following folder:
         </p>
         <p className={`mt-3 opacity-90`}>{API.userDataPath}</p>
-        <Button className={`w-32 mx-auto mt-8`} onClick={() => { setOpenStoragePermissionErrorModal(false); }}>
+        <Button
+          className={`w-32 mx-auto mt-8`}
+          onClick={() => {
+            setOpenStoragePermissionErrorModal(false);
+          }}
+        >
           OKAY
         </Button>
       </Modal>

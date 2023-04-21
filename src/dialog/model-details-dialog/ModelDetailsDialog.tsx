@@ -161,24 +161,26 @@ export const ModelDetailsDialog = (props: {
                 SYNC
               </Button>
               <div className={`flex flex-col relative`} style={{ minWidth: '25rem' }}>
-                <p className={`-mt-3 text-sm opacity-50`}>{currentItem.metadata.type}</p>
-                <h3 className="text-3xl mt-0 font-medium leading-10" style={{ wordBreak: 'break-word' }}>
-                  {currentItem.computed.name}
-                </h3>
-                <p className={`text-lg opacity-70 mt-2`}>Version: {currentItem.computed.version ?? '-'}</p>
-                <p className={`text-lg opacity-70 mt-2`}>
-                  Base: {currentItem.metadata.currentVersion.baseModel ?? '-'}
-                </p>
-                {!!currentItem.metadata.description && (
-                  <Button
-                    className={`w-40 right-0 self-end`}
-                    onClick={() => {
-                      setOpenDescriptionModal(true);
-                    }}
-                  >
-                    View Description
-                  </Button>
-                )}
+                <div className={`flex flex-col relative w-full`}>
+                  <p className={`-mt-3 text-sm opacity-50`}>{currentItem.metadata.type}</p>
+                  <h3 className="text-3xl mt-0 font-medium leading-10" style={{ wordBreak: 'break-word' }}>
+                    {currentItem.computed.name}
+                  </h3>
+                  <p className={`text-lg opacity-70 mt-2`}>Version: {currentItem.computed.version ?? '-'}</p>
+                  <p className={`text-lg opacity-70 mt-2`}>
+                    Base: {currentItem.metadata.currentVersion.baseModel ?? '-'}
+                  </p>
+                  {!!currentItem.metadata.description && (
+                    <Button
+                      className={`w-40 absolute right-0 bottom-1 self-end`}
+                      onClick={() => {
+                        setOpenDescriptionModal(true);
+                      }}
+                    >
+                      View Description
+                    </Button>
+                  )}
+                </div>
                 <div className={`relative mt-auto w-full p-4 bg-gray-800`}>
                   <p
                     style={{ zIndex: -1 }}
@@ -275,12 +277,30 @@ export const ModelDetailsDialog = (props: {
                 {currentItem.filename ? (
                   <>
                     {currentItem.filename}
-                    <span
-                      className={`info-chips ${currentItem.vaePath ? 'active text-primary-200 ' : ''}`}
-                      title={currentItem.vaePath ?? 'This model has no VAE file beside its file'}
-                    >
-                      {currentItem.vaePath ? 'VAE' : 'No VAE'}
-                    </span>
+                    {((vae) => (
+                      <span
+                        className={`info-chips ${
+                          vae === 'external' ? 'active' : vae === 'baked' ? 'alt' : vae === 'missing' ? 'error' : ''
+                        }`}
+                        title={
+                          vae === 'external'
+                            ? currentItem.vaePath
+                            : vae === 'baked'
+                            ? 'This model has a VAE baked inside'
+                            : vae === 'missing'
+                            ? "You missed the VAE shipped with this model, click to open model's webpage"
+                            : 'This model has no custom VAE'
+                        }
+                      >
+                        {vae === 'external'
+                          ? 'VAE'
+                          : vae === 'baked'
+                          ? 'Baked VAE'
+                          : vae === 'missing'
+                          ? 'Missing VAE'
+                          : 'No VAE'}
+                      </span>
+                    ))(currentItem.computed.hasVAE)}
                     <span
                       className={`info-chips ${currentItem.configPath ? 'active text-primary-200 ' : ''}`}
                       title={currentItem.configPath ?? 'This model has no Config file beside its file'}

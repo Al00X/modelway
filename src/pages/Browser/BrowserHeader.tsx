@@ -1,7 +1,6 @@
 import { GlobalHotKeys } from 'react-hotkeys';
 import { useEffect, useRef, useState } from 'react';
 import { useAtom } from 'jotai';
-import { useForceUpdate } from '@mantine/hooks';
 import Input, { InputElementType } from '@/components/Input/Input';
 import { Item } from '@/components/Item/Item';
 import { ButtonGroup } from '@/components/ButtonGroup/ButtonGroup';
@@ -46,6 +45,7 @@ export interface BrowserHeaderChangeEvent extends FilterEngineInputs {
 export const BrowserHeader = (props: {
   onChange: (e: BrowserHeaderChangeEvent) => void;
   onSync: (e: ButtonClickEvent) => void;
+  onRefresh: (e: ButtonClickEvent) => void;
 }) => {
   const [atomAvailableTags] = useAtom(DataState.availableTagsKeyValue);
   const [atomAvailableMerges] = useAtom(DataState.availableMergesKeyValue);
@@ -62,8 +62,6 @@ export const BrowserHeader = (props: {
   const searchInputRef = useRef<InputElementType>(null);
   const filterTagSelectRef = useRef<SelectElementType>(null);
   const filterMergesSelectRef = useRef<SelectElementType>(null);
-
-  const forceUpdate = useForceUpdate();
 
   useEffect(() => {
     props.onChange({
@@ -194,12 +192,14 @@ export const BrowserHeader = (props: {
           }}
         />
       </div>
-      <div className={`flex flex-col flex-none h-full`}>
+      <div className={`flex gap-3 flex-none h-10 self-baseline`}>
+        <Button title={`Refresh models from disk`} className={`ml-auto`} onClick={props.onRefresh}>
+          REFRESH
+        </Button>
         <Button
-          className={`ml-auto bg-primary-700 hover:bg-primary-600`}
-          onClick={(e) => {
-            props.onSync(e);
-          }}
+          title={`Sync models with server (CivitAI)`}
+          className={`bg-primary-700 hover:bg-primary-600`}
+          onClick={props.onSync}
         >
           SYNC
         </Button>

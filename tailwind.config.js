@@ -45,6 +45,12 @@ module.exports = {
           800: '#205f70',
           900: '#1f4c58',
         },
+        secondary: {
+          DEFAULT: '#f18233',
+        },
+        error: {
+          DEFAULT: '#e52441',
+        },
       },
     },
   },

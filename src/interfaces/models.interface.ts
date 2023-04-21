@@ -10,8 +10,12 @@ export type ModelType =
   | 'Poses'
   | 'Misc';
 
+export type VAEStatus = 'baked' | 'external' | 'missing' | 'none' | undefined;
+export type ConfigStatus = 'yes' | 'none' | 'missing' | undefined;
+
 export interface ModelVersion {
   id?: number;
+  fileId?: number;
   modelId?: number;
   fileName?: string;
   triggers?: string[];
@@ -75,5 +79,7 @@ export interface ModelExtended extends Model {
     name: string;
     recognized: boolean;
     version?: string;
+    hasVAE: VAEStatus;
+    hasConfig?: ConfigStatus;
   };
 }

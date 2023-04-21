@@ -12,10 +12,14 @@
 }
 .info-chips {
   @apply ml-2 inline-flex items-center justify-center text-xs select-none py-0.5 rounded-xl px-2.5;
+  @apply bg-gray-800 opacity-90 text-gray-300;
   &.active {
-    @apply bg-gray-900 opacity-95 font-medium;
+    @apply bg-gray-900 text-primary-200 opacity-95 font-medium #{!important};
   }
-  &:not(.active) {
-    @apply bg-gray-800 opacity-90 text-gray-300;
+  &.error {
+    @apply bg-error text-white opacity-95 font-medium #{!important};
+  }
+  &.alt {
+    @apply bg-secondary text-gray-900 opacity-95 font-medium #{!important};
   }
 }

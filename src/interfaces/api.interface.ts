@@ -90,7 +90,7 @@ export interface CivitModelFile {
   name: string; // file name
   id: number;
   sizeKB: number;
-  type: 'Model' | string;
+  type: 'Model' | 'VAE' | 'Config' | string;
   format: string;
   pickleScanResult: 'Success' | string;
   pickleScanMessage: string;

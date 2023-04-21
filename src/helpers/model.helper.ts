@@ -72,6 +72,7 @@ export function civitModelToModel(model: CivitModel, previousModel?: Model): Par
   const versionMap = (v: CivitModelVersion, file?: CivitModelFile | null): ModelVersion => {
     return {
       id: v.id,
+      fileId: file?.id,
       modelId: v.id,
       name: v.name,
       description: v.description,
@@ -179,12 +180,45 @@ export function modelPopulateComputedValues(model: Model): ModelExtended {
     .replaceAll('[]', '')
     .trim();
 
+  // ----- VAE & Config
+  let hasVAE: ModelExtended['computed']['hasVAE'];
+  let hasConfig: ModelExtended['computed']['hasConfig'];
+  const vaeFileStatus: typeof hasVAE =
+    model.vaePath !== undefined ? 'external' : model.filename.toLowerCase().includes('bakedvae') ? 'baked' : undefined;
+  const configFileStatus: typeof hasConfig = model.configPath !== undefined ? 'yes' : undefined;
+
+  const versionObject = model.metadata.originalValues?.versions?.find((v) => v.id === model.metadata.currentVersion.id);
+  const fileOriginalName = versionObject?.files?.find((t) => t.id === model.metadata.currentVersion.fileId)?.name;
+  const versionContainsVaeFile = versionObject?.files?.some((t) => t.type === 'VAE');
+  const versionContainsConfigFile = versionObject?.files?.some((t) => t.type === 'Config');
+
+  if (vaeFileStatus === 'external') {
+    hasVAE = 'external';
+  } else if (fileOriginalName?.toLowerCase().includes('bakedvae') || vaeFileStatus === 'baked') {
+    hasVAE = 'baked';
+  } else if (versionContainsVaeFile && vaeFileStatus === undefined) {
+    hasVAE = 'missing';
+  } else if (versionContainsVaeFile === false) {
+    hasVAE = 'none';
+  }
+
+  if (configFileStatus === 'yes') {
+    hasConfig = 'yes';
+  } else if (versionContainsConfigFile) {
+    hasConfig = 'missing';
+  } else if (versionContainsConfigFile === false) {
+    hasConfig = 'none';
+  }
+  // -----
+
   return {
     ...model,
     computed: {
       name,
       recognized: model.metadata.currentVersion && Object.values(model.metadata.currentVersion).length > 0,
       version,
+      hasVAE,
+      hasConfig,
     },
   };
 }
