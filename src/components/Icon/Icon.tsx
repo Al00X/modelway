@@ -1,6 +1,9 @@
 import { MouseEvent, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import './Icon.scss';
+import { atom, useAtom } from 'jotai';
+
+const svgCacheAtom = atom({} as { [p: string]: string });
 
 export const Icon = (props: {
   icon: string;
@@ -11,20 +14,31 @@ export const Icon = (props: {
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [svgData, setSvgData] = useState('');
+  const [atomCache, setAtomCache] = useAtom(svgCacheAtom);
 
   useEffect(() => {
-    axios
-      .get<string>(`/icons/${props.icon}.svg`)
-      .then((res) => {
-        setSvgData(res.data.replace('<svg', '<svg class="icon"'));
-      })
-      .catch((e) => {
-        console.error('Icon fetch failed: ', props.icon, e);
-      });
-  }, [props.icon]);
+    const cacheData = atomCache[props.icon];
 
-  // useEffect(() => {
-  // }, [svgData]);
+    if (cacheData) {
+      setSvgData(cacheData);
+    } else {
+      axios
+        .get<string>(`/icons/${props.icon}.svg`)
+        .then((res) => {
+          const data = res.data.replace('<svg', '<svg class="icon"');
+
+          setSvgData(data);
+          // TODO: Caches like a bitch, race condition is destroying my ass... i cant take this anymore, i dont want caching, damn this
+          setAtomCache({
+            ...atomCache,
+            [props.icon]: data,
+          });
+        })
+        .catch((e) => {
+          console.error('Icon fetch failed: ', props.icon, e);
+        });
+    }
+  }, [props.icon]);
 
   return (
     <div

@@ -6,7 +6,7 @@ import { API } from '@/api';
 import { wait } from '@/helpers/promise.helper';
 import { fileExists } from '@/helpers/node.helper';
 
-let STORAGE_PATH: string, STORAGE_MODELS_PATH: string, STORAGE_ASSETS_PATH: string;
+export let STORAGE_PATH: string, STORAGE_MODELS_PATH: string, STORAGE_ASSETS_PATH: string;
 
 interface StorageModels {
   lastUpdate: string;
@@ -103,6 +103,16 @@ export async function importAssets(files: File[]): Promise<ModelImage[]> {
   console.log('New Assets:', assets);
 
   return assets;
+}
+
+// name with extension
+export async function saveAssetBlob(name: string, blob: Blob) {
+  const buffer = Buffer.from(await blob.arrayBuffer());
+  const filename = `${name}`;
+
+  await fs.writeFile(path.join(STORAGE_ASSETS_PATH, filename), buffer);
+
+  return filename;
 }
 
 async function generateModelImageBuffer(data: Buffer): Promise<Omit<ModelImage, 'url'>> {

@@ -21,7 +21,7 @@ export const BrowserFooter = (props: { filteredListLength: number | undefined })
 
   return (
     <div
-      className={`sticky bottom-0 w-full flex items-center py-2 px-3 text-sm bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg text-white gap-12 z-10`}
+      className={`sticky bottom-0 w-full flex items-center py-2 px-3 text-sm bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg text-gray-50 gap-12 z-10`}
     >
       {missingFilesList.length > 0 && (
         <div

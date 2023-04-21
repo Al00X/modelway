@@ -1,3 +1,4 @@
+import { parse, join } from 'node:path';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAtom } from 'jotai';
 import { useLocation } from 'wouter';
@@ -13,6 +14,8 @@ import { DataState } from '@/states/Data';
 import { AppContext } from '@/context/App/app.context';
 import { SettingsState } from '@/states/Settings';
 import { Modal } from '@/components/Modal/Modal';
+import { copyFile } from '@/helpers/node.helper';
+import { imageToUrl, resolveImageUrlToPath } from '@/services/image-asset';
 
 export interface ProgressEvent {
   current: number;
@@ -32,6 +35,7 @@ export const AppProvider = (props: { children: any }) => {
   const [openSyncDialog, setOpenSyncDialog] = useState(false);
 
   const [atomRawList, setAtomRawList] = useAtom(DataState.rawList);
+  const [atomProcessedList, setAtomProcessedList] = useAtom(DataState.processedList);
   const [atomUserPaths, setAtomUserPaths] = useAtom(SettingsState.userPaths);
   const [atomIsFirstLaunch, setAtomIsFirstLaunch] = useAtom(SettingsState.isFirstLaunch);
   const [render, setRender] = useState(false);
@@ -238,6 +242,39 @@ export const AppProvider = (props: { children: any }) => {
     await finalizeSyncing(newSyncedList);
   }, [finalizeSyncing, shouldCancelSync]);
 
+  const clientUpdate = useCallback(async () => {
+    let counter = 0;
+    const total = atomProcessedList.length;
+
+    setProgress({
+      current: counter,
+      total,
+      message: '',
+    });
+    for (const item of atomProcessedList) {
+      counter++;
+      if ((item.metadata.currentVersion.images?.length ?? 0) > 0) {
+        setProgress({
+          current: counter,
+          total,
+          message: `${item.filename}`,
+        });
+        const thumbnail = item.metadata.currentVersion.images![0];
+        const result = await imageToUrl(thumbnail);
+
+        if (result?.type && result.type !== 'http') {
+          const path = resolveImageUrlToPath(result.path);
+          // automatic1111 doesn't work with jpeg and other junks, only PNG
+          // yea you're seeing right, im directly changing the extension, deal with it!
+          // parse(path).ext
+          const destinationFileName = `${parse(item.filename).name}.preview${'.png'}`;
+
+          await copyFile(path, join(item.path, '..', destinationFileName));
+        }
+      }
+    }
+  }, [atomProcessedList]);
+
   async function update(id: number, model: Model, immediate?: boolean) {
     const index = atomRawList.findIndex((x) => x.id === id);
 
@@ -323,6 +360,7 @@ export const AppProvider = (props: { children: any }) => {
       <AppContext.Provider
         value={{
           clientSync: () => clientSync(),
+          clientUpdate: () => clientUpdate(),
           serverSync: (type, filter) => serverSync(type, filter),
           progress,
           update: (id, model, immediate) => update(id, model, immediate),

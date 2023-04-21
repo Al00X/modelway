@@ -4,6 +4,7 @@ import { Model, ModelType } from '@/interfaces/models.interface';
 
 export const AppContext = createContext({
   clientSync: async () => {},
+  clientUpdate: async () => {},
   // filter is the list of model file names (model.filename)
   serverSync: async (type?: ModelType, filter?: string[]) => {},
   progress: undefined as ProgressEvent | undefined,

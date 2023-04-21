@@ -1,4 +1,4 @@
-import { readdir, access, constants } from 'node:fs/promises';
+import fs, { readdir, access, constants } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 /**
@@ -53,4 +53,8 @@ export async function checkDirPermission(dir: string, permissions: 'read' | 'rea
   }
 
   return true;
+}
+
+export async function copyFile(path: string, destination: string) {
+  await fs.copyFile(path, destination);
 }

@@ -59,8 +59,8 @@ export interface Model {
 export interface ModelImage {
   url: string;
   nsfw?: boolean;
-  width?: number;
-  height?: number;
+  width: number;
+  height: number;
   hash?: string;
   hide?: boolean;
   meta?: {

@@ -46,6 +46,7 @@ export const BrowserHeader = (props: {
   onChange: (e: BrowserHeaderChangeEvent) => void;
   onSync: (e: ButtonClickEvent) => void;
   onRefresh: (e: ButtonClickEvent) => void;
+  onUpdate: (e: ButtonClickEvent) => void;
 }) => {
   const [atomAvailableTags] = useAtom(DataState.availableTagsKeyValue);
   const [atomAvailableMerges] = useAtom(DataState.availableMergesKeyValue);
@@ -193,7 +194,11 @@ export const BrowserHeader = (props: {
         />
       </div>
       <div className={`flex gap-3 flex-none h-10 self-baseline`}>
-        <Button title={`Refresh models from disk`} className={`ml-auto`} onClick={props.onRefresh}>
+        <div className={`ml-auto`}></div>
+        <Button title={`Update models filesystem with .preview (thumbnail) and .info`} onClick={props.onUpdate}>
+          UPDATE
+        </Button>
+        <Button title={`Refresh models from disk`} onClick={props.onRefresh}>
           REFRESH
         </Button>
         <Button

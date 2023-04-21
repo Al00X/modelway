@@ -1,11 +1,15 @@
 import './Image.scss';
 import { useAtom } from 'jotai';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Blurhash } from 'react-blurhash';
+import axios from 'axios';
 import { resolveImage } from '@/services/image-asset';
 import { SettingsState } from '@/states/Settings';
 import useContextMenu from '@/hooks/useContextMenu';
 import { ModelImage } from '@/interfaces/models.interface';
+import { saveAssetBlob } from '@/services/storage';
+import { fileExists } from '@/helpers/node.helper';
+import { Img } from '@/components/Image/Img';
 
 export const Image = (props: {
   item: ModelImage;
@@ -68,17 +72,18 @@ export const Image = (props: {
     >
       <div className={`transition-all absolute inset-0 pointer-events-none`}></div>
       {!loaded && (
-        <div style={{ aspectRatio }} className={`h-full w-auto bg-gray-800`}>
+        <div
+          style={{ aspectRatio }}
+          className={`${props.item.height > props.item.width ? 'w-full h-auto' : 'h-full w-auto'} bg-gray-800`}
+        >
           {!!props.item.hash && <Blurhash className={`w-full h-full`} hash={props.item.hash} />}
         </div>
       )}
-      <img
+      <Img
+        src={resolveImage(props.item.url)}
         draggable={false}
-        src={resolveImage(props.item)}
-        width={props.item.width ?? undefined}
-        height={props.item.height ?? undefined}
-        alt=""
-        loading="eager"
+        width={props.item.width}
+        height={props.item.height}
         className={`transition-all ${!isNSFW && props.item.nsfw && !props.legalize ? 'blurry' : ''} ${
           loaded ? '' : 'invisible absolute'
         }`}

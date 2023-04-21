@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
-import { useForceUpdate } from '@mantine/hooks';
 import { BrowserHeader, BrowserHeaderChangeEvent } from './BrowserHeader';
 import { useAppContext } from '@/context/App';
 import { ModelExtended } from '@/interfaces/models.interface';
@@ -23,12 +22,9 @@ export const Browser = () => {
   const appContext = useAppContext();
   const containerRef = useRef<HTMLDivElement>(null);
   const [triggerListUpdate, setTriggerListUpdate] = useState(false);
-  const forceUpdate = useForceUpdate();
 
   const prepareList = useCallback(() => {
     if (atomList.length === 0) return;
-
-    const scrollPos = containerRef.current?.scrollTop;
 
     setList(undefined);
     setTimeout(() => {
@@ -39,12 +35,6 @@ export const Browser = () => {
       console.timeEnd('Prepare List');
       setList(newList);
       setTriggerListUpdate(false);
-      // setTimeout(() => {
-      //   console.log(containerRef.current?.scrollTop, scrollPos);
-      //   containerRef.current?.scrollTo({
-      //     top: scrollPos
-      //   });
-      // }, 100)
     }, 0);
   }, [atomList, filters]);
 
@@ -92,6 +82,25 @@ export const Browser = () => {
     [appContext],
   );
 
+  const runClientUpdate = useCallback(
+    (e: ButtonClickEvent) => {
+      e.setLoading(true);
+      appContext
+        .clientUpdate()
+        .then(() => {
+          openToast('Updated!');
+          e.setLoading(false);
+        })
+        .catch((error) => {
+          e.setLoading(false);
+          if (error === undefined) return;
+          console.error('Update failed', error);
+          openToast('Update Failed :(');
+        });
+    },
+    [appContext],
+  );
+
   useEffect(() => {
     if (triggerListUpdate || (list === undefined && atomList.length > 0)) {
       prepareList();
@@ -108,7 +117,12 @@ export const Browser = () => {
 
   return (
     <div ref={containerRef} className={`flex flex-col h-full overflow-auto`}>
-      <BrowserHeader onChange={setFilters} onSync={runServerSync} onRefresh={runClientSync} />
+      <BrowserHeader
+        onChange={setFilters}
+        onSync={runServerSync}
+        onRefresh={runClientSync}
+        onUpdate={runClientUpdate}
+      />
       <div className={`w-full flex-auto relative`}>
         {!list && <Loader className={`transition-all mx-auto ${list ? 'opacity-0' : 'opacity-100'}`} />}
         <div

@@ -79,12 +79,12 @@ async function createWindow() {
     return { action: 'deny' };
   });
 
-  protocol.registerFileProtocol('assets', (request, callback) => {
-    const file = request.url.substring(9, request.url.length);
+  protocol.registerFileProtocol('asset', (request, callback) => {
+    const file = request.url.substring(8, request.url.length);
     callback({ path: join(app.getPath('userData'), 'Data', 'assets', file) });
   });
   protocol.registerFileProtocol('file', (request, callback) => {
-    const pathname = decodeURI(request.url.replace('file:///', ''));
+    const pathname = decodeURI(request.url.replace('file://', ''));
     callback(pathname);
   });
 }
