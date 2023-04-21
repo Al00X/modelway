@@ -13,7 +13,7 @@ function cleanupTextFromShit(text: string) {
 }
 
 export function modelFileNamePrune(model: Model | string) {
-  let text = typeof model === 'string' ? model : model.file;
+  let text = typeof model === 'string' ? model : model.filename;
 
   if (text.length <= 0) return '';
   text = path.parse(text).name;
@@ -93,18 +93,20 @@ export function civitModelToModel(model: CivitModel, previousModel?: Model): Par
       : !previousModel
       ? model.modelVersions[0]
       : model.modelVersions.find((x) =>
-          x.files.find((y) => y.name === previousModel.file || y.hashes.AutoV1?.toLowerCase() === previousModel.hash),
+          x.files.find(
+            (y) => y.name === previousModel.filename || y.hashes.AutoV1?.toLowerCase() === previousModel.hash,
+          ),
         ) ?? null;
   let currentVersionFile: CivitModelFile | null = null;
 
   if (!currentVersion && previousModel) {
     // const sha256 = GetModelHash(previousModel, 'sha256');
-    console.error(`Version YOKH NIGGA: ${previousModel.file ?? model.name}`);
+    console.error(`Version YOKH NIGGA: ${previousModel.filename ?? model.name}`);
   }
   if (currentVersion) {
     currentVersionFile = previousModel
       ? currentVersion.files.find(
-          (x) => x.name === previousModel.file || x.hashes.AutoV1?.toLowerCase() === previousModel.hash,
+          (x) => x.name === previousModel.filename || x.hashes.AutoV1?.toLowerCase() === previousModel.hash,
         ) ?? null
       : currentVersion.files.find((x) => x.primary) ?? null;
     if (!currentVersionFile) {
@@ -137,7 +139,7 @@ export function civitModelToModel(model: CivitModel, previousModel?: Model): Par
 
 export function mergeModelDetails(model: Model): Model {
   if (!model.metadata.originalValues) {
-    // console.warn(`Model has no available server data for merging: ${model.file}`);
+    // console.warn(`Model has no available server data for merging: ${model.filename}`);
     return model;
   }
 
@@ -165,7 +167,7 @@ export function mergeModelDetails(model: Model): Model {
 export function modelPopulateComputedValues(model: Model): ModelExtended {
   let name =
     model.metadata.name ??
-    model.file.substring(0, model.file.lastIndexOf('.')).replaceAll('_', ' ').replaceAll('-', ' ');
+    model.filename.substring(0, model.filename.lastIndexOf('.')).replaceAll('_', ' ').replaceAll('-', ' ');
   let version = model.metadata.currentVersion.name
     ? modelVersionNamePrune(model.metadata.currentVersion.name)
     : undefined;
@@ -198,7 +200,7 @@ export function modelsDeduplicate(models: Model[]) {
     const matches = findAllIndexes(models, (x, index) => {
       return (
         i !== index &&
-        ((x.file !== '' && model.file === x.file) ||
+        ((x.filename !== '' && model.filename === x.filename) ||
           (x.metadata.id !== -1 && !!x.metadata.id && model.metadata.id === x.metadata.id))
       );
     });

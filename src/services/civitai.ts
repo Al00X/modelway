@@ -16,16 +16,18 @@ async function apiCivitSearchWithModel(model: Model, query: string, page = 1): P
   const result = await http.get<CivitPaginatedResult<CivitModel>>(`models?query=${query}&page=${page}`);
 
   if (result.data.items.length === 0) {
-    console.error(model.file, 'Not found :(');
+    console.error(model.filename, 'Not found :(');
 
     return null;
   }
   if (result.data.items.length === 1) {
-    console.log(model.file, 'Bingo!');
+    console.log(model.filename, 'Bingo!');
 
     return result.data.items[0];
   }
-  let found = result.data.items.find((x) => x.modelVersions.find((y) => y.files.find((z) => z.name === model.file)));
+  let found = result.data.items.find((x) =>
+    x.modelVersions.find((y) => y.files.find((z) => z.name === model.filename)),
+  );
 
   if (!found) {
     const name = modelFileNamePrune(model).toLowerCase();
@@ -42,12 +44,12 @@ async function apiCivitSearchWithModel(model: Model, query: string, page = 1): P
     return apiCivitSearchWithModel(model, query, page + 1);
   }
   if (!found) {
-    console.warn(model.file, 'Dalas kodom vari?, has ya nis?', result.data.metadata.totalItems);
+    console.warn(model.filename, 'Dalas kodom vari?, has ya nis?', result.data.metadata.totalItems);
 
     return false;
   }
 
-  console.log(model.file, 'Found!');
+  console.log(model.filename, 'Found!');
 
   return found;
 }
@@ -59,7 +61,7 @@ async function apiCivitGetById(id: number): Promise<CivitModel> {
 }
 
 export default async function apiCivitGetModel(model: Model) {
-  if (!model.hash && !model.file) return;
+  if (!model.hash && !model.filename) return;
 
   try {
     let result;
@@ -72,12 +74,17 @@ export default async function apiCivitGetModel(model: Model) {
     }
 
     if (result === false) {
-      const fullHash = await getModelHash(model, 'sha256');
-      const hashResult = await apiCivitSearchWithModel(model, fullHash);
+      const blake3 = await getModelHash(model, 'blake3');
+      const blakeHashResult = await apiCivitSearchWithModel(model, blake3);
 
-      if (!hashResult) return null;
+      if (blakeHashResult) return blakeHashResult;
 
-      return hashResult;
+      const sha256 = await getModelHash(model, 'sha256');
+      const sha256HashResult = await apiCivitSearchWithModel(model, sha256);
+
+      if (sha256HashResult) return sha256HashResult;
+
+      return null;
     }
 
     return result;

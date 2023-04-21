@@ -1,3 +1,4 @@
+import './Button.scss';
 import { MouseEvent, useEffect, useState } from 'react';
 import { Loader } from '@/components/Loader/Loader';
 
@@ -27,9 +28,9 @@ export const Button = (props: {
     <button
       type="button"
       style={{ fontSize: '0.875rem' }}
-      className={`transition-all duration-100 inline-flex justify-center items-center rounded-md border border-transparent bg-gray-200 px-4 py-2 font-medium text-white ${
-        !loading && !props.disabled ? 'hover:bg-gray-150' : 'pointer-events-none'
-      } ${props.disabled ? 'opacity-50' : ''} focus:outline-none relative ${props.className ?? ''}`}
+      className={`ui-button ${!loading && !props.disabled ? 'hover:bg-gray-150' : 'pointer-events-none'} ${
+        props.disabled ? 'opacity-50' : ''
+      } ${props.className ?? ''}`}
       onClick={(e) => {
         onClick(e as never);
       }}

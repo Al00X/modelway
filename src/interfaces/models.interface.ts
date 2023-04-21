@@ -28,9 +28,13 @@ export interface ModelVersion {
 
 export interface Model {
   id: number;
-  fullPath: string;
-  file: string;
+  path: string;
+  filename: string;
   hash: string;
+  vaePath?: string;
+  thumbnailPath?: string;
+  infoPath?: string;
+  configPath?: string;
   hide?: boolean;
   metadata: {
     id?: number;

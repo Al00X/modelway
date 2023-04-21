@@ -1,0 +1,4 @@
+.ui-button {
+  @apply transition-all duration-100 inline-flex justify-center items-center rounded-md border border-transparent px-4 py-2 font-medium text-white relative focus:outline-none;
+  @apply bg-gray-200 #{!important};
+}

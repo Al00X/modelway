@@ -4,7 +4,7 @@ import { atom, useAtom, useAtomValue } from 'jotai';
 import { ModelExtended, ModelImage } from '@/interfaces/models.interface';
 import { TagList } from '@/components/TagList/TagList';
 import { Image } from '@/components/Image/Image';
-import { Button } from '@/components/Button/Button';
+import { Button, ButtonClickEvent } from '@/components/Button/Button';
 import { Modal } from '@/components/Modal/Modal';
 import { ImageDetailsDialog } from '@/dialog/image-details-dialog/ImageDetailsDialog';
 import { importAssets } from '@/services/storage';
@@ -12,24 +12,27 @@ import Input from '@/components/Input/Input';
 import { clipboardSet } from '@/services/clipboard';
 import { openExternalModelLink, openExternalUser } from '@/services/shell';
 import './ModelDetailsDialog.scss';
-import { clone } from '@/helpers/native.helper';
+import { clone, mergeArray } from '@/helpers/native.helper';
 import { DataState } from '@/states/Data';
+import { useAppContext } from '@/context/App';
 
 const SEPARATOR = `    .    `;
 
-const formAtom = atom({
+const ATOM_FORM_DEFAULT = {
   notes: '' as string,
   cover: undefined as ModelImage | undefined,
   triggers: [] as string[],
   merges: [] as string[],
   tags: [] as string[],
-});
+};
+const formAtom = atom(ATOM_FORM_DEFAULT);
 
 export const ModelDetailsDialog = (props: {
   open: boolean;
   onClose: () => void;
   onSave: (item: ModelExtended, closed: boolean) => void;
   item: ModelExtended | undefined;
+  onSync: (e: ButtonClickEvent, fileName: string) => void;
 }) => {
   const [open, setOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<ModelExtended>();
@@ -42,6 +45,8 @@ export const ModelDetailsDialog = (props: {
   const atomMergesList = useAtomValue(DataState.availableMergesKeyValue);
   const atomTagsList = useAtomValue(DataState.availableTagsKeyValue);
 
+  const appContext = useAppContext();
+
   useEffect(() => {
     setTimeout(() => {
       setOpen(props.open && !!props.item);
@@ -52,12 +57,22 @@ export const ModelDetailsDialog = (props: {
       setAtomForm({
         cover: props.item.metadata.coverImage,
         notes: props.item.metadata.notes ?? '',
-        merges: props.item.metadata.currentVersion.merges?.filter((x) => !!x) ?? [],
-        tags: props.item.metadata.tags?.filter((x) => !!x) ?? [],
-        triggers: props.item.metadata.currentVersion.triggers?.filter((x) => !!x) ?? [],
+        merges: mergeArray(atomForm.merges ?? [], props.item.metadata.currentVersion.merges?.filter((x) => !!x) ?? []),
+        tags: mergeArray(atomForm.tags ?? [], props.item.metadata.tags?.filter((x) => !!x) ?? []),
+        triggers: mergeArray(
+          atomForm.triggers ?? [],
+          props.item.metadata.currentVersion.triggers?.filter((x) => !!x) ?? [],
+        ),
       });
+      updateKeenSize();
     }
   }, [props.open, props.item, setAtomForm]);
+
+  useEffect(() => {
+    if (!open) {
+      setAtomForm(ATOM_FORM_DEFAULT);
+    }
+  }, [open]);
 
   const [keenRef, keenInstanceRef] = useKeenSlider({
     drag: true,
@@ -136,7 +151,15 @@ export const ModelDetailsDialog = (props: {
               });
             }}
           >
-            <div className={`flex h-full max-h-[19rem] gap-5`}>
+            <div className={`flex h-full max-h-[19rem] gap-5 mt-5`}>
+              <Button
+                className={`absolute top-4 right-6 text-xs h-6 bg-primary-700 hover:bg-primary-600 tracking-widest w-32`}
+                onClick={(e) => {
+                  props.onSync(e, currentItem.filename);
+                }}
+              >
+                SYNC
+              </Button>
               <div className={`flex flex-col relative`} style={{ minWidth: '25rem' }}>
                 <p className={`-mt-3 text-sm opacity-50`}>{currentItem.metadata.type}</p>
                 <h3 className="text-3xl mt-0 font-medium leading-10" style={{ wordBreak: 'break-word' }}>
@@ -148,7 +171,7 @@ export const ModelDetailsDialog = (props: {
                 </p>
                 {!!currentItem.metadata.description && (
                   <Button
-                    className={`w-40 right-0 absolute self-end`}
+                    className={`w-40 right-0 self-end`}
                     onClick={() => {
                       setOpenDescriptionModal(true);
                     }}
@@ -173,7 +196,7 @@ export const ModelDetailsDialog = (props: {
                   ></textarea>
                 </div>
               </div>
-              <div className={`flex gap-2 w-full`}>
+              <div className={`flex gap-2 w-full mt-3`}>
                 <TagList
                   tags={atomForm.triggers}
                   label={`Triggers`}
@@ -249,13 +272,26 @@ export const ModelDetailsDialog = (props: {
             </div>
             <div className="mt-auto flex items-center justify-end gap-2 pt-5">
               <p className={`absolute bottom-4 left-4 text-sm opacity-70 select-text whitespace-pre`}>
-                {currentItem.file ? (
+                {currentItem.filename ? (
                   <>
-                    {currentItem.file}
+                    {currentItem.filename}
+                    <span
+                      className={`info-chips ${currentItem.vaePath ? 'active text-primary-200 ' : ''}`}
+                      title={currentItem.vaePath ?? 'This model has no VAE file beside its file'}
+                    >
+                      {currentItem.vaePath ? 'VAE' : 'No VAE'}
+                    </span>
+                    <span
+                      className={`info-chips ${currentItem.configPath ? 'active text-primary-200 ' : ''}`}
+                      title={currentItem.configPath ?? 'This model has no Config file beside its file'}
+                    >
+                      {currentItem.configPath ? 'Config' : 'No Config'}
+                    </span>
                     {!!currentItem.hash && (
                       <>
                         <span className={`select-none`}>{SEPARATOR}</span>
                         <span
+                          title={`Click to copy`}
                           role={`button`}
                           tabIndex={-1}
                           className={`cursor-pointer`}
@@ -271,6 +307,7 @@ export const ModelDetailsDialog = (props: {
                       <>
                         <span className={`select-none`}>{SEPARATOR}</span>
                         <span
+                          title={`Click to open link`}
                           tabIndex={-1}
                           role={`link`}
                           className={`cursor-pointer`}
@@ -295,7 +332,7 @@ export const ModelDetailsDialog = (props: {
                   setOpenWrongModelModal(true);
                 }}
               >
-                Wrong synced model
+                Manually Set Sync URL
               </span>
               <Button
                 onClick={() => {
@@ -349,18 +386,19 @@ export const ModelDetailsDialog = (props: {
               }}
             />
             <div className={`flex items-center justify-end mt-4`}>
-              {!!currentItem.metadata.id && (
-                <span
-                  role={`link`}
-                  tabIndex={-1}
-                  className={`mr-auto opacity-40 text-sm underline cursor-pointer`}
-                  onClick={() => {
-                    openExternalModelLink(currentItem.metadata.id!);
-                  }}
-                >
-                  Current ID: {currentItem.metadata.id}
-                </span>
-              )}
+              <span
+                role={`link`}
+                tabIndex={-1}
+                className={`mr-auto opacity-40 text-sm whitespace-pre ${
+                  currentItem.metadata.id ? 'underline cursor-pointer' : ''
+                }`}
+                onClick={() => {
+                  if (!currentItem.metadata.id) return;
+                  openExternalModelLink(currentItem.metadata.id);
+                }}
+              >
+                Current ID: {currentItem.metadata.id ?? 'N/A'}
+              </span>
               <Button>SAVE</Button>
             </div>
           </Modal>

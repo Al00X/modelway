@@ -54,6 +54,7 @@ async function createWindow() {
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       nodeIntegration: true,
       contextIsolation: false,
+      webSecurity: false,
     },
   });
 
@@ -81,6 +82,10 @@ async function createWindow() {
   protocol.registerFileProtocol('assets', (request, callback) => {
     const file = request.url.substring(9, request.url.length);
     callback({ path: join(app.getPath('userData'), 'Data', 'assets', file) });
+  });
+  protocol.registerFileProtocol('file', (request, callback) => {
+    const pathname = decodeURI(request.url.replace('file:///', ''));
+    callback(pathname);
   });
 }
 

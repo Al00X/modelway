@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
 import { useForceUpdate } from '@mantine/hooks';
-import { BrowserHeader, BrowserHeaderChangeEvent, BrowserSyncEvent } from './BrowserHeader';
+import { BrowserHeader, BrowserHeaderChangeEvent } from './BrowserHeader';
 import { useAppContext } from '@/context/App';
 import { ModelExtended } from '@/interfaces/models.interface';
 import { Loader } from '@/components/Loader/Loader';
@@ -11,6 +11,7 @@ import { DataState } from '@/states/Data';
 import { ModelDetailsDialog } from '@/dialog/model-details-dialog/ModelDetailsDialog';
 import { BrowserFooter } from '@/pages/Browser/BrowserFooter';
 import { filterModelsList } from '@/services/filter-engine';
+import { ButtonClickEvent } from '@/components/Button/Button';
 
 export const Browser = () => {
   const atomList = useAtomValue(DataState.processedList);
@@ -20,10 +21,14 @@ export const Browser = () => {
   const [filters, setFilters] = useState<BrowserHeaderChangeEvent | undefined>();
 
   const appContext = useAppContext();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [triggerListUpdate, setTriggerListUpdate] = useState(false);
   const forceUpdate = useForceUpdate();
 
   const prepareList = useCallback(() => {
     if (atomList.length === 0) return;
+
+    const scrollPos = containerRef.current?.scrollTop;
 
     setList(undefined);
     setTimeout(() => {
@@ -33,40 +38,55 @@ export const Browser = () => {
       if (!newList) return;
       console.timeEnd('Prepare List');
       setList(newList);
+      setTriggerListUpdate(false);
+      // setTimeout(() => {
+      //   console.log(containerRef.current?.scrollTop, scrollPos);
+      //   containerRef.current?.scrollTo({
+      //     top: scrollPos
+      //   });
+      // }, 100)
     }, 0);
   }, [atomList, filters]);
 
   const runServerSync = useCallback(
-    (e: BrowserSyncEvent) => {
+    (e: ButtonClickEvent, filename?: string) => {
       e.setLoading(true);
 
-      const filter = list?.map((x) => x.file);
+      const filter = filename ? [filename] : list?.map((x) => x.filename);
 
       appContext
         .serverSync(filters?.category, filter)
         .then(() => {
+          openToast('Synced!');
           e.setLoading(false);
+          setTriggerListUpdate(true);
         })
         .catch((error) => {
           e.setLoading(false);
           if (error === undefined) return;
           console.error('Server sync failed', error);
+          openToast('Synced Failed :(');
         });
     },
-    [list, appContext, filters?.category],
+    [list, appContext, filters?.category, itemToViewDetails, prepareList, atomList],
   );
 
   useEffect(() => {
-    if (list === undefined && atomList.length > 0) {
+    if (triggerListUpdate || (list === undefined && atomList.length > 0)) {
       prepareList();
     }
-  }, [atomList, list]);
+  }, [atomList, triggerListUpdate]);
+  useEffect(() => {
+    if (list && itemToViewDetails) {
+      setItemToViewDetails(atomList.find((x) => x.id === itemToViewDetails.id));
+    }
+  }, [list]);
   useEffect(() => {
     prepareList();
   }, [filters]);
 
   return (
-    <div className={`flex flex-col h-full overflow-auto`}>
+    <div ref={containerRef} className={`flex flex-col h-full overflow-auto`}>
       <BrowserHeader onChange={setFilters} onSync={runServerSync} />
       <div className={`w-full flex-auto relative`}>
         {!list && <Loader className={`transition-all mx-auto ${list ? 'opacity-0' : 'opacity-100'}`} />}
@@ -94,15 +114,17 @@ export const Browser = () => {
       <ModelDetailsDialog
         item={itemToViewDetails}
         open={!!itemToViewDetails}
+        onSync={runServerSync}
         onClose={() => {
           setItemToViewDetails(undefined);
         }}
         onSave={(newItem, close) => {
           const localSaveFn = () => {
-            const index = list!.findIndex((x) => x.id === newItem.id);
+            const newList = [...(list ?? [])];
+            const index = newList.findIndex((x) => x.id === newItem.id);
 
-            list![index] = newItem;
-            forceUpdate();
+            newList[index] = newItem;
+            setList(newList);
           };
           const immediate = close;
 

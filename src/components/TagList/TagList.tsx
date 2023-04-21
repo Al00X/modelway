@@ -16,7 +16,7 @@ export const TagList = (props: {
   className?: string;
   autoCompleteList?: KeyValue<string>[];
 }) => {
-  const [list, _setList] = useState<string[]>(props.tags ?? []);
+  const [list, _setList] = useState<string[]>([]);
   const [input, setInput] = useState('');
   const [toEdit, setToEdit] = useState<string>('');
   const [pastePreviewList, setPastePreviewList] = useState<string[] | undefined>(undefined);
@@ -110,6 +110,10 @@ export const TagList = (props: {
       setToEdit('');
     }
   }, [input]);
+
+  useEffect(() => {
+    setList(props.tags ?? []);
+  }, [props.tags]);
 
   return (
     <>

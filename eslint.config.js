@@ -62,6 +62,8 @@ module.exports = defineFlatConfig([
       '@typescript-eslint/no-throw-literal': 0,
       'unicorn/no-unsafe-regex': 0,
       'react/hook-use-state': 0,
+      'no-case-declarations': 0,
+      'sonarjs/no-duplicate-string': 0,
     },
   },
 ]);

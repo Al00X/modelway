@@ -18,6 +18,7 @@ export const ModelCard = (props: { item: ModelExtended; wide?: boolean; onClick?
     for (const i of [
       props.item.metadata.coverImage,
       ...(props.item.metadata.currentVersion.images?.slice(0, 3) ?? []),
+      props.item.thumbnailPath ? { url: props.item.thumbnailPath } : undefined,
     ]) {
       if (!i || imagesArray.findIndex((x) => x.url === i.url) !== -1) continue;
       imagesArray.push(i);

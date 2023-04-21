@@ -10,6 +10,11 @@ module.exports = {
       fontSize: {
         '2xs': '0.625rem',
       },
+      spacing: {
+        17: '4.25rem',
+        18: '4.5rem',
+        19: '4.75rem',
+      },
       colors: {
         white: '#f6f3f3',
         gray: {

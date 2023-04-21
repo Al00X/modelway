@@ -6,6 +6,9 @@ export function resolveImage(image: ModelImage | string) {
   if (url.includes('http')) {
     return url;
   }
+  if (url.includes(':') && url.includes('\\')) {
+    return `file:///${url}`;
+  }
 
   return `assets://${url}`;
 }

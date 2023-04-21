@@ -47,7 +47,7 @@ export function filterModelsList(
 
     if (filters.search) {
       processedList = processedList.filter((x) => {
-        for (const i of [x.file, x.hash, x.metadata.name]) {
+        for (const i of [x.filename, x.hash, x.metadata.name]) {
           if (i?.toLowerCase()?.includes(filters.search!)) return true;
         }
 

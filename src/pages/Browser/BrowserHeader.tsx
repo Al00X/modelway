@@ -32,16 +32,20 @@ const TruncateViewList: KeyValue<TruncateViewType>[] = [
   { label: 'Synced', value: 'synced', hint: 'Models synced with online data' },
   { label: 'Unknown', value: 'unknown', hint: 'Models with unknown hash (Not synced)' },
 ];
+const CategoryList: KeyValue<ModelType>[] = [
+  { label: 'Checkpoints', value: 'Checkpoint' },
+  { label: 'LORA', value: 'LORA' },
+  { label: 'Hypernetworks', value: 'Hypernetwork' },
+  { label: 'Embeddings', value: 'TextualInversion' },
+];
 
 export interface BrowserHeaderChangeEvent extends FilterEngineInputs {
   viewMode: ViewType;
 }
 
-export type BrowserSyncEvent = ButtonClickEvent & { forceUpdate: () => void };
-
 export const BrowserHeader = (props: {
   onChange: (e: BrowserHeaderChangeEvent) => void;
-  onSync: (e: BrowserSyncEvent) => void;
+  onSync: (e: ButtonClickEvent) => void;
 }) => {
   const [atomAvailableTags] = useAtom(DataState.availableTagsKeyValue);
   const [atomAvailableMerges] = useAtom(DataState.availableMergesKeyValue);
@@ -181,12 +185,20 @@ export const BrowserHeader = (props: {
             CLEAR
           </Button>
         </Item>
+        <ButtonGroup
+          className={`absolute right-4 bottom-4 text-sm`}
+          value={category}
+          items={CategoryList}
+          onValue={(e) => {
+            setCategory(e as any);
+          }}
+        />
       </div>
       <div className={`flex flex-col flex-none h-full`}>
         <Button
-          className={`ml-auto`}
+          className={`ml-auto bg-primary-700 hover:bg-primary-600`}
           onClick={(e) => {
-            props.onSync({ ...e, forceUpdate });
+            props.onSync(e);
           }}
         >
           SYNC

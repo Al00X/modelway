@@ -15,7 +15,7 @@ export const ButtonGroup = (props: {
         key={x.value}
         title={x.hint}
         tabIndex={-1}
-        className={`transition-all filter flex items-center justify-center px-2 py-1 text-white gap-1 w-full border border-gray-400 ${
+        className={`transition-all filter flex items-center justify-center px-2 py-1 text-white gap-1 w-full border border-gray-400 outline-0 ${
           props.value === x.value
             ? 'bg-gray-300 opacity-100'
             : 'bg-gray-500 opacity-60 hover:brightness-110 cursor-pointer'

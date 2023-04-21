@@ -4,9 +4,9 @@ import { useLocation } from 'wouter';
 import { useForceUpdate } from '@mantine/hooks';
 import { storageGetModels, storageSetModels } from '@/services/storage';
 import { Model, ModelType } from '@/interfaces/models.interface';
-import { getModelHash, scanModelDirectory } from '@/services/scan';
+import { getModelHash, ModelScanEntry, scanModelDirectory } from '@/services/scan';
 import { Progress } from '@/components/Progress/Progress';
-import apiCivitGetModel from '@/services/api';
+import apiCivitGetModel from '@/services/civitai';
 import { civitModelToModel, modelsDeduplicate } from '@/helpers/model.helper';
 import { Button } from '@/components/Button/Button';
 import { DataState } from '@/states/Data';
@@ -122,14 +122,14 @@ export const AppProvider = (props: { children: any }) => {
       counter++;
       const item = tempRawList[i];
 
-      if ((filter ? !filter.includes(item.file) : false) || category ? item.metadata.type !== category : false)
+      if ((filter ? !filter.includes(item.filename) : false) || category ? item.metadata.type !== category : false)
         continue;
       setProgress({
         current: counter,
         total,
-        message: `${item.metadata.type} - ${item.file}`,
+        message: `${item.metadata.type} - ${item.filename}`,
       });
-      if (filter ? !filter.includes(item.file) : false) continue;
+      if (filter ? !filter.includes(item.filename) : false) continue;
 
       const result = await apiCivitGetModel(item);
 
@@ -168,8 +168,8 @@ export const AppProvider = (props: { children: any }) => {
     for (const type of ['Checkpoint']) {
       const scanned = await scanModelDirectory(atomUserPaths, type as any);
       const filteredList = loadedList.filter((x) => x.metadata.type === type);
-      let entries = filteredList.map((x) => [x, scanned.find((y) => y.name === x.file)]);
-      const newItems = scanned.filter((x) => filteredList.findIndex((y) => x.name === y.file) === -1);
+      let entries = filteredList.map((x) => [x, scanned.find((y) => y.model.filename === x.filename)]);
+      const newItems = scanned.filter((x) => filteredList.findIndex((y) => x.model.filename === y.filename) === -1);
 
       entries = [...entries, ...newItems.map((x) => [undefined, x])];
 
@@ -182,18 +182,18 @@ export const AppProvider = (props: { children: any }) => {
         if (shouldCancelSync()) throw undefined;
 
         let fromStorage = modelEntry[0] as Model | undefined;
-        const fromFile = modelEntry[1] as { name: string; path: string } | undefined;
+        const fromFile = modelEntry[1] as ModelScanEntry | undefined;
 
         setProgress({
           current: i,
           total: entries.length,
-          message: `${type} - ${fromStorage?.metadata.name ?? fromStorage?.file ?? fromFile?.name ?? ''}`,
+          message: `${type} - ${fromStorage?.metadata.name ?? fromStorage?.filename ?? fromFile?.model.filename ?? ''}`,
         });
 
         let hash: string | undefined;
 
         if (fromFile) {
-          hash = await getModelHash({ file: fromFile.name, fullPath: fromFile.path }, 'autoV1');
+          hash = await getModelHash(fromFile.model, 'autoV1');
         }
 
         if (fromStorage) {
@@ -202,18 +202,27 @@ export const AppProvider = (props: { children: any }) => {
             fromStorage.id = lastId;
           }
 
-          if (fromFile && fromStorage.hash !== hash) {
+          // if (fromFile && fromStorage.hash !== hash) {
+          if (fromFile) {
             fromStorage.hash = hash!;
-            fromStorage.fullPath = fromFile.path;
-            fromStorage.file = fromFile.name;
+            fromStorage.path = fromFile.model.path;
+            fromStorage.filename = fromFile.model.filename;
+            fromStorage.vaePath = fromFile.vae?.path;
+            fromStorage.thumbnailPath = fromFile.thumbnail?.path;
+            fromStorage.infoPath = fromFile.info?.path;
+            fromStorage.configPath = fromFile.config?.path;
           }
         } else if (fromFile) {
-          console.log(`New model added to the DB: ${fromFile.name}`);
+          console.log(`New model added to the DB: ${fromFile.model.filename}`);
           lastId++;
           fromStorage = {
             id: lastId,
-            fullPath: fromFile.path,
-            file: fromFile.name,
+            path: fromFile.model.path,
+            filename: fromFile.model.filename,
+            vaePath: fromFile.vae?.path,
+            thumbnailPath: fromFile.thumbnail?.path,
+            infoPath: fromFile.info?.path,
+            configPath: fromFile.config?.path,
             hash: hash!,
             metadata: { type: type as any, currentVersion: {} },
           };

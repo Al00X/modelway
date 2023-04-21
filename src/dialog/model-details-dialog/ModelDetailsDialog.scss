@@ -10,3 +10,12 @@
     opacity: 0.7;
   }
 }
+.info-chips {
+  @apply ml-2 inline-flex items-center justify-center text-xs select-none py-0.5 rounded-xl px-2.5;
+  &.active {
+    @apply bg-gray-900 opacity-95 font-medium;
+  }
+  &:not(.active) {
+    @apply bg-gray-800 opacity-90 text-gray-300;
+  }
+}
