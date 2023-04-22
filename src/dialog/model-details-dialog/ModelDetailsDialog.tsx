@@ -37,7 +37,7 @@ export const ModelDetailsDialog = (props: {
   const [open, setOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<ModelExtended>();
   const [lightbox, setLightbox] = useState(-1);
-  const [openDescriptionModal, setOpenDescriptionModal] = useState(false);
+  const [openDescriptionModal, setOpenDescriptionModal] = useState<boolean>(false);
   const [openWrongModelModal, setOpenWrongModelModal] = useState(false);
   const [inputManualSyncLink, setInputManualSyncLink] = useState('');
   const [atomForm, setAtomForm] = useAtom(formAtom);
@@ -372,19 +372,31 @@ export const ModelDetailsDialog = (props: {
           </Modal>
           <Modal
             withCloseButton
-            title={`Description`}
+            title={`Description:`}
             className={`z-[6666]`}
-            width={`60%`}
-            height={`60%`}
+            width={`90%`}
+            height={`70%`}
             open={openDescriptionModal}
             onClose={() => {
               setOpenDescriptionModal(false);
             }}
           >
-            <div
-              className={`description-panel mt-3 leading-9`}
-              dangerouslySetInnerHTML={{ __html: currentItem.metadata.description ?? '' }}
-            ></div>
+            <p className={`absolute top-4 left-3/4 text-xl font-medium`}>Version Info:</p>
+            <div className={`flex h-full gap-3 pb-11 mt-4`}>
+              <div
+                className={`description-panel leading-9 w-3/4 pr-4 bg-gray-800 p-4 rounded-lg`}
+                dangerouslySetInnerHTML={{
+                  __html: currentItem.metadata.description ?? '',
+                }}
+              ></div>
+              <div className={`border-l border-gray-600`}></div>
+              <div
+                className={`description-panel leading-9 bg-gray-800 p-4 rounded-lg w-1/4`}
+                dangerouslySetInnerHTML={{
+                  __html: currentItem.metadata.currentVersion.description ?? 'N/A',
+                }}
+              ></div>
+            </div>
           </Modal>
           <Modal
             withCloseButton
