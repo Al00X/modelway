@@ -527,6 +527,9 @@ export const ModelDetailsDialog = (props: {
             onClose={() => {
               setLightbox(-1);
             }}
+            onFullResRequest={() => {
+              // ...
+            }}
           />
         </>
       )}

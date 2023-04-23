@@ -1,6 +1,6 @@
 import './Image.scss';
 import { useAtom } from 'jotai';
-import { useState } from 'react';
+import { forwardRef, useImperativeHandle, useState } from 'react';
 import { Blurhash } from 'react-blurhash';
 import { SettingsState } from '@/states/Settings';
 import useContextMenu from '@/hooks/useContextMenu';
@@ -8,16 +8,23 @@ import { ModelImage } from '@/interfaces/models.interface';
 import { Img } from '@/components/Image/Img';
 import { Loader } from '@/components/Loader/Loader';
 
-export const Image = (props: {
-  item: ModelImage;
-  fit?: 'width' | 'height';
-  onClick?: (e: MouseEvent) => void;
-  onLoad?: () => void;
-  onUpdate?: (item: ModelImage) => void;
-  onSetAsCover?: () => void;
-  cursor?: 'auto' | 'pointer' | 'default';
-  legalize?: boolean;
-}) => {
+export interface ImageElement {
+  useFullResolution: () => void;
+}
+
+export const Image = forwardRef<
+  ImageElement,
+  {
+    item: ModelImage;
+    fit?: 'width' | 'height';
+    onClick?: (e: MouseEvent) => void;
+    onLoad?: () => void;
+    onUpdate?: (item: ModelImage) => void;
+    onSetAsCover?: () => void;
+    cursor?: 'auto' | 'pointer' | 'default';
+    legalize?: boolean;
+  }
+>((props, ref) => {
   const [isNSFW, setNSFW] = useAtom(SettingsState.isNSFWToggled);
   const [loaded, setLoaded] = useState(false);
   const [contextRef] = useContextMenu({
@@ -51,6 +58,17 @@ export const Image = (props: {
     props.item.width && props.item.height ? props.item.width / props.item.height : 'initial',
   );
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      useFullResolution: () => {
+        props.item.url = props.item.url.replace(/(width=)\d+/, `width=${4096}`);
+        props.onUpdate?.(props.item);
+      },
+    }),
+    [props.item, props.onUpdate],
+  );
+
   return (
     <div
       role={`presentation`}
@@ -65,7 +83,7 @@ export const Image = (props: {
           ? 'cursor-pointer'
           : ''
       }`}
-      onClick={(e) => props.onClick?.(e as never)}
+      onClick={(e) => (loaded ? props.onClick?.(e as never) : null)}
     >
       <div className={`transition-all absolute inset-0 pointer-events-none`}></div>
       {!loaded && (
@@ -95,4 +113,4 @@ export const Image = (props: {
       />
     </div>
   );
-};
+});

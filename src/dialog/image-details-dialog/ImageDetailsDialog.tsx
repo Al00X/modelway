@@ -1,31 +1,50 @@
-import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
-import { useEffect, useReducer } from 'react';
+import { ReactZoomPanPinchContentRef, TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
+import { useEffect, useReducer, useRef } from 'react';
 import { Modal } from '@/components/Modal/Modal';
 import { ModelImage } from '@/interfaces/models.interface';
-import { Image } from '@/components/Image/Image';
+import { Image, ImageElement } from '@/components/Image/Image';
 import { Section } from '@/components/Section/Section';
 import './ImageDetailsDialog.scss';
+import { Button } from '@/components/Button/Button';
 
-export const ImageDetailsDialog = (props: { open: number; onClose: () => void; images: ModelImage[] }) => {
+export const ImageDetailsDialog = (props: {
+  open: number;
+  onClose: () => void;
+  images: ModelImage[];
+  onFullResRequest: () => void;
+}) => {
   const [currentImage, updateCurrentImage] = useReducer(() => {
     return props.images.length > props.open ? props.images[props.open] : null;
   }, null);
+  const pannerRef = useRef<ReactZoomPanPinchContentRef>(null);
+  const imageRef = useRef<ImageElement>(null);
 
   useEffect(() => {
     updateCurrentImage();
-  }, [props.open]);
+    setTimeout(() => {
+      pannerRef.current?.centerView();
+    }, 50);
+  }, [props.open, currentImage, props.images]);
 
   return (
     <Modal withCloseButton width={`90vw`} height={`90vh`} open={props.open >= 0} onClose={props.onClose}>
       <div className={`w-full h-full flex gap-8`}>
-        <div className={`flex-auto h-full`}>
-          {!!currentImage && (
-            <TransformWrapper centerOnInit={false} initialScale={1}>
-              <TransformComponent wrapperClass={`w-full h-full`}>
-                <Image legalize item={currentImage} cursor={`default`} />
-              </TransformComponent>
-            </TransformWrapper>
-          )}
+        <div className={`flex flex-col flex-auto`}>
+          <div className={`flex-auto h-full bg-gray-800 rounded-xl p-2`}>
+            {!!currentImage && (
+              <TransformWrapper ref={pannerRef} initialScale={1}>
+                <TransformComponent
+                  wrapperClass={`w-full h-full`}
+                  contentClass={`${currentImage.width > currentImage.height ? 'w-full' : 'h-full'}`}
+                >
+                  <Image legalize item={currentImage} cursor={`default`} />
+                </TransformComponent>
+              </TransformWrapper>
+            )}
+          </div>
+          <Button disabled title={`WIP`} className={`left-3 top-3 w-64 mb-3 `} onClick={props.onFullResRequest}>
+            Load Image Full Resolution
+          </Button>
         </div>
         <div className={`flex-none w-[25rem] overflow-auto flex flex-col gap-4 p-2 pb-20`}>
           <Section wrapperClass={`w-full`} label={`Prompt`}>

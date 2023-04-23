@@ -34,10 +34,11 @@ export const Button = forwardRef<
       title={props.title}
       type="button"
       style={{ fontSize: '0.875rem' }}
-      className={`ui-button ${!loading && !props.disabled ? 'hover:bg-gray-150' : 'pointer-events-none'} ${
+      className={`ui-button ${!loading && !props.disabled ? 'hover:bg-gray-150' : 'cursor-default'} ${
         props.disabled ? 'opacity-50' : ''
       } ${props.className ?? ''}`}
       onClick={(e) => {
+        if (loading || props.disabled) return;
         onClick(e as never);
       }}
     >

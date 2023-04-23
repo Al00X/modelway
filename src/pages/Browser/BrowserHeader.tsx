@@ -227,6 +227,7 @@ export const BrowserHeader = (props: {
           REFRESH
         </Button>
         <Menu
+          closeOnItemClick
           classNames={{ dropdown: `overflow-hidden rounded-lg bg-gray-800 text-base box-shadow border-gray-550 p-0` }}
         >
           <Menu.Target>
@@ -240,7 +241,9 @@ export const BrowserHeader = (props: {
                 title={`Sync models that are currently being filtered`}
                 disabled={isSyncing}
                 className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
-                onClick={(e) => { doSync(e, 'view'); }}
+                onClick={(e) => {
+                  doSync(e, 'view');
+                }}
               >
                 SYNC VIEW
               </Button>
@@ -248,7 +251,9 @@ export const BrowserHeader = (props: {
                 title={`Sync all the models within the selected category`}
                 disabled={isSyncing}
                 className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
-                onClick={(e) => { doSync(e, 'category'); }}
+                onClick={(e) => {
+                  doSync(e, 'category');
+                }}
               >
                 SYNC CATEGORY
               </Button>
@@ -256,7 +261,9 @@ export const BrowserHeader = (props: {
                 title={`Sync all the available categories`}
                 disabled={isSyncing}
                 className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
-                onClick={(e) => { doSync(e, 'all'); }}
+                onClick={(e) => {
+                  doSync(e, 'all');
+                }}
               >
                 SYNC ALL
               </Button>
