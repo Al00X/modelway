@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
-import { BrowserHeader, BrowserHeaderChangeEvent } from './BrowserHeader';
+import { BrowserHeader, BrowserHeaderChangeEvent, BrowserHeaderSyncEvent } from './BrowserHeader';
 import { useAppContext } from '@/context/App';
 import { ModelExtended } from '@/interfaces/models.interface';
 import { Loader } from '@/components/Loader/Loader';
@@ -11,6 +11,7 @@ import { ModelDetailsDialog } from '@/dialog/model-details-dialog/ModelDetailsDi
 import { BrowserFooter } from '@/pages/Browser/BrowserFooter';
 import { filterModelsList } from '@/services/filter-engine';
 import { ButtonClickEvent } from '@/components/Button/Button';
+import { modelPopulateComputedValues } from '@/helpers/model.helper';
 
 export const Browser = () => {
   const atomList = useAtomValue(DataState.processedList);
@@ -39,13 +40,26 @@ export const Browser = () => {
   }, [atomList, filters]);
 
   const runServerSync = useCallback(
-    (e: ButtonClickEvent, filename?: string) => {
+    (e: BrowserHeaderSyncEvent) => {
       e.setLoading(true);
 
-      const filter = filename ? [filename] : list?.map((x) => x.filename);
+      let filter: string[] | undefined;
+      let category = filters?.category;
+
+      if (e.filename) {
+        filter = [e.filename];
+      } else if (e.mode === 'view') {
+        filter = list?.map((x) => x.filename);
+      } else if (e.mode === 'category') {
+        filter = undefined;
+      } else {
+        // e.mode === 'all'
+        category = undefined;
+        filter = undefined;
+      }
 
       appContext
-        .serverSync(filters?.category, filter)
+        .serverSync(category, filter)
         .then(() => {
           openToast('Synced!');
           e.setLoading(false);
@@ -126,7 +140,7 @@ export const Browser = () => {
       <div className={`w-full flex-auto relative`}>
         {!list && <Loader className={`transition-all mx-auto ${list ? 'opacity-0' : 'opacity-100'}`} />}
         <div
-          className={`transition-opacity w-full gap-1 ${
+          className={`transition-opacity w-full gap-2 ${
             filters?.viewMode === 'grid' ? 'flex flex-wrap px-2' : 'flex flex-col'
           } ${list ? 'opacity-100' : 'opacity-0'}`}
         >
@@ -149,7 +163,9 @@ export const Browser = () => {
       <ModelDetailsDialog
         item={itemToViewDetails}
         open={!!itemToViewDetails}
-        onSync={runServerSync}
+        onSync={(e, filename) => {
+          runServerSync({ setLoading: e.setLoading, filename });
+        }}
         onClose={() => {
           setItemToViewDetails(undefined);
         }}
@@ -159,7 +175,7 @@ export const Browser = () => {
             const newList = [...(list ?? [])];
             const index = newList.findIndex((x) => x.id === newItem.id);
 
-            newList[index] = newItem;
+            newList[index] = modelPopulateComputedValues(newItem);
             setList(newList);
           };
           const immediate = close;

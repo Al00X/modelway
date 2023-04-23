@@ -1,7 +1,11 @@
 import './ModelCard.scss';
 import { useEffect, useState } from 'react';
+import { useHover } from '@mantine/hooks';
 import { Image } from '@/components/Image/Image';
 import { ModelExtended, ModelImage } from '@/interfaces/models.interface';
+import { Item } from '@/components/Item/Item';
+import { Icon } from '@/components/Icon/Icon';
+import { clipboardSet } from '@/services/clipboard';
 
 interface ModelCardKeyImages {
   single: ModelImage | null;
@@ -11,6 +15,7 @@ interface ModelCardKeyImages {
 
 export const ModelCard = (props: { item: ModelExtended; wide?: boolean; onClick?: (item: ModelExtended) => void }) => {
   const [keyImages, setKeyImages] = useState<ModelCardKeyImages>({ single: null, double: [], triple: [] });
+  const hoverState = useHover();
 
   useEffect(() => {
     const imagesArray: ModelImage[] = [];
@@ -21,18 +26,19 @@ export const ModelCard = (props: { item: ModelExtended; wide?: boolean; onClick?
       props.item.thumbnailPath ? { url: props.item.thumbnailPath } : undefined,
     ]) {
       if (!i || imagesArray.findIndex((x) => x.url === i.url) !== -1) continue;
-      imagesArray.push(i);
+      imagesArray.push(i as ModelImage);
     }
 
     setKeyImages({
       single: imagesArray.length > 0 ? imagesArray[0] : null,
       double: imagesArray.length > 1 ? [imagesArray[0], imagesArray[1]] : imagesArray,
-      triple: imagesArray,
+      triple: imagesArray.slice(0, 3),
     });
   }, [props.item, props.item.metadata.coverImage]);
 
   return (
     <div
+      ref={hoverState.ref}
       role={`presentation`}
       className={`model-card ${props.wide ? 'wide' : ''}`}
       onClick={() => props.onClick?.(props.item)}
@@ -41,14 +47,33 @@ export const ModelCard = (props: { item: ModelExtended; wide?: boolean; onClick?
         <>
           {!!keyImages.single && <Image item={keyImages.single} />}
           <div className={`flex flex-col text-overlay font-bold tracking-wide`}>
-            <span className={`text-base`}>{props.item.computed.name}</span>
-            {!!props.item.computed.version && (
-              <span
-                className={`text-xs font-bold tracking-wider px-3 text-white py-1 bg-black bg-opacity-70 rounded-xl mt-1`}
+            <div className={`text-base  w-full flex flex-col items-center justify-center py-1 px-1`}>
+              <span className={``}>{props.item.computed.name}</span>
+              {!!props.item.computed.version && (
+                <span
+                  className={`w-fit text-xs font-bold tracking-wider px-3 bg-black bg-opacity-70 rounded-xl text-white py-1 mt-1`}
+                >
+                  {props.item.computed.version}
+                </span>
+              )}
+            </div>
+            <div className={`h-6`}>{/* Space Bro */}</div>
+            <div
+              className={`absolute left-0 right-0 bottom-0 transition-all flex items-center bg-gray-400 bg-opacity-20 backdrop-blur-sm w-full overflow-hidden px-3 ${
+                hoverState.hovered ? 'h-6' : 'h-0'
+              }`}
+            >
+              <Item
+                className={`gap-0`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clipboardSet(props.item.metadata.currentVersion.triggers?.join(', '));
+                }}
               >
-                {props.item.computed.version}
-              </span>
-            )}
+                <Icon size={`0.75rem`} icon={`copy`} />
+                <span className={`text-2xs`}>COPY TRIGGERS</span>
+              </Item>
+            </div>
           </div>
           {!!props.item.metadata.currentVersion.baseModel && (
             <div

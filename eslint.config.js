@@ -65,6 +65,7 @@ module.exports = defineFlatConfig([
       'no-case-declarations': 0,
       'sonarjs/no-duplicate-string': 0,
       'sonarjs/no-identical-conditions': 0,
+      'operator-assignment': 0,
     },
   },
 ]);

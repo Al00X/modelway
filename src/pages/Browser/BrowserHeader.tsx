@@ -1,6 +1,7 @@
 import { GlobalHotKeys } from 'react-hotkeys';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAtom } from 'jotai';
+import { Menu } from '@mantine/core';
 import Input, { InputElementType } from '@/components/Input/Input';
 import { Item } from '@/components/Item/Item';
 import { ButtonGroup } from '@/components/ButtonGroup/ButtonGroup';
@@ -19,7 +20,7 @@ const SortList: KeyValue<SortType>[] = [
 ];
 const ViewList: KeyValue<ViewType>[] = [
   { label: 'Grid', value: 'grid', icon: 'grid' },
-  { label: 'List', value: 'list', icon: 'list' },
+  { label: 'List', value: 'list', icon: 'list', hint: 'WIP' },
 ];
 const SortDirectionList: KeyValue<SortDirection>[] = [
   { label: 'Asc', value: 'asc', icon: 'asc', hint: 'Ascending' },
@@ -38,13 +39,23 @@ const CategoryList: KeyValue<ModelType>[] = [
   { label: 'Embeddings', value: 'TextualInversion' },
 ];
 
+export type SyncModeTypes = 'category' | 'view' | 'all';
+
 export interface BrowserHeaderChangeEvent extends FilterEngineInputs {
   viewMode: ViewType;
 }
 
+export interface BrowserHeaderSyncEvent {
+  setLoading: (state: boolean) => void;
+  mode?: SyncModeTypes;
+  filename?: string;
+}
+
+const SEARCH_DEBOUNCE = 300; // in ms
+
 export const BrowserHeader = (props: {
   onChange: (e: BrowserHeaderChangeEvent) => void;
-  onSync: (e: ButtonClickEvent) => void;
+  onSync: (e: BrowserHeaderSyncEvent) => void;
   onRefresh: (e: ButtonClickEvent) => void;
   onUpdate: (e: ButtonClickEvent) => void;
 }) => {
@@ -59,10 +70,24 @@ export const BrowserHeader = (props: {
   const [search, setSearch] = useState('');
   const [filterTags, setFilterTags] = useState<string[] | null>(null);
   const [filterMerges, setFilterMerges] = useState<string[] | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const searchInputRef = useRef<InputElementType>(null);
   const filterTagSelectRef = useRef<SelectElementType>(null);
   const filterMergesSelectRef = useRef<SelectElementType>(null);
+
+  const doSync = useCallback(
+    (e: ButtonClickEvent, mode: SyncModeTypes) => {
+      props.onSync({
+        setLoading: (v) => {
+          e.setLoading(v);
+          setIsSyncing(v);
+        },
+        mode,
+      });
+    },
+    [props.onSync],
+  );
 
   useEffect(() => {
     props.onChange({
@@ -103,7 +128,7 @@ export const BrowserHeader = (props: {
           placeholder={`Search...`}
           icon={`search`}
           value={search}
-          debounce={200}
+          debounce={SEARCH_DEBOUNCE}
           onValue={(e) => {
             setSearch(e);
           }}
@@ -198,16 +223,53 @@ export const BrowserHeader = (props: {
         <Button title={`Update models filesystem with .preview (thumbnail) and .info`} onClick={props.onUpdate}>
           UPDATE
         </Button>
-        <Button title={`Refresh models from disk`} onClick={props.onRefresh}>
+        <Button title={`Refresh/Scan models from disk`} onClick={props.onRefresh}>
           REFRESH
         </Button>
-        <Button
-          title={`Sync models with server (CivitAI)`}
-          className={`bg-primary-700 hover:bg-primary-600`}
-          onClick={props.onSync}
+        <Menu
+          classNames={{ dropdown: `overflow-hidden rounded-lg bg-gray-800 text-base box-shadow border-gray-550 p-0` }}
         >
-          SYNC
-        </Button>
+          <Menu.Target>
+            <Button title={`Sync models with server (CivitAI)`} className={`bg-primary-700 hover:bg-primary-600`}>
+              SYNC
+            </Button>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <div className={`flex flex-col gap-0.5 p-0.5 overflow-hidden rounded-xl`}>
+              <Button
+                title={`Sync models that are currently being filtered`}
+                disabled={isSyncing}
+                className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
+                onClick={(e) => { doSync(e, 'view'); }}
+              >
+                SYNC VIEW
+              </Button>
+              <Button
+                title={`Sync all the models within the selected category`}
+                disabled={isSyncing}
+                className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
+                onClick={(e) => { doSync(e, 'category'); }}
+              >
+                SYNC CATEGORY
+              </Button>
+              <Button
+                title={`Sync all the available categories`}
+                disabled={isSyncing}
+                className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
+                onClick={(e) => { doSync(e, 'all'); }}
+              >
+                SYNC ALL
+              </Button>
+            </div>
+          </Menu.Dropdown>
+        </Menu>
+        {/*<Button*/}
+        {/*  title={`Sync models with server (CivitAI)`}*/}
+        {/*  className={`bg-primary-700 hover:bg-primary-600`}*/}
+        {/*  onClick={props.onSync}*/}
+        {/*>*/}
+        {/*  SYNC*/}
+        {/*</Button>*/}
       </div>
     </div>
   );

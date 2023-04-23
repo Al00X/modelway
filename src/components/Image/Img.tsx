@@ -1,15 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import axios from 'axios';
-import {
-  generateImageFilenameFromUrl,
-  imageFetch,
-  imageToUrl,
-  resolveImage,
-  resolveImageUrlToPath,
-  urlContainsProtocol,
-} from '@/services/image-asset';
-import { fileExists } from '@/helpers/node.helper';
+import { imageFetch } from '@/services/image-asset';
 import { saveAssetBlob } from '@/services/storage';
+import { ModelImage } from '@/interfaces/models.interface';
 
 export const Img = (props: {
   src: string;
@@ -19,6 +11,7 @@ export const Img = (props: {
   loading?: 'eager' | 'lazy';
   draggable?: boolean;
   className?: string;
+  metadata?: ModelImage['meta'];
   onLoad?: () => void;
 }) => {
   const isFetching = useRef(false);

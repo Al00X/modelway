@@ -1,19 +1,22 @@
 import './Button.scss';
-import { MouseEvent, useEffect, useState } from 'react';
+import { forwardRef, MouseEvent, useEffect, useState } from 'react';
 import { Loader } from '@/components/Loader/Loader';
 
 export interface ButtonClickEvent {
   setLoading: (v: boolean) => void;
 }
 
-export const Button = (props: {
-  onClick?: (e: ButtonClickEvent) => void;
-  children?: any;
-  className?: string;
-  loading?: boolean;
-  disabled?: boolean;
-  title?: string;
-}) => {
+export const Button = forwardRef<
+  HTMLButtonElement,
+  {
+    onClick?: (e: ButtonClickEvent) => void;
+    children?: any;
+    className?: string;
+    loading?: boolean;
+    disabled?: boolean;
+    title?: string;
+  }
+>((props, ref) => {
   const [loading, setLoading] = useState(props.loading);
 
   function onClick(e: MouseEvent) {
@@ -27,6 +30,7 @@ export const Button = (props: {
 
   return (
     <button
+      ref={ref}
       title={props.title}
       type="button"
       style={{ fontSize: '0.875rem' }}
@@ -47,4 +51,4 @@ export const Button = (props: {
       )}
     </button>
   );
-};
+});

@@ -91,7 +91,7 @@ export async function importAssets(files: File[]): Promise<ModelImage[]> {
   for (const file of files) {
     const fileName = `${file.name.length > 5 ? file.name.slice(0, 6) : file.name}-${unix}${path.extname(file.name)}`;
     const data = await fs.readFile(file.path);
-    const metadata = await generateModelImageBuffer(data);
+    const metadata = await generateModelImageFromBuffer(data);
     const newPath = path.join(STORAGE_ASSETS_PATH, fileName);
 
     await fs.writeFile(newPath, data);
@@ -105,17 +105,28 @@ export async function importAssets(files: File[]): Promise<ModelImage[]> {
   return assets;
 }
 
-// name with extension
-export async function saveAssetBlob(name: string, blob: Blob) {
-  const buffer = Buffer.from(await blob.arrayBuffer());
-  const filename = `${name}`;
-
-  await fs.writeFile(path.join(STORAGE_ASSETS_PATH, filename), buffer);
-
-  return filename;
+export async function saveImageAssetBlob(name: string, blob: Blob, meta?: ModelImage['meta']) {
+  const imgPath = await saveAssetBlob(name, blob);
+  // exiftool.write(imgPath, {
+  //   parameters: {
+  //     prompt: ''
+  //   }
+  // })
 }
 
-async function generateModelImageBuffer(data: Buffer): Promise<Omit<ModelImage, 'url'>> {
+// name with extension
+export async function saveAssetBlob(name: string, blob: Blob) {
+  console.log(blob);
+  const buffer = Buffer.from(await blob.arrayBuffer());
+  const filename = `${name}`;
+  const filePath = path.join(STORAGE_ASSETS_PATH, filename);
+
+  await fs.writeFile(filePath, buffer);
+
+  return filePath;
+}
+
+async function generateModelImageFromBuffer(data: Buffer): Promise<Omit<ModelImage, 'url'>> {
   const meta = await parse(data, true);
 
   let prompt, negative, steps, hash, cfg, seed, sampler;

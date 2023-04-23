@@ -47,6 +47,8 @@ module.exports = {
         },
         secondary: {
           DEFAULT: '#f18233',
+          400: '#f18233',
+          500: '#cc7231',
         },
         error: {
           DEFAULT: '#e52441',

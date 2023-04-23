@@ -1,15 +1,12 @@
 import './Image.scss';
 import { useAtom } from 'jotai';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Blurhash } from 'react-blurhash';
-import axios from 'axios';
-import { resolveImage } from '@/services/image-asset';
 import { SettingsState } from '@/states/Settings';
 import useContextMenu from '@/hooks/useContextMenu';
 import { ModelImage } from '@/interfaces/models.interface';
-import { saveAssetBlob } from '@/services/storage';
-import { fileExists } from '@/helpers/node.helper';
 import { Img } from '@/components/Image/Img';
+import { Loader } from '@/components/Loader/Loader';
 
 export const Image = (props: {
   item: ModelImage;
@@ -74,13 +71,17 @@ export const Image = (props: {
       {!loaded && (
         <div
           style={{ aspectRatio }}
-          className={`${props.item.height > props.item.width ? 'w-full h-auto' : 'h-full w-auto'} bg-gray-800`}
+          className={`${
+            props.item.height > props.item.width ? 'w-full h-auto' : 'h-full w-auto'
+          } bg-gray-800 flex items-center justify-center`}
         >
           {!!props.item.hash && <Blurhash className={`w-full h-full`} hash={props.item.hash} />}
+          <Loader className={`absolute`} />
         </div>
       )}
       <Img
-        src={resolveImage(props.item.url)}
+        src={props.item.url}
+        metadata={props.item.meta}
         draggable={false}
         width={props.item.width}
         height={props.item.height}

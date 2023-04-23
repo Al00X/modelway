@@ -15,10 +15,19 @@ import './ModelDetailsDialog.scss';
 import { clone, mergeArray } from '@/helpers/native.helper';
 import { DataState } from '@/states/Data';
 import { useAppContext } from '@/context/App';
+import { ExpandButton } from '@/components/ExpandButton/ExpandButton';
+import { Item } from '@/components/Item/Item';
+import { KeyValue } from '@/interfaces/utils.interface';
+import Select from '@/components/Select/Select';
+import { Section } from '@/components/Section/Section';
+import { KeenWheelControl } from '@/plugins/keenWheelControl';
 
 const SEPARATOR = `    .    `;
 
 const ATOM_FORM_DEFAULT = {
+  name: '' as string,
+  version: '' as string,
+  base: '' as string,
   notes: '' as string,
   cover: undefined as ModelImage | undefined,
   triggers: [] as string[],
@@ -26,6 +35,14 @@ const ATOM_FORM_DEFAULT = {
   tags: [] as string[],
 };
 const formAtom = atom(ATOM_FORM_DEFAULT);
+
+const BaseVersionsList: KeyValue<string>[] = [
+  { label: 'SD 1.4', value: 'SD 1.4' },
+  { label: 'SD 1.5', value: 'SD 1.5' },
+  { label: 'SD 2.0', value: 'SD 2.0' },
+  { label: 'SD 2.1', value: 'SD 2.1' },
+  { label: 'SD 2.1 768px', value: 'SD 2.1 768px' },
+];
 
 export const ModelDetailsDialog = (props: {
   open: boolean;
@@ -41,6 +58,7 @@ export const ModelDetailsDialog = (props: {
   const [openWrongModelModal, setOpenWrongModelModal] = useState(false);
   const [inputManualSyncLink, setInputManualSyncLink] = useState('');
   const [atomForm, setAtomForm] = useAtom(formAtom);
+  const [editMode, setEditMode] = useState(false);
 
   const atomMergesList = useAtomValue(DataState.availableMergesKeyValue);
   const atomTagsList = useAtomValue(DataState.availableTagsKeyValue);
@@ -55,6 +73,9 @@ export const ModelDetailsDialog = (props: {
       console.log(props.item);
       setCurrentItem(clone(props.item));
       setAtomForm({
+        name: props.item.computed.name,
+        version: props.item.computed.version ?? '',
+        base: props.item.metadata.currentVersion.baseModel ?? '',
         cover: props.item.metadata.coverImage,
         notes: props.item.metadata.notes ?? '',
         merges: mergeArray(atomForm.merges ?? [], props.item.metadata.currentVersion.merges?.filter((x) => !!x) ?? []),
@@ -70,18 +91,27 @@ export const ModelDetailsDialog = (props: {
 
   useEffect(() => {
     if (!open) {
-      setAtomForm(ATOM_FORM_DEFAULT);
+      // I've put a lazy delay here because of the animation
+      setTimeout(() => {
+        setAtomForm(ATOM_FORM_DEFAULT);
+        setEditMode(false);
+        setCurrentItem(undefined);
+      }, 100);
     }
   }, [open]);
 
-  const [keenRef, keenInstanceRef] = useKeenSlider({
-    drag: true,
-    mode: 'free',
-    slides: {
-      perView: 'auto',
-      spacing: 8,
+  const [keenRef, keenInstanceRef] = useKeenSlider(
+    {
+      drag: true,
+      mode: 'free',
+      slides: {
+        perView: 'auto',
+        spacing: 8,
+      },
+      // TODO: Wheel is a lil jaggeroljunkal, needs a fix
     },
-  });
+    [KeenWheelControl],
+  );
 
   const updateKeenSize = useCallback(() => {
     setTimeout(() => {
@@ -101,11 +131,14 @@ export const ModelDetailsDialog = (props: {
           ...itemToSave,
           metadata: {
             ...itemToSave.metadata,
+            name: atomForm.name,
             coverImage: atomForm.cover,
             notes: atomForm.notes,
             tags: atomForm.tags,
             currentVersion: {
               ...itemToSave.metadata.currentVersion,
+              name: atomForm.version,
+              baseModel: atomForm.base,
               merges: atomForm.merges,
               triggers: atomForm.triggers,
             },
@@ -152,27 +185,80 @@ export const ModelDetailsDialog = (props: {
             }}
           >
             <div className={`flex h-full max-h-[19rem] gap-5 mt-5`}>
-              <Button
-                className={`absolute top-4 right-6 text-xs h-6 bg-primary-700 hover:bg-primary-600 tracking-widest w-32`}
-                onClick={(e) => {
-                  props.onSync(e, currentItem.filename);
-                }}
-              >
-                SYNC
-              </Button>
+              <div className={`absolute flex items-center top-4 right-6 gap-4`}>
+                <Button
+                  className={`text-xs h-7 w-32 bg-primary-700 hover:bg-primary-600 tracking-widest`}
+                  onClick={(e) => {
+                    props.onSync(e, currentItem.filename);
+                  }}
+                >
+                  SYNC
+                </Button>
+                <ExpandButton
+                  icon={editMode ? 'close' : 'edit'}
+                  iconSize={`1.25rem`}
+                  expandWidth={'4.75rem'}
+                  className={`transition-all text-xs whitespace-nowrap ${
+                    editMode ? ' bg-secondary-500 text-white' : 'bg-gray-500 hover:bg-gray-400'
+                  } h-7 rounded-md flex-row-reverse px-2 font-medium tracking-wider`}
+                  onClick={() => {
+                    setEditMode(!editMode);
+                  }}
+                >
+                  {editMode ? 'VIEW MODE' : 'EDIT MODE'}
+                </ExpandButton>
+              </div>
+
               <div className={`flex flex-col relative`} style={{ minWidth: '25rem' }}>
                 <div className={`flex flex-col relative w-full`}>
                   <p className={`-mt-3 text-sm opacity-50`}>{currentItem.metadata.type}</p>
-                  <h3 className="text-3xl mt-0 font-medium leading-10" style={{ wordBreak: 'break-word' }}>
-                    {currentItem.computed.name}
-                  </h3>
-                  <p className={`text-lg opacity-70 mt-2`}>Version: {currentItem.computed.version ?? '-'}</p>
-                  <p className={`text-lg opacity-70 mt-2`}>
-                    Base: {currentItem.metadata.currentVersion.baseModel ?? '-'}
-                  </p>
+                  {editMode ? (
+                    <Input
+                      className={`py-1 text-2xl min-h-0`}
+                      value={atomForm.name}
+                      placeholder={`Model Name...`}
+                      onValue={(e) => {
+                        setAtomForm((v) => ({ ...v, name: e }));
+                      }}
+                    />
+                  ) : (
+                    <h3 className="text-3xl mt-0 font-medium leading-10" style={{ wordBreak: 'break-word' }}>
+                      {atomForm.name}
+                    </h3>
+                  )}
+                  <Item className={`mt-2 text-lg`} labelClassName={`opacity-70`} label={`Version`}>
+                    {editMode ? (
+                      <Input
+                        className={`py-0.5 min-h-0`}
+                        value={atomForm.version}
+                        placeholder={`Model Version...`}
+                        onValue={(e) => {
+                          setAtomForm((v) => ({ ...v, version: e }));
+                        }}
+                      />
+                    ) : (
+                      <span className={`opacity-90`}>{atomForm.version !== '' ? atomForm.version : '-'}</span>
+                    )}
+                  </Item>
+                  <Item className={`mt-2 text-lg`} labelClassName={`opacity-70`} label={`Base`}>
+                    {editMode ? (
+                      <Select
+                        className={`py-0.5 min-h-0 w-40`}
+                        items={BaseVersionsList}
+                        value={[atomForm.base]}
+                        placeholder={`Base Version...`}
+                        onValue={(e) => {
+                          setAtomForm((v) => ({ ...v, base: e![0] }));
+                        }}
+                      />
+                    ) : (
+                      <span className={`opacity-90`}>{atomForm.base !== '' ? atomForm.base : '-'}</span>
+                    )}
+                  </Item>
+
                   {!!currentItem.metadata.description && (
                     <Button
-                      className={`w-40 absolute right-0 bottom-1 self-end`}
+                      className={`w-40 absolute right-0 ${editMode ? '-bottom-1' : 'bottom-1'} self-end`}
                       onClick={() => {
                         setOpenDescriptionModal(true);
                       }}
@@ -181,22 +267,17 @@ export const ModelDetailsDialog = (props: {
                     </Button>
                   )}
                 </div>
-                <div className={`relative mt-auto w-full p-4 bg-gray-800`}>
-                  <p
-                    style={{ zIndex: -1 }}
-                    className={`absolute left-0 -top-5 rounded-lg px-4 py-1 pb-4 text-sm bg-gray-800`}
-                  >
-                    Notes
-                  </p>
+                <Section className={`w-full mt-auto pr-4`} label={`Notes`}>
                   <textarea
                     className={`bg-transparent resize-none w-full outline-0`}
+                    readOnly={!editMode}
                     value={atomForm.notes}
                     rows={3}
                     onInput={(e) => {
                       setAtomForm((v) => ({ ...v, notes: e.currentTarget.value }));
                     }}
                   ></textarea>
-                </div>
+                </Section>
               </div>
               <div className={`flex gap-2 w-full mt-3`}>
                 <TagList
@@ -224,7 +305,7 @@ export const ModelDetailsDialog = (props: {
                 />
               </div>
             </div>
-            <div className={`overflow-auto`}>
+            <div className={``}>
               <div className={`w-full h-[18rem] mt-4 p-3 bg-gray-800`}>
                 <div ref={keenRef} className={`keen-slider w-full h-full`}>
                   {(currentItem.metadata.currentVersion.images?.length ?? 0) === 0 && (
@@ -279,6 +360,7 @@ export const ModelDetailsDialog = (props: {
                     {currentItem.filename}
                     {((vae) => (
                       <span
+                        role={`presentation`}
                         className={`info-chips ${
                           vae === 'external' ? 'active' : vae === 'baked' ? 'alt' : vae === 'missing' ? 'error' : ''
                         }`}
@@ -291,6 +373,11 @@ export const ModelDetailsDialog = (props: {
                             ? "You missed the VAE shipped with this model, click to open model's webpage"
                             : 'This model has no custom VAE'
                         }
+                        onClick={() => {
+                          if (vae === 'missing' && currentItem.metadata.id) {
+                            openExternalModelLink(currentItem.metadata.id);
+                          }
+                        }}
                       >
                         {vae === 'external'
                           ? 'VAE'

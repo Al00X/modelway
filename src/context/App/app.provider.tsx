@@ -20,6 +20,7 @@ import { imageToUrl, resolveImageUrlToPath } from '@/services/image-asset';
 export interface ProgressEvent {
   current: number;
   total: number;
+  title: string;
   message: string;
 }
 
@@ -71,20 +72,6 @@ export const AppProvider = (props: { children: any }) => {
     setAtomIsFirstLaunch(false);
   }, [setAtomIsFirstLaunch]);
 
-  const closeSyncDialog = useCallback(
-    (result: boolean) => {
-      setOpenSyncDialog(false);
-      if (result) {
-        forceUpdate();
-        serverSync().catch((e) => {
-          console.error('Server sync failed', e);
-        });
-      }
-      endGreeting();
-    },
-    [endGreeting, forceUpdate, serverSync],
-  );
-
   const finalizeSyncing = useCallback(
     async (newList: Model[]) => {
       await storageSetModels(newList);
@@ -103,46 +90,51 @@ export const AppProvider = (props: { children: any }) => {
     cancelSyncing.current = false;
   }
 
-  async function serverSync(category?: ModelType, filter?: string[]) {
-    if (isSyncing.current) {
-      return;
-    }
+  const serverSync = useCallback(
+    async (category?: ModelType, filter?: string[]) => {
+      if (isSyncing.current) {
+        return;
+      }
 
-    isSyncing.current = 'server';
-    setLoading(true);
+      isSyncing.current = 'server';
+      setLoading(true);
 
-    const tempRawList = [...atomRawList];
-    let counter = 0;
-    const total = tempRawList.length;
+      const tempRawList = [...atomRawList];
+      let counter = 0;
+      const total = tempRawList.length;
 
-    setProgress({
-      current: counter,
-      total,
-      message: '',
-    });
-
-    for (let i = 0; i < total; i++) {
-      if (shouldCancelSync()) throw undefined;
-      counter++;
-      const item = tempRawList[i];
-
-      if ((filter ? !filter.includes(item.filename) : false) || category ? item.metadata.type !== category : false)
-        continue;
       setProgress({
         current: counter,
         total,
-        message: `${item.metadata.type} - ${item.filename}`,
+        title: '',
+        message: '',
       });
-      if (filter ? !filter.includes(item.filename) : false) continue;
 
-      const result = await apiCivitGetModel(item);
+      for (let i = 0; i < total; i++) {
+        if (shouldCancelSync()) throw undefined;
+        counter++;
+        const item = tempRawList[i];
 
-      if (!result) continue;
-      tempRawList[i] = civitModelToModel(result, item);
-    }
+        if ((filter ? !filter.includes(item.filename) : false) || (category ? item.metadata.type !== category : false))
+          continue;
 
-    await finalizeSyncing(tempRawList);
-  }
+        setProgress({
+          current: counter,
+          total,
+          title: item.metadata.type,
+          message: item.filename,
+        });
+
+        const result = await apiCivitGetModel(item);
+
+        if (!result) continue;
+        tempRawList[i] = civitModelToModel(result, item);
+      }
+
+      await finalizeSyncing(tempRawList);
+    },
+    [atomRawList, finalizeSyncing, shouldCancelSync],
+  );
 
   const clientSync = useCallback(async () => {
     if (isSyncing.current) {
@@ -161,6 +153,7 @@ export const AppProvider = (props: { children: any }) => {
     setProgress({
       current: 0,
       total: 0,
+      title: '',
       message: '',
     });
 
@@ -169,8 +162,9 @@ export const AppProvider = (props: { children: any }) => {
     const newSyncedList: Model[] = [];
     let i = 0;
 
-    for (const type of ['Checkpoint']) {
-      const scanned = await scanModelDirectory(atomUserPaths, type as any);
+    for (const type of ['Checkpoint', 'Hypernetwork', 'LORA', 'TextualInversion'] as ModelType[]) {
+      i++;
+      const scanned = await scanModelDirectory(atomUserPaths, type);
       const filteredList = loadedList.filter((x) => x.metadata.type === type);
       let entries = filteredList.map((x) => [x, scanned.find((y) => y.model.filename === x.filename)]);
       const newItems = scanned.filter((x) => filteredList.findIndex((y) => x.model.filename === y.filename) === -1);
@@ -179,7 +173,8 @@ export const AppProvider = (props: { children: any }) => {
 
       setProgress({
         current: 0,
-        total: entries.length,
+        total: 4,
+        title: '',
         message: '',
       });
       for (const modelEntry of entries) {
@@ -190,8 +185,9 @@ export const AppProvider = (props: { children: any }) => {
 
         setProgress({
           current: i,
-          total: entries.length,
-          message: `${type} - ${fromStorage?.metadata.name ?? fromStorage?.filename ?? fromFile?.model.filename ?? ''}`,
+          total: 4,
+          title: `Scanning ${type}...`,
+          message: `${fromStorage?.metadata.name ?? fromStorage?.filename ?? fromFile?.model.filename ?? ''}`,
         });
 
         let hash: string | undefined;
@@ -233,14 +229,26 @@ export const AppProvider = (props: { children: any }) => {
         }
 
         newSyncedList.push(fromStorage!);
-
-        i++;
       }
     }
     console.log(modelsDeduplicate(newSyncedList));
 
     await finalizeSyncing(newSyncedList);
-  }, [finalizeSyncing, shouldCancelSync]);
+  }, [finalizeSyncing, shouldCancelSync, atomUserPaths, navigate]);
+
+  const closeSyncDialog = useCallback(
+    (result: boolean) => {
+      setOpenSyncDialog(false);
+      if (result) {
+        forceUpdate();
+        serverSync().catch((e) => {
+          console.error('Server sync failed', e);
+        });
+      }
+      endGreeting();
+    },
+    [endGreeting, forceUpdate, serverSync],
+  );
 
   const clientUpdate = useCallback(async () => {
     let counter = 0;
@@ -249,6 +257,7 @@ export const AppProvider = (props: { children: any }) => {
     setProgress({
       current: counter,
       total,
+      title: '',
       message: '',
     });
     for (const item of atomProcessedList) {
@@ -257,6 +266,7 @@ export const AppProvider = (props: { children: any }) => {
         setProgress({
           current: counter,
           total,
+          title: '',
           message: `${item.filename}`,
         });
         const thumbnail = item.metadata.currentVersion.images![0];
@@ -343,6 +353,7 @@ export const AppProvider = (props: { children: any }) => {
           style={{ zIndex: 9999 }}
           className={`fixed inset-0 bg-black bg-opacity-60 backdrop-filter backdrop-blur-sm flex flex-col items-center justify-center`}
         >
+          <span className={`text-lg`}>{progress?.title ?? ''}</span>
           {progress?.message ?? 'LOADING'}
           <Progress className={`mt-4`} current={progress?.current ?? 0} total={progress?.total ?? 1} />
           {isSyncing.current !== 'client' && (

@@ -1,10 +1,12 @@
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import { useEffect, useState } from 'react';
 import { DataState } from '@/states/Data';
 import { Icon } from '@/components/Icon/Icon';
+import { ModelType } from '@/interfaces/models.interface';
 
-export const BrowserFooter = (props: { filteredListLength: number | undefined }) => {
+export const BrowserFooter = (props: { filteredListLength: number | undefined; selectedCategory?: ModelType }) => {
   const [atomList] = useAtom(DataState.processedList);
+  const atomModelsCount = useAtomValue(DataState.modelCountsByCategory);
   const [missingFilesList, setMissingFilesList] = useState<{ name: string; vae: boolean; config: boolean }[]>([]);
 
   useEffect(() => {
@@ -21,7 +23,7 @@ export const BrowserFooter = (props: { filteredListLength: number | undefined })
 
   return (
     <div
-      className={`sticky bottom-0 w-full flex items-center py-2 px-3 text-sm bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg text-gray-50 gap-12 z-10`}
+      className={`sticky bottom-0 w-full flex items-center py-2 px-3 text-xs bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg text-gray-50 gap-9 z-10`}
     >
       {missingFilesList.length > 0 && (
         <div
@@ -34,7 +36,11 @@ export const BrowserFooter = (props: { filteredListLength: number | undefined })
       )}
       <div className={`ml-auto`}>{/* SpaceLaces */}</div>
       <span className={``}>Filtered: {props.filteredListLength ?? 0}</span>
-      <span className={``}>Total: {atomList.length ?? 0}</span>
+      <span className={`opacity-70`}>Checkpoints: {atomModelsCount.Checkpoint ?? 0}</span>
+      <span className={`opacity-70`}>Hypernetworks: {atomModelsCount.Hypernetwork ?? 0}</span>
+      <span className={`opacity-70`}>LORA: {atomModelsCount.LORA ?? 0}</span>
+      <span className={`opacity-70`}>Embeddings: {atomModelsCount.TextualInversion ?? 0}</span>
+      <span className={`opacity-90`}>Total: {atomList.length ?? 0}</span>
       <div className={`w-0`}>{/* SpaceLaces Vaultage 2 */}</div>
     </div>
   );

@@ -3,7 +3,7 @@ import { Model, ModelExtended, ModelType } from '@/interfaces/models.interface';
 import { mergeModelDetails, modelPopulateComputedValues } from '@/helpers/model.helper';
 import { KeyValue } from '@/interfaces/utils.interface';
 
-type ModelsListType = { [p in ModelType]?: Model[] };
+type ModelsListByCategory<T> = { [p in ModelType]?: T };
 
 export class DataState {
   static rawList = atom<Model[]>([]);
@@ -20,18 +20,30 @@ export class DataState {
 
     return list;
   });
-  static processedListKeyed = atom<ModelsListType>((get) => {
+  // static processedListKeyed = atom<ModelsListType>((get) => {
+  //   const models = get(DataState.rawList);
+  //   const list: any = {};
+  //
+  //   for (const i of models) {
+  //     const newItem = mergeModelDetails(i);
+  //
+  //     if ((list[newItem.metadata.type]?.length ?? 0) > 0) {
+  //       list[newItem.metadata.type].push(newItem);
+  //     } else {
+  //       list[newItem.metadata.type] = [newItem];
+  //     }
+  //   }
+  //
+  //   return list;
+  // });
+  static modelCountsByCategory = atom<ModelsListByCategory<number>>((get) => {
     const models = get(DataState.rawList);
-    const list: any = {};
+    const list: ModelsListByCategory<number> = {};
 
     for (const i of models) {
       const newItem = mergeModelDetails(i);
 
-      if ((list[newItem.metadata.type]?.length ?? 0) > 0) {
-        list[newItem.metadata.type].push(newItem);
-      } else {
-        list[newItem.metadata.type] = [newItem];
-      }
+      list[newItem.metadata.type] = (list[newItem.metadata.type] ?? 0) + 1;
     }
 
     return list;
@@ -64,10 +76,7 @@ export class DataState {
       ...new Set(
         models
           .reduce((pre, cur) => {
-            return [
-              ...pre,
-              ...(cur.metadata.currentVersion.merges?.map((x) => (x === false ? '' : x.toLowerCase())) ?? []),
-            ];
+            return [...pre, ...(cur.metadata.currentVersion.merges?.map((x) => x.toLowerCase()) ?? [])];
           }, [] as string[])
           .filter((x) => !!x && x !== ''),
       ),

@@ -187,7 +187,7 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(
             dropdown:
               props.autocomplete && list.length === 0
                 ? 'hidden'
-                : `max-h-60 overflow-hidden rounded-lg bg-gray-800 text-base shadow-xl border-gray-550 p-0`,
+                : `max-h-60 overflow-hidden rounded-lg bg-gray-800 text-base box-shadow border-gray-550 p-0`,
           }}
         >
           <Menu.Target>
