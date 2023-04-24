@@ -30,7 +30,7 @@ export const SettingsDialog = (props: { open: boolean; onClose: () => void }) =>
     >
       <UserPathsForm className={`mt-5`} ref={userPathsFormRef} />
       <div className={`w-full flex items-center justify-end`}>
-        <Button className={`mt-12 h-10 w-32 bg-primary-700 hover:bg-primary-800 justify-center`} onClick={save}>
+        <Button className={`mt-12 h-10 w-32 bg-primary-700 hover:bg-primary-600 justify-center`} onClick={save}>
           SAVE
         </Button>
       </div>
