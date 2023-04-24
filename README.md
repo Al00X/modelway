@@ -10,7 +10,7 @@ ___
 
 ## Contribute
 ___
-This project is built on `Node v16.18.0`. to avoid unwanted things to happen, make sure you're using this version of Node.
+This project is built on `Node v16.18.0`. to avoid unwanted things to happen, make sure you're using this version.
 
 ### How To Run?
 
@@ -21,5 +21,5 @@ npm install
 npm start
 ```
 ```
-profit
+profit.
 ```
