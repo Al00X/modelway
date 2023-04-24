@@ -164,7 +164,15 @@ export const AppProvider = (props: { children: any }) => {
 
     for (const type of ['Checkpoint', 'Hypernetwork', 'LORA', 'TextualInversion'] as ModelType[]) {
       i++;
-      const scanned = await scanModelDirectory(atomUserPaths, type);
+      let scanned: ModelScanEntry[];
+
+      try {
+        scanned = await scanModelDirectory(atomUserPaths, type);
+      } catch (e) {
+        console.warn(`Type: ${type} cannot get scanned`);
+        continue;
+      }
+
       const filteredList = loadedList.filter((x) => x.metadata.type === type);
       let entries = filteredList.map((x) => [x, scanned.find((y) => y.model.filename === x.filename)]);
       const newItems = scanned.filter((x) => filteredList.findIndex((y) => x.model.filename === y.filename) === -1);
@@ -382,15 +390,15 @@ export const AppProvider = (props: { children: any }) => {
 
       <Modal
         open={openSyncDialog}
-        width={`30rem`}
+        width={`35rem`}
         height={`auto`}
         onClose={() => {
           closeSyncDialog(false);
         }}
       >
-        <p className={`text-2xl`}>Do you want to sync all your models?</p>
+        <p className={`text-2xl`}>Do you want to sync all your models now?</p>
         <span className={`opacity-70 mt-6`}>
-          Syncing is done via CivitAI database, you can also skip syncing and fill the models data yourself!
+          Syncing is done via CivitAI database (Online), you can also skip syncing and fill the models data yourself!
         </span>
         <div className={`flex items-cemter justify-end gap-4 mt-12`}>
           <Button

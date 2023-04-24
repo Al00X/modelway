@@ -25,12 +25,11 @@ export const Browser = () => {
   const [triggerListUpdate, setTriggerListUpdate] = useState(false);
 
   const prepareList = useCallback(() => {
-    if (atomList.length === 0) return;
-
     setList(undefined);
     setTimeout(() => {
       console.time('Prepare List');
-      const newList = filterModelsList(atomList, filters);
+
+      const newList = atomList.length === 0 ? [] : filterModelsList(atomList, filters);
 
       if (!newList) return;
       console.timeEnd('Prepare List');
@@ -116,7 +115,7 @@ export const Browser = () => {
   );
 
   useEffect(() => {
-    if (triggerListUpdate || (list === undefined && atomList.length > 0)) {
+    if (triggerListUpdate || ((list === undefined || list.length === 0) && atomList.length > 0)) {
       prepareList();
     }
   }, [atomList, triggerListUpdate]);
