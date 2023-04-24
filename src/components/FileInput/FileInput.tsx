@@ -26,7 +26,7 @@ export const FileInput = (props: {
         value={props.value}
       />
       <Button
-        className={`rounded-tl-none rounded-bl-none text-xs font-bold`}
+        className={`rounded-tl-none rounded-bl-none text-xs font-bold tracking-wider`}
         disabled={props.readonly}
         onClick={browse}
       >

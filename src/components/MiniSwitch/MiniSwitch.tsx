@@ -1,30 +1,37 @@
+import './MiniSwitch.scss';
+import { Icon } from '@/components/Icon/Icon';
+
 export const MiniSwitch = (props: {
   value?: boolean;
   onValue?: (e: boolean) => void;
   falseText?: string;
   trueText?: string;
+  trueIcon?: string;
+  falseIcon?: string;
+  trueTitle?: string;
+  falseTitle?: string;
   className?: string;
+  activeClassName?: string;
 }) => {
   return (
     <div
       tabIndex={-1}
       role={`switch`}
-      style={{ width: '52px', height: '28px' }}
-      className={`transition-all relative p-0.5 border-white cursor-pointer outline-0 ${props.className ?? ''}`}
+      style={{ fontSize: '10px', letterSpacing: '1.45px', width: '52px', height: '24px' }}
+      title={props.value ? props.trueTitle : props.falseTitle}
+      className={`ui-mini-switch ${props.value ? 'active' : ''} ${props.className ?? ''} ${
+        props.value && props.activeClassName ? props.activeClassName : ''
+      }`}
       onClick={() => {
         props.onValue?.(!props.value);
       }}
     >
-      <div
-        style={{ fontSize: '10px', letterSpacing: '1.45px' }}
-        className={`transition-all w-full h-full flex items-center justify-center font-bold border ${
-          props.value
-            ? 'bg-white text-black hover:bg-opacity-80 border-transparent'
-            : 'bg-white bg-opacity-0 hover:bg-opacity-10 text-white border-white'
-        }`}
-      >
-        <span className={`text-center`}>{props.value ? props.trueText : props.falseText}</span>
-      </div>
+      {!props.value && !!props.falseIcon && <Icon icon={props.falseIcon} className={`w-full h-full`} />}
+      {!!props.value && !!props.trueIcon && <Icon icon={props.trueIcon} className={`w-full h-full`} />}
+      {(!props.value && props.falseText) ||
+        (props.value && props.trueText && (
+          <span className={`text-center`}>{props.value ? props.trueText : props.falseText}</span>
+        ))}
     </div>
   );
 };

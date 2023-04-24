@@ -45,8 +45,10 @@ async function createWindow() {
     icon: join(process.env.PUBLIC, 'favicon.ico'),
     frame: false,
     titleBarStyle: 'hidden',
-    width: 1080,
-    height: 720,
+    width: 1580,
+    minWidth: 1190,
+    height: 900,
+    minHeight: 800,
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production

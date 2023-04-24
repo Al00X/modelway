@@ -26,7 +26,7 @@ export const Modal = (props: {
       centered
       className={`app-modal relative ${props.className ?? ''}`}
       withCloseButton={false}
-      classNames={{ overlay: 'bg-black bg-opacity-70 backdrop-filter backdrop-blur-xs' }}
+      classNames={{ overlay: 'bg-black bg-opacity-70 backdrop-filter backdrop-blur-xs filter-blur-none' }}
       styles={{ content: { width: props.width ?? '50%', height: props.height ?? '50%' } }}
       opened={props.open}
       onClose={props.onClose}
@@ -45,7 +45,7 @@ export const Modal = (props: {
         )}
         {props.children}
         <div
-          className={`transition-all absolute z-50 bg-black backdrop-filter backdrop-blur-xs bg-opacity-80 inset-0 flex flex-col items-center justify-center pointer-events-none ${
+          className={`transition-all absolute z-50 bg-black backdrop-filter backdrop-blur-xs filter-blur-none bg-opacity-80 inset-0 flex flex-col items-center justify-center pointer-events-none ${
             dropzone.isDragAccept ? 'opacity-100' : 'opacity-0'
           }`}
         >

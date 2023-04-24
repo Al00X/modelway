@@ -11,3 +11,8 @@
 .box-shadow {
   box-shadow: 0px 0px 18px 1px rgba(0, 0, 0, 0.9);
 }
+
+.filter-blur-none {
+  // This is used with backdrop-blur because of the view resize bug
+  filter: blur(0px) !important;
+}

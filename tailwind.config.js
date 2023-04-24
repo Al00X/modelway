@@ -4,6 +4,10 @@ module.exports = {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      screens: {
+        '2xl': '1420px',
+        '3xl': '1600px',
+      },
       backdropBlur: {
         xs: '2px',
       },

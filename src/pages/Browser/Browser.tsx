@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAtomValue } from 'jotai';
-import { BrowserHeader, BrowserHeaderChangeEvent, BrowserHeaderSyncEvent } from './BrowserHeader';
+import { BrowserHeader, BrowserHeaderChangeEvent, BrowserHeaderRef, BrowserHeaderSyncEvent } from './BrowserHeader';
 import { useAppContext } from '@/context/App';
 import { ModelExtended } from '@/interfaces/models.interface';
 import { Loader } from '@/components/Loader/Loader';
@@ -12,6 +12,8 @@ import { BrowserFooter } from '@/pages/Browser/BrowserFooter';
 import { filterModelsList } from '@/services/filter-engine';
 import { ButtonClickEvent } from '@/components/Button/Button';
 import { modelPopulateComputedValues } from '@/helpers/model.helper';
+import { useEvent } from '@/hooks/useEvent';
+import { HotKeySearchEvent } from '@/context/HotKeys.provider';
 
 export const Browser = () => {
   const atomList = useAtomValue(DataState.processedList);
@@ -22,7 +24,12 @@ export const Browser = () => {
 
   const appContext = useAppContext();
   const containerRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<BrowserHeaderRef>(null);
   const [triggerListUpdate, setTriggerListUpdate] = useState(false);
+
+  useEvent(HotKeySearchEvent, () => {
+    headerRef.current?.getSearchInputRef()?.focus();
+  });
 
   const prepareList = useCallback(() => {
     setList(undefined);
@@ -131,6 +138,7 @@ export const Browser = () => {
   return (
     <div ref={containerRef} className={`flex flex-col h-full overflow-auto`}>
       <BrowserHeader
+        ref={headerRef}
         onChange={setFilters}
         onSync={runServerSync}
         onRefresh={runClientSync}

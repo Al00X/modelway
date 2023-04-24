@@ -66,6 +66,8 @@ module.exports = defineFlatConfig([
       'sonarjs/no-duplicate-string': 0,
       'sonarjs/no-identical-conditions': 0,
       'operator-assignment': 0,
+      'storybook/prefer-pascal-case': 0,
+      'react/jsx-no-useless-fragment': 0,
     },
   },
 ]);

@@ -195,9 +195,9 @@ const Select = forwardRef<SelectElementType, SelectProps<any>>(
               setCursorToEnd
               ref={inputRef}
               placeholder={props.placeholder}
-              readonly={false}
+              readonly={!props.multi && !props.autocomplete}
               icon={props.icon}
-              className={props.className}
+              className={`${props.className ?? ''} cursor-pointer`}
               clearable={false}
               value={
                 props.autocomplete ? props.input : !props.multi ? (selected.length > 0 ? selected[0].label : '') : ''

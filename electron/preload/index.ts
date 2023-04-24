@@ -1,7 +1,5 @@
 /* eslint-disable */
 
-import { app, BrowserWindow, ipcMain } from 'electron';
-
 function domReady(condition: DocumentReadyState[] = ['complete', 'interactive']) {
   return new Promise((resolve) => {
     if (condition.includes(document.readyState)) {
@@ -70,7 +68,7 @@ function useLoading() {
   oStyle.id = 'app-loading-style';
   oStyle.innerHTML = styleContent;
   oDiv.className = 'app-loading-wrap';
-  oDiv.innerHTML = `<div class="${className}"><div></div></div>`;
+  oDiv.innerHTML = `<div style="-webkit-app-region: drag;"><div>LOADING...</div></div>`;
 
   return {
     appendLoading() {

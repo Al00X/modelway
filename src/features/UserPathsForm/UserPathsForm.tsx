@@ -7,6 +7,7 @@ import { FileInput } from '@/components/FileInput/FileInput';
 import { MiniSwitch } from '@/components/MiniSwitch/MiniSwitch';
 import { SettingsState, UserPaths } from '@/states/Settings';
 import { ModelType } from '@/interfaces/models.interface';
+import { Separator } from '@/components/Separator/Separator';
 
 export interface UserPathsFormElement {
   export: () => UserPaths | null;
@@ -91,16 +92,17 @@ export const UserPathsForm = forwardRef<
 
   return (
     <div className={`flex flex-col w-full ${props.className ?? ''}`}>
-      <p className={`text-sm opacity-80`}>
+      <p className={`text-base opacity-90`}>
         By choosing a client folder, other fields are populated automatically. If you want to select folders manually,
         you can skip client selection and switch the desired fields to manual mode to browse each folder individually.
       </p>
-      <div className={`mt-7`}></div>
+      <Separator className={`mt-7 mb-9`} />
       <Item label={`Stable Diffusion Client`}>
+        <span className={`absolute -top-3.5 left-0 text-xs opacity-30`}>OPTIONAL</span>
         <FileInput placeholder={`SD Client Folder Path...`} value={clientPath} onValue={setClientPath} />
         <span className={`absolute text-xs left-0 -bottom-6 opacity-60`}>Only Automatic1111 is supported</span>
       </Item>
-      <div className={`mt-16`}></div>
+      <Separator className={`mt-16 mb-4 opacity-40`} />
       {Object.values(paths).map((item) => (
         <Item
           className={`mt-4`}
@@ -109,10 +111,13 @@ export const UserPathsForm = forwardRef<
           label={item.label}
           startEl={
             <MiniSwitch
-              className={`w-10`}
+              className={`w-11 h-9 p-2 border-gray-600 bg-gray-800`}
+              activeClassName={`bg-white text-black`}
               value={item.isAuto}
-              trueText={`A`}
-              falseText={`M`}
+              trueIcon={`lock`}
+              falseIcon={`unlock`}
+              trueTitle={`Automatic`}
+              falseTitle={`Manual`}
               onValue={(e) => {
                 item.isAuto = e;
                 forceUpdate();

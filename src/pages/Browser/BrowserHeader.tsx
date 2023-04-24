@@ -1,5 +1,4 @@
-import { GlobalHotKeys } from 'react-hotkeys';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useAtom } from 'jotai';
 import { Menu } from '@mantine/core';
 import Input, { InputElementType } from '@/components/Input/Input';
@@ -51,14 +50,21 @@ export interface BrowserHeaderSyncEvent {
   filename?: string;
 }
 
+export interface BrowserHeaderRef {
+  getSearchInputRef: () => InputElementType | null;
+}
+
 const SEARCH_DEBOUNCE = 300; // in ms
 
-export const BrowserHeader = (props: {
-  onChange: (e: BrowserHeaderChangeEvent) => void;
-  onSync: (e: BrowserHeaderSyncEvent) => void;
-  onRefresh: (e: ButtonClickEvent) => void;
-  onUpdate: (e: ButtonClickEvent) => void;
-}) => {
+export const BrowserHeader = forwardRef<
+  BrowserHeaderRef,
+  {
+    onChange: (e: BrowserHeaderChangeEvent) => void;
+    onSync: (e: BrowserHeaderSyncEvent) => void;
+    onRefresh: (e: ButtonClickEvent) => void;
+    onUpdate: (e: ButtonClickEvent) => void;
+  }
+>((props, ref) => {
   const [atomAvailableTags] = useAtom(DataState.availableTagsKeyValue);
   const [atomAvailableMerges] = useAtom(DataState.availableMergesKeyValue);
   const [atomViewMode, setAtomViewMode] = useAtom(SettingsState.viewMode);
@@ -114,103 +120,173 @@ export const BrowserHeader = (props: {
     props.onChange,
   ]);
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      getSearchInputRef: () => searchInputRef.current,
+    }),
+    [],
+  );
+
   return (
     <div
-      className={`flex p-4 items-center bg-gray-800 bg-opacity-90 backdrop-filter backdrop-blur-sm z-10 sticky top-0 w-full shadow-lg gap-12`}
+      className={`flex flex-col bg-gray-800 bg-opacity-90 backdrop-filter backdrop-blur-sm filter-blur-none z-10 sticky top-0 w-full shadow-lg`}
     >
-      <GlobalHotKeys keyMap={{ search: 'ctrl+f' }} handlers={{ search: () => searchInputRef.current?.focus() }} />
-
-      <div className={`flex flex-wrap items-center gap-x-12 gap-y-4 flex-auto`}>
-        <Input
-          clearable
-          ref={searchInputRef}
-          className={`w-full max-w-[20rem]`}
-          placeholder={`Search...`}
-          icon={`search`}
-          value={search}
-          debounce={SEARCH_DEBOUNCE}
-          onValue={(e) => {
-            setSearch(e);
-          }}
-        />
-        <Item label={`View`}>
-          <ButtonGroup
-            items={ViewList}
-            value={atomViewMode}
-            onValue={(e) => {
-              setAtomViewMode(e as never);
-            }}
-          />
-          <ButtonGroup
-            className={`ml-2`}
-            items={TruncateViewList}
-            value={atomTruncateViewMode}
-            onValue={(e) => {
-              setAtomTruncateViewMode(e as never);
-            }}
-          />
-        </Item>
-        <Item label={`Sort`}>
-          <Select
-            items={SortList}
-            value={[atomSortMode]}
-            className={`w-full max-w-[20rem]`}
-            icon={`sort`}
-            onValue={(e) => {
-              console.log(e, atomSortMode);
-              setAtomSortMode(e![0]);
-            }}
-          ></Select>
-          <ButtonGroup
-            hideLabels
-            className={`flex-none absolute right-0.5 bottom-0.5 w-20 top-0.5`}
-            items={SortDirectionList}
-            value={atomSortDirection}
-            onValue={(e) => {
-              setAtomSortDirection(e as never);
-            }}
-          />
-        </Item>
-        <Item label={`Filter`}>
-          <Select
-            multiple
+      <div className={`flex p-4 items-center gap-12`}>
+        <div className={`flex flex-wrap items-center gap-x-12 gap-y-4 flex-auto`}>
+          <Input
             clearable
-            multi
-            ref={filterTagSelectRef}
-            items={atomAvailableTags}
-            cols={3}
+            ref={searchInputRef}
             className={`w-full max-w-[20rem]`}
-            placeholder={'Tags...'}
-            value={filterTags}
+            placeholder={`Search...`}
+            icon={`search`}
+            value={search}
+            debounce={SEARCH_DEBOUNCE}
             onValue={(e) => {
-              setFilterTags(e);
+              setSearch(e);
             }}
-          ></Select>
-          <Select
-            multiple
-            clearable
-            multi
-            ref={filterMergesSelectRef}
-            items={atomAvailableMerges}
-            cols={2}
-            className={`w-full max-w-[20rem]`}
-            placeholder={'Merges...'}
-            value={filterMerges}
-            onValue={(e) => {
-              setFilterMerges(e);
-            }}
-          ></Select>
-          <Button
-            onClick={() => {
-              filterTagSelectRef.current?.clear();
-              filterMergesSelectRef.current?.clear();
-            }}
-          >
-            CLEAR
+          />
+          <Item label={`View`}>
+            <ButtonGroup
+              items={ViewList}
+              value={atomViewMode}
+              onValue={(e) => {
+                setAtomViewMode(e as never);
+              }}
+            />
+            <ButtonGroup
+              className={`ml-2`}
+              items={TruncateViewList}
+              value={atomTruncateViewMode}
+              onValue={(e) => {
+                setAtomTruncateViewMode(e as never);
+              }}
+            />
+          </Item>
+          <Item label={`Sort`}>
+            <Select
+              items={SortList}
+              value={[atomSortMode]}
+              className={`w-full max-w-[20rem]`}
+              icon={`sort`}
+              onValue={(e) => {
+                console.log(e, atomSortMode);
+                setAtomSortMode(e![0]);
+              }}
+            ></Select>
+            <ButtonGroup
+              hideLabels
+              className={`flex-none absolute right-0.5 bottom-0.5 w-20 top-0.5`}
+              items={SortDirectionList}
+              value={atomSortDirection}
+              onValue={(e) => {
+                setAtomSortDirection(e as never);
+              }}
+            />
+          </Item>
+          <Item label={`Filter`}>
+            <Select
+              multiple
+              clearable
+              multi
+              ref={filterTagSelectRef}
+              items={atomAvailableTags}
+              cols={3}
+              className={`w-full max-w-[20rem]`}
+              placeholder={'Tags...'}
+              value={filterTags}
+              onValue={(e) => {
+                setFilterTags(e);
+              }}
+            ></Select>
+            <Select
+              multiple
+              clearable
+              multi
+              ref={filterMergesSelectRef}
+              items={atomAvailableMerges}
+              cols={2}
+              className={`w-full max-w-[20rem]`}
+              placeholder={'Merges...'}
+              value={filterMerges}
+              onValue={(e) => {
+                setFilterMerges(e);
+              }}
+            ></Select>
+            <Button
+              onClick={() => {
+                filterTagSelectRef.current?.clear();
+                filterMergesSelectRef.current?.clear();
+              }}
+            >
+              CLEAR
+            </Button>
+          </Item>
+        </div>
+        <div className={`flex gap-3 flex-none h-10 self-baseline`}>
+          <div className={`ml-auto`}></div>
+          <Button title={`Update models filesystem with .preview (thumbnail) and .info`} onClick={props.onUpdate}>
+            UPDATE
           </Button>
-        </Item>
+          <Button title={`Refresh/Scan models from disk`} onClick={props.onRefresh}>
+            REFRESH
+          </Button>
+          <Menu
+            closeOnItemClick
+            classNames={{ dropdown: `overflow-hidden rounded-lg bg-gray-800 text-base box-shadow border-gray-550 p-0` }}
+          >
+            <Menu.Target>
+              <Button title={`Sync models with server (CivitAI)`} className={`bg-primary-700 hover:bg-primary-600`}>
+                SYNC
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <div className={`flex flex-col gap-0.5 p-0.5 overflow-hidden rounded-xl`}>
+                <Button
+                  title={`Sync models that are currently being filtered`}
+                  disabled={isSyncing}
+                  className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
+                  onClick={(e) => {
+                    doSync(e, 'view');
+                  }}
+                >
+                  SYNC VIEW
+                </Button>
+                <Button
+                  title={`Sync all the models within the selected category`}
+                  disabled={isSyncing}
+                  className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
+                  onClick={(e) => {
+                    doSync(e, 'category');
+                  }}
+                >
+                  SYNC CATEGORY
+                </Button>
+                <Button
+                  title={`Sync all the available categories`}
+                  disabled={isSyncing}
+                  className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
+                  onClick={(e) => {
+                    doSync(e, 'all');
+                  }}
+                >
+                  SYNC ALL
+                </Button>
+              </div>
+            </Menu.Dropdown>
+          </Menu>
+          {/*<Button*/}
+          {/*  title={`Sync models with server (CivitAI)`}*/}
+          {/*  className={`bg-primary-700 hover:bg-primary-600`}*/}
+          {/*  onClick={props.onSync}*/}
+          {/*>*/}
+          {/*  SYNC*/}
+          {/*</Button>*/}
+        </div>
+      </div>
+      <div className={`flex flex-col pb-3 pr-3`}>
         <ButtonGroup
-          className={`absolute right-4 bottom-4 text-sm`}
+          className={`2xl:absolute right-4 bottom-3 ml-auto text-sm`}
           value={category}
           items={CategoryList}
           onValue={(e) => {
@@ -218,66 +294,6 @@ export const BrowserHeader = (props: {
           }}
         />
       </div>
-      <div className={`flex gap-3 flex-none h-10 self-baseline`}>
-        <div className={`ml-auto`}></div>
-        <Button title={`Update models filesystem with .preview (thumbnail) and .info`} onClick={props.onUpdate}>
-          UPDATE
-        </Button>
-        <Button title={`Refresh/Scan models from disk`} onClick={props.onRefresh}>
-          REFRESH
-        </Button>
-        <Menu
-          closeOnItemClick
-          classNames={{ dropdown: `overflow-hidden rounded-lg bg-gray-800 text-base box-shadow border-gray-550 p-0` }}
-        >
-          <Menu.Target>
-            <Button title={`Sync models with server (CivitAI)`} className={`bg-primary-700 hover:bg-primary-600`}>
-              SYNC
-            </Button>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <div className={`flex flex-col gap-0.5 p-0.5 overflow-hidden rounded-xl`}>
-              <Button
-                title={`Sync models that are currently being filtered`}
-                disabled={isSyncing}
-                className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
-                onClick={(e) => {
-                  doSync(e, 'view');
-                }}
-              >
-                SYNC VIEW
-              </Button>
-              <Button
-                title={`Sync all the models within the selected category`}
-                disabled={isSyncing}
-                className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
-                onClick={(e) => {
-                  doSync(e, 'category');
-                }}
-              >
-                SYNC CATEGORY
-              </Button>
-              <Button
-                title={`Sync all the available categories`}
-                disabled={isSyncing}
-                className={`bg-gray-600 hover:bg-gray-500 border-0 rounded-none`}
-                onClick={(e) => {
-                  doSync(e, 'all');
-                }}
-              >
-                SYNC ALL
-              </Button>
-            </div>
-          </Menu.Dropdown>
-        </Menu>
-        {/*<Button*/}
-        {/*  title={`Sync models with server (CivitAI)`}*/}
-        {/*  className={`bg-primary-700 hover:bg-primary-600`}*/}
-        {/*  onClick={props.onSync}*/}
-        {/*>*/}
-        {/*  SYNC*/}
-        {/*</Button>*/}
-      </div>
     </div>
   );
-};
+});

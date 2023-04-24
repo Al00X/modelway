@@ -1,0 +1,7 @@
+.ui-mini-switch {
+  @apply transition-all relative p-0.5 cursor-pointer outline-0 flex items-center justify-center font-bold border;
+  @apply bg-white bg-opacity-0 hover:bg-opacity-10 text-white border-white;
+  &.active {
+    @apply bg-white text-black hover:bg-opacity-80 border-transparent;
+  }
+}

@@ -16,6 +16,7 @@ import { SettingsState } from '@/states/Settings';
 import { Modal } from '@/components/Modal/Modal';
 import { copyFile } from '@/helpers/node.helper';
 import { imageToUrl, resolveImageUrlToPath } from '@/services/image-asset';
+import { AppState } from '@/states/App';
 
 export interface ProgressEvent {
   current: number;
@@ -31,7 +32,7 @@ export const AppProvider = (props: { children: any }) => {
   const isSyncing = useRef<'client' | 'server' | undefined>();
   const cancelSyncing = useRef<boolean>(false);
   const [isCanceling, setIsCanceling] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useAtom(AppState.isLoading);
   const [progress, setProgress] = useState<ProgressEvent | undefined>();
   const [openSyncDialog, setOpenSyncDialog] = useState(false);
 
@@ -359,7 +360,7 @@ export const AppProvider = (props: { children: any }) => {
       {!!loading && (
         <div
           style={{ zIndex: 9999 }}
-          className={`fixed inset-0 bg-black bg-opacity-60 backdrop-filter backdrop-blur-sm flex flex-col items-center justify-center`}
+          className={`fixed inset-0 bg-black bg-opacity-60 backdrop-filter backdrop-blur-sm filter-blur-none flex flex-col items-center justify-center`}
         >
           <span className={`text-lg`}>{progress?.title ?? ''}</span>
           {progress?.message ?? 'LOADING'}
