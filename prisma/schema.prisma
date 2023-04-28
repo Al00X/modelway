@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// enum ModelType {
+// Checkpoint
+// TextualInversion
+// Hypernetwork
+// AestheticGradient
+// LORA
+// Controlnet
+// Poses
+// Misc
+// }
+//
+// enum FileType {
+//   Model
+//   Config
+//   VAE
+// }
+
+model Model {
+  id            Int            @id @default(autoincrement())
+  path          String         @unique
+  filename      String         @unique
+  hash          String
+  vaePath       String?
+  thumbnailPath String?
+  infoPath      String?
+  configPath    String?
+  hide          Boolean        @default(false)
+  metadata      ModelMetadata?
+}
+
+model ModelMetadata {
+  id             Int            @id @default(autoincrement())
+  type           String
+  serverId       Int?           @unique
+  name           String?
+  notes          String?
+  description    String?
+  nsfw           Boolean?
+  creator        String?
+  tags           Tag[]
+  coverImage     ModelImage?
+  currentVersion ModelVersion?  @relation("CurrentVersion")
+  versions       ModelVersion[] @relation("Versions")
+  originalValues String?
+
+  modelId Int   @unique
+  model   Model @relation(fields: [modelId], references: [id])
+}
+
+model ModelVersion {
+  id          Int              @id @default(autoincrement())
+  serverId    Int?             @unique
+  fileName    String?
+  triggers    Trigger[]
+  baseModel   String?
+  name        String?
+  description String?
+  merges      ModelNameTag[]
+  images      ModelImage[]
+  createdAt   DateTime?
+  updatedAt   DateTime?
+  files       CivitFile[]
+  hashes      CivitFileHashes?
+
+  metadataId               Int            @unique
+  metadata                 ModelMetadata  @relation("Versions", fields: [metadataId], references: [id])
+  metadataCurrentVersionId Int?           @unique
+  metadataCurrentVersion   ModelMetadata? @relation("CurrentVersion", fields: [metadataCurrentVersionId], references: [id])
+}
+
+model ModelImage {
+  id     String              @id @default(cuid())
+  url    String
+  width  Int
+  height Int
+  nsfw   Boolean?
+  order  Int?
+  hide   Boolean?
+  hash   String?
+  meta   ModelImageMetadata?
+
+  versionId            Int
+  version              ModelVersion  @relation(fields: [versionId], references: [id])
+  metadataCoverImageId Int           @unique
+  metadata             ModelMetadata @relation(fields: [metadataCoverImageId], references: [id])
+}
+
+model ModelImageMetadata {
+  imageId        String  @id @unique
+  seed           Int?
+  steps          Int?
+  prompt         String?
+  sampler        String?
+  cfgScale       String?
+  hash           String?
+  negativePrompt String?
+
+  image ModelImage @relation(fields: [imageId], references: [id])
+}
+
+model CivitFile {
+  id                Int              @id
+  // file name
+  name              String
+  sizeKB            Int
+  type              String
+  format            String
+  pickleScanResult  String
+  pickleScanMessage String
+  virusScanResult   String
+  scannedAt         String
+  hashes            CivitFileHashes?
+  primary           Boolean
+  downloadUrl       String
+
+  versionId Int          @unique
+  version   ModelVersion @relation(fields: [versionId], references: [id])
+}
+
+model CivitFileHashes {
+  fileId Int     @id @unique
+  SHA256 String?
+  AutoV1 String?
+  AutoV2 String?
+  BLAKE3 String?
+  CRC32  String?
+
+  file      CivitFile    @relation(fields: [fileId], references: [id])
+  versionId Int          @unique
+  version   ModelVersion @relation(fields: [versionId], references: [id])
+}
+
+model Tag {
+  name      String   @id
+  isLocal   Boolean?
+  isDeleted Boolean?
+
+  metadatas ModelMetadata[]
+}
+
+model ModelNameTag {
+  name      String   @id
+  isLocal   Boolean?
+  isDeleted Boolean?
+
+  versions ModelVersion[]
+}
+
+model Trigger {
+  name      String   @id
+  isLocal   Boolean?
+  isDeleted Boolean?
+
+  versions ModelVersion[]
+}

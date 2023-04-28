@@ -68,7 +68,7 @@ function useLoading() {
   oStyle.id = 'app-loading-style';
   oStyle.innerHTML = styleContent;
   oDiv.className = 'app-loading-wrap';
-  oDiv.innerHTML = `<div style="-webkit-app-region: drag; font-family: system-ui; font-size: 4rem; color: white"><div>LOADING...</div></div>`;
+  oDiv.innerHTML = `<div style="-webkit-app-region: drag; font-family: system-ui; font-size: 2.5rem; color: white"><div>LOADING...</div></div>`;
 
   return {
     appendLoading() {

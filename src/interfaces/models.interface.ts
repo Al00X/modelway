@@ -13,23 +13,6 @@ export type ModelType =
 export type VAEStatus = 'baked' | 'external' | 'missing' | 'none' | undefined;
 export type ConfigStatus = 'yes' | 'none' | 'missing' | undefined;
 
-export interface ModelVersion {
-  id?: number;
-  fileId?: number;
-  modelId?: number;
-  fileName?: string;
-  triggers?: string[];
-  baseModel?: string;
-  name?: string;
-  description?: string | null;
-  merges?: string[];
-  images?: ModelImage[];
-  createdAt?: string;
-  updatedAt?: string;
-  files?: CivitModelFile[];
-  hashes?: CivitFileHashes;
-}
-
 export interface Model {
   id: number;
   path: string;
@@ -54,6 +37,23 @@ export interface Model {
     versions?: ModelVersion[];
     originalValues?: Model['metadata'];
   };
+}
+
+export interface ModelVersion {
+  id?: number;
+  fileId?: number;
+  modelId?: number;
+  fileName?: string;
+  triggers?: string[];
+  baseModel?: string;
+  name?: string;
+  description?: string | null;
+  merges?: string[];
+  images?: ModelImage[];
+  createdAt?: string;
+  updatedAt?: string;
+  files?: CivitModelFile[];
+  hashes?: CivitFileHashes;
 }
 
 export interface ModelImage {
