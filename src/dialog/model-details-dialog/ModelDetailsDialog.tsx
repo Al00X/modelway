@@ -25,6 +25,7 @@ import { KeenWheelControl } from '@/plugins/keenWheelControl';
 const SEPARATOR = `    .    `;
 
 const ATOM_FORM_DEFAULT = {
+  id: undefined as number | undefined,
   name: '' as string,
   version: '' as string,
   base: '' as string,
@@ -73,6 +74,7 @@ export const ModelDetailsDialog = (props: {
       console.log(props.item);
       setCurrentItem(clone(props.item));
       setAtomForm({
+        id: props.item.metadata.id,
         name: props.item.computed.name,
         version: props.item.computed.version ?? '',
         base: props.item.metadata.currentVersion.baseModel ?? '',
@@ -153,6 +155,21 @@ export const ModelDetailsDialog = (props: {
     },
     [currentItem, props.onSave, props.onClose, atomForm],
   );
+
+  function updateIdManually(e: ButtonClickEvent) {
+    const regex = /(?<=https:\/\/civitai\.com\/models\/)\d+/;
+    const matches = regex.exec(inputManualSyncLink);
+
+    if (matches && matches.length > 0 && currentItem) {
+      const newId = matches[0];
+
+      currentItem.metadata.id = +newId;
+      onSave(false);
+      setTimeout(() => {
+        props.onSync(e, currentItem.filename);
+      }, 1);
+    }
+  }
 
   return (
     <>
@@ -496,6 +513,7 @@ export const ModelDetailsDialog = (props: {
               setOpenWrongModelModal(false);
             }}
           >
+            {/*<span className={`mt-3`}>* Caution * Changing the ID causes to</span>*/}
             <Input
               className={`w-full mt-4`}
               value={inputManualSyncLink}
@@ -518,7 +536,7 @@ export const ModelDetailsDialog = (props: {
               >
                 Current ID: {currentItem.metadata.id ?? 'N/A'}
               </span>
-              <Button>SAVE</Button>
+              <Button onClick={updateIdManually}>SAVE</Button>
             </div>
           </Modal>
           <ImageDetailsDialog

@@ -8,7 +8,7 @@ import { Model, ModelType } from '@/interfaces/models.interface';
 import { getModelHash, ModelScanEntry, scanModelDirectory } from '@/services/scan';
 import { Progress } from '@/components/Progress/Progress';
 import apiCivitGetModel from '@/services/civitai';
-import { civitModelToModel, modelsDeduplicate } from '@/helpers/model.helper';
+import { civitModelToModel, modelsDeduplicate, modelSyncAndMerge } from '@/helpers/model.helper';
 import { Button } from '@/components/Button/Button';
 import { DataState } from '@/states/Data';
 import { AppContext } from '@/context/App/app.context';
@@ -126,10 +126,11 @@ export const AppProvider = (props: { children: any }) => {
           message: item.filename,
         });
 
-        const result = await apiCivitGetModel(item);
+        const result = await modelSyncAndMerge(item);
 
         if (!result) continue;
-        tempRawList[i] = civitModelToModel(result, item);
+
+        tempRawList[i] = result;
       }
 
       await finalizeSyncing(tempRawList);
@@ -158,7 +159,7 @@ export const AppProvider = (props: { children: any }) => {
       message: '',
     });
 
-    let lastId = loadedList.reduce((pre, cur) => (pre > cur.id ? pre : cur.id), -1);
+    let lastId = loadedList.reduce((pre, cur) => (pre > cur.id ? pre : cur.id), 0);
 
     const newSyncedList: Model[] = [];
     let i = 0;

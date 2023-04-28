@@ -58,7 +58,7 @@ export interface CivitModelVersion {
 
 export interface CivitModelImage {
   url: string;
-  nsfw: boolean;
+  nsfw: boolean | 'None' | 'Soft' | 'Mature' | 'X';
   width: number;
   height: number;
   hash: string;

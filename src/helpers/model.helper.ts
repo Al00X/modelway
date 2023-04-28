@@ -2,6 +2,7 @@ import path from 'node:path';
 import { Model, ModelExtended, ModelImage, ModelVersion } from '@/interfaces/models.interface';
 import { CivitModel, CivitModelFile, CivitModelImage, CivitModelVersion } from '@/interfaces/api.interface';
 import { findAllIndexes, mergeArray } from '@/helpers/native.helper';
+import apiCivitGetModel from '@/services/civitai';
 
 function cleanupTextFromShit(text: string) {
   return text
@@ -55,7 +56,7 @@ export function civitModelToModel(model: CivitModel, previousModel?: Model): Par
       hash: v.hash,
       width: v.width,
       height: v.height,
-      nsfw: v.nsfw,
+      nsfw: v.nsfw === 'X' || v.nsfw === 'Mature' || v.nsfw === 'Soft' || v.nsfw === true,
       meta: v.meta
         ? {
             seed: v.meta.seed,
@@ -246,4 +247,12 @@ export function modelsDeduplicate(models: Model[]) {
   }
 
   return models.filter((x, i) => !toRemove.includes(i));
+}
+
+export async function modelSyncAndMerge(model: Model) {
+  const result = await apiCivitGetModel(model);
+
+  if (!result) return;
+
+  return civitModelToModel(result, model);
 }
