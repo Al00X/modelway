@@ -39,6 +39,7 @@
     "lint-staged": "^13.2.1",
     "postcss": "^8.4.21",
     "prettier": "^2.8.4",
+    "prisma": "^4.13.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sass": "^1.58.3",
