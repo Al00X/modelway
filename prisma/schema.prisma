@@ -69,9 +69,8 @@ model ModelVersion {
   createdAt   DateTime?
   updatedAt   DateTime?
   files       CivitFile[]
-  hashes      CivitFileHashes?
 
-  metadataId               Int            @unique
+  metadataId               Int
   metadata                 ModelMetadata  @relation("Versions", fields: [metadataId], references: [id])
   metadataCurrentVersionId Int?           @unique
   metadataCurrentVersion   ModelMetadata? @relation("CurrentVersion", fields: [metadataCurrentVersionId], references: [id])
@@ -90,17 +89,17 @@ model ModelImage {
 
   versionId            Int
   version              ModelVersion  @relation(fields: [versionId], references: [id])
-  metadataCoverImageId Int           @unique
-  metadata             ModelMetadata @relation(fields: [metadataCoverImageId], references: [id])
+  metadataCoverImageId Int?           @unique
+  metadata             ModelMetadata? @relation(fields: [metadataCoverImageId], references: [id])
 }
 
 model ModelImageMetadata {
   imageId        String  @id @unique
-  seed           Int?
+  seed           BigInt?
   steps          Int?
   prompt         String?
   sampler        String?
-  cfgScale       String?
+  cfgScale       Int?
   hash           String?
   negativePrompt String?
 
@@ -111,7 +110,7 @@ model CivitFile {
   id                Int              @id
   // file name
   name              String
-  sizeKB            Int
+  sizeKB            Float
   type              String
   format            String
   pickleScanResult  String
@@ -135,8 +134,6 @@ model CivitFileHashes {
   CRC32  String?
 
   file      CivitFile    @relation(fields: [fileId], references: [id])
-  versionId Int          @unique
-  version   ModelVersion @relation(fields: [versionId], references: [id])
 }
 
 model Tag {
